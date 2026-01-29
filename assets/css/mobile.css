@@ -1,0 +1,35 @@
+/* Mobile-first base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+/* Touch-friendly defaults */
+input,
+button {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+/* Ant Design mobile tuning */
+.ant-input,
+.ant-input-password,
+.ant-btn {
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+/* Primary button override */
+.ant-btn-primary {
+  background: #2F2F2F;
+  border-color: #2F2F2F;
+}
+
+.ant-btn-primary:hover {
+  background: #1f1f1f;
+}
