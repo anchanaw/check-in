@@ -10,7 +10,6 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, navigateTo } from '#app'
@@ -21,19 +20,61 @@ const route = useRoute()
 const inviteType = ref<InviteType>('invalid')
 const loading = ref(true)
 
-onMounted(async () => {
-  const inviteCode = route.query.invite as string
+const IS_DEV = import.meta.env.DEV
 
-  // 1. ไม่มี invite → ถือว่า invalid
+onMounted(async () => {
+  const inviteCode = route.query.invite as string | undefined
+
+  // 🟡 DEV: ไม่มี invite → ไป login ได้
+  if (!inviteCode && IS_DEV) {
+    navigateTo('/login')
+    return
+  }
+
+  // 🔴 PROD: ไม่มี invite → invalid
   if (!inviteCode) {
     inviteType.value = 'invalid'
     loading.value = false
     return
   }
 
+ // 🟡 DEV MOCK
+if (IS_DEV) {
+  inviteType.value = 'register'
+  // เปลี่ยนค่าเพื่อเทส:
+  // inviteType.value = 'team_change'
+  // inviteType.value = 'intern'
+  // inviteType.value = 'invalid'
+
+  loading.value = false
+
+  switch (inviteType.value) {
+    case 'register':
+      navigateTo(`/register?invite=${inviteCode}`)
+      break
+
+    case 'team_change':
+      navigateTo(`/login?invite=${inviteCode}`)
+      break
+
+    case 'intern':
+      navigateTo('/intern')
+      break
+
+    default:
+      inviteType.value = 'invalid'
+      break
+  }
+
+  return
+}
+
+
+  // 🔴 REAL API (backend มาแล้ว)
   try {
-    // 2. เรียก API ตรวจ invite
-    const res = await $fetch<{ valid: boolean; invite_type: InviteType }>(`/api/invites/${inviteCode}`)
+    const res = await $fetch<{ valid: boolean; invite_type: InviteType }>(
+      `/api/invites/${inviteCode}`
+    )
 
     if (!res.valid) {
       inviteType.value = 'invalid'
@@ -43,28 +84,24 @@ onMounted(async () => {
 
     inviteType.value = res.invite_type
 
-    // 3. route ตาม invite_type
     switch (res.invite_type) {
       case 'register':
         navigateTo(`/register?invite=${inviteCode}`)
         break
-
       case 'team_change':
         navigateTo(`/login?invite=${inviteCode}`)
         break
-
       case 'intern':
         navigateTo('/intern')
         break
-
       default:
         inviteType.value = 'invalid'
+        break
     }
-  } catch (err) {
+  } catch {
     inviteType.value = 'invalid'
   } finally {
     loading.value = false
   }
 })
 </script>
-

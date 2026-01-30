@@ -89,93 +89,94 @@
 import { useRoute, navigateTo } from '#app'
 import { ref, onMounted } from 'vue'
 import { useInviteApi } from '~/composables/useInviteApi'
-
-const { validate } = useInviteApi()
+import { useAuthApi } from '~/composables/useAuthApi'
 
 definePageMeta({ layout: 'mobile' })
+
+// APIs
+const { validate } = useInviteApi()
+const { register } = useAuthApi()
 
 // 1️⃣ รับ invite จาก URL
 const route = useRoute()
 const inviteCode = ref<string | null>(null)
 
-// ใช้แสดงใน subtitle (display only)
-const mentorDisplayName = ref<string>('') // users.display_name
-const teamToken = ref<string>('')          // team.token
+// display only
+const mentorDisplayName = ref('')
+const teamToken = ref('')
 
 onMounted(async () => {
-    inviteCode.value = route.query.invite as string
+  inviteCode.value = route.query.invite as string
 
-    // กันเข้าหน้านี้ตรง ๆ
-    if (!inviteCode.value) {
-        navigateTo('/')
-        return
+  if (!inviteCode.value) {
+    navigateTo('/')
+    return
+  }
+
+  try {
+    // ✅ ใช้ Invite API (mock / real)
+    const res: any = await validate(inviteCode.value)
+
+    if (!res.valid) {
+      navigateTo('/')
+      return
     }
 
-    try {
-        const res: any = await $fetch(`/api/invites/${inviteCode.value}`)
-
-        if (!res.valid) {
-            navigateTo('/')
-            return
-        }
-
-        // ✅ map ตาม Data Dictionary
-        mentorDisplayName.value = res.mentor?.display_name ?? ''
-        teamToken.value = res.team?.token ?? ''
-    } catch (e) {
-        navigateTo('/')
-    }
+    mentorDisplayName.value = res.mentor?.display_name ?? ''
+    teamToken.value = res.team?.token ?? ''
+  } catch {
+    navigateTo('/')
+  }
 })
 
 // 2️⃣ validation rules
 const req = [{ required: true, message: 'Required' }]
 
 const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
-    validator(_: any, value: any) {
-        if (!value || value === getFieldValue('password')) {
-            return Promise.resolve()
-        }
-        return Promise.reject('Passwords do not match')
+  validator(_: any, value: any) {
+    if (!value || value === getFieldValue('password')) {
+      return Promise.resolve()
     }
+    return Promise.reject('Passwords do not match')
+  }
 })
 
-// 3️⃣ submit → เรียก API
+// 3️⃣ submit → Register API (mock)
 const loading = ref(false)
 
 const onSubmit = async (values: any) => {
-    loading.value = true
+  loading.value = true
 
-    try {
-        await $fetch('/api/auth/register', {
-            method: 'POST',
-            body: {
-                invite_code: inviteCode.value,
+  try {
+    await register({
+      invite_code: inviteCode.value,
 
-                // required
-                email: values.email,
-                password: values.password,
-                first_name: values.firstName,
-                last_name: values.lastName,
+      // required
+      email: values.email,
+      username: values.email, // ใช้ email เป็น username (mock & real)
+      password: values.password,
+      first_name: values.firstName,
+      last_name: values.lastName,
 
-                // optional (ตรง data dic)
-                display_name: values.displayName,
-                gender: values.gender,
-                birth_date: values.dob
-                    ? values.dob.format('YYYY-MM-DD')
-                    : null,
-                university: values.university,
-                student_id: values.studentId
-            }
-        })
+      // optional
+      display_name: values.displayName,
+      gender: values.gender,
+      birth_date: values.dob
+        ? values.dob.format('YYYY-MM-DD')
+        : null,
+      university: values.university,
+      student_id: values.studentId
+    })
 
-        navigateTo('/register/success')
-    } catch (err) {
-        alert('สมัครไม่สำเร็จ หรือ invite หมดอายุ')
-    } finally {
-        loading.value = false
-    }
+    navigateTo('/register/success')
+  } catch (err) {
+    alert('สมัครไม่สำเร็จ หรือ invite หมดอายุ')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
+
 
 <style scoped>
 .register-header {

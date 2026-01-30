@@ -1,4 +1,4 @@
-import { useApi } from '../../api/core'
+import { useApi } from './core'
 
 export const useCheckinApi = () => {
   const { apiFetch } = useApi()
