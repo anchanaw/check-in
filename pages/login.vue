@@ -37,13 +37,60 @@
   </BaseCard>
 </template>
 
-<script setup>
-definePageMeta({
-  layout: 'mobile'
-})
+<script setup lang="ts">
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthApi } from '~/composables/useAuthApi'
+import { useAuthStore } from '~/stores/auth.store'
+import { useUserStore } from '~/stores/user.store'
 
-const onSubmit = (values) => {
-  console.log('login values:', values)
+definePageMeta({ layout: 'mobile' })
+
+const router = useRouter()
+const route = useRoute()
+
+const { login } = useAuthApi()
+const authStore = useAuthStore()
+const userStore = useUserStore()
+
+const inviteCode = route.query.invite as string | undefined
+
+const onSubmit = async (values: any) => {
+  try {
+    const res: any = await login({
+      username: values.username,
+      password: values.password,
+      ...(inviteCode && { invite_code: inviteCode }) // (optional) เฉพาะ intern flow
+    })
+
+    // 1️⃣ เก็บ token
+    authStore.setTokens({
+      access_token: res.access_token,
+      refresh_token: res.refresh_token
+    })
+
+    // 2️⃣ เก็บ user (display only)
+    userStore.setUser({
+      username: res.user.username,
+      display_name: res.user.display_name
+    })
+
+    // 3️⃣ redirect ตาม role
+    switch (res.user.role) {
+      case 'intern':
+        router.push('/intern')
+        break
+      case 'mentor':
+        router.push('/mentor')
+        break
+      case 'manager':
+        router.push('/manager')
+        break
+      default:
+        router.push('/login')
+    }
+  } catch (err) {
+    alert('Username or password incorrect')
+  }
 }
 </script>
 

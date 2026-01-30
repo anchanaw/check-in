@@ -1,6 +1,5 @@
 <template>
-  <CheckInHeader :userName="user.firstName" :date="dateTime.date" />
-
+  <CheckInHeader :userName="user.display_name" :date="dateTime.date" />
   <div class="content">
     <LocationCard />
     <CheckInStatusCard />
@@ -33,15 +32,18 @@ import LocationCard from '~/components/checkin/LocationCard.vue'
 import CheckInStatusCard from '~/components/checkin/CheckInStatusCard.vue'
 import CheckinSuccessModal from '@/components/CheckinSuccessModal.vue'
 import CheckinFailModal from '@/components/CheckinFailModal.vue'
+import { useCheckinApi } from '~/composables/useCheckinApi'
 
-definePageMeta({ layout: 'app' })
+const { checkIn } = useCheckinApi()
+
+definePageMeta({ layout: 'app' ,middleware:'auth'})
 
 const checkinSuccess = ref(false)
 const checkinFail = ref(false)
 
 // mock user
 const user = {
-  firstName: 'Sompong'
+  display_name: 'Sompong'
 }
 
 // เวลา real-time
@@ -61,8 +63,8 @@ onUnmounted(() => {
 const dateTime = computed(() => {
   const d = now.value
   return {
-    date: `${String(d.getDate()).padStart(2,'0')} | ${String(d.getMonth()+1).padStart(2,'0')} | ${d.getFullYear()}`,
-    time: `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+    date: `${String(d.getDate()).padStart(2, '0')} | ${String(d.getMonth() + 1).padStart(2, '0')} | ${d.getFullYear()}`,
+    time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 })
 

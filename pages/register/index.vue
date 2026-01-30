@@ -5,10 +5,9 @@
             <div class="title">Create Your Account</div>
         </div>
 
-        <!-- subtitle -->
         <p class="subtitle">
-            Invited by Mentor : {{ mentorName }}<br />
-            From {{ teamName }}
+            Invited by Mentor : {{ mentorDisplayName }}<br />
+            From {{ teamToken }}
         </p>
     </header>
 
@@ -86,13 +85,53 @@
     </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { useRoute, navigateTo } from '#app'
+import { ref, onMounted } from 'vue'
+import { useInviteApi } from '~/composables/useInviteApi'
+
+const { validate } = useInviteApi()
+
 definePageMeta({ layout: 'mobile' })
 
+// 1️⃣ รับ invite จาก URL
+const route = useRoute()
+const inviteCode = ref<string | null>(null)
+
+// ใช้แสดงใน subtitle (display only)
+const mentorDisplayName = ref<string>('') // users.display_name
+const teamToken = ref<string>('')          // team.token
+
+onMounted(async () => {
+    inviteCode.value = route.query.invite as string
+
+    // กันเข้าหน้านี้ตรง ๆ
+    if (!inviteCode.value) {
+        navigateTo('/')
+        return
+    }
+
+    try {
+        const res: any = await $fetch(`/api/invites/${inviteCode.value}`)
+
+        if (!res.valid) {
+            navigateTo('/')
+            return
+        }
+
+        // ✅ map ตาม Data Dictionary
+        mentorDisplayName.value = res.mentor?.display_name ?? ''
+        teamToken.value = res.team?.token ?? ''
+    } catch (e) {
+        navigateTo('/')
+    }
+})
+
+// 2️⃣ validation rules
 const req = [{ required: true, message: 'Required' }]
 
-const validateConfirm = ({ getFieldValue }) => ({
-    validator(_, value) {
+const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
+    validator(_: any, value: any) {
         if (!value || value === getFieldValue('password')) {
             return Promise.resolve()
         }
@@ -100,8 +139,41 @@ const validateConfirm = ({ getFieldValue }) => ({
     }
 })
 
-const onSubmit = (values) => {
-    console.log('register values:', values)
+// 3️⃣ submit → เรียก API
+const loading = ref(false)
+
+const onSubmit = async (values: any) => {
+    loading.value = true
+
+    try {
+        await $fetch('/api/auth/register', {
+            method: 'POST',
+            body: {
+                invite_code: inviteCode.value,
+
+                // required
+                email: values.email,
+                password: values.password,
+                first_name: values.firstName,
+                last_name: values.lastName,
+
+                // optional (ตรง data dic)
+                display_name: values.displayName,
+                gender: values.gender,
+                birth_date: values.dob
+                    ? values.dob.format('YYYY-MM-DD')
+                    : null,
+                university: values.university,
+                student_id: values.studentId
+            }
+        })
+
+        navigateTo('/register/success')
+    } catch (err) {
+        alert('สมัครไม่สำเร็จ หรือ invite หมดอายุ')
+    } finally {
+        loading.value = false
+    }
 }
 </script>
 
@@ -134,13 +206,13 @@ const onSubmit = (values) => {
 }
 
 .login-link {
-  margin-top: 16px;
-  text-align: center;
-  font-size: 14px;
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
 }
 
 .login-link a {
-  color: #6CBCFA;
-  text-decoration: underline;
+    color: #6CBCFA;
+    text-decoration: underline;
 }
 </style>

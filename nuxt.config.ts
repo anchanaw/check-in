@@ -6,7 +6,7 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/mobile.css'],
 
-  modules: [
+  modules: ['@pinia/nuxt',
     [
       '@vite-pwa/nuxt',
       {
