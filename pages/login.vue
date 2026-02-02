@@ -63,9 +63,10 @@ const onSubmit = async (values: any) => {
     })
 
     // 1️⃣ เก็บ token
-    authStore.setTokens({
+    authStore.setAuth({
       access_token: res.access_token,
-      refresh_token: res.refresh_token
+      refresh_token: res.refresh_token,
+      user: res.user
     })
 
     // 2️⃣ เก็บ user (display only)

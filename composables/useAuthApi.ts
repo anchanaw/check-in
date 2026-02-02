@@ -2,7 +2,7 @@
 import { useApi } from './core'
 import { useAuthStore } from '~/stores/auth.store'
 
-const IS_DEV = import.meta.env.DEV
+const IS_DEV = import.meta.env.VITE_USE_AUTH_MOCK === 'false'
 
 export const useAuthApi = () => {
   const { apiFetch } = useApi()
@@ -47,7 +47,7 @@ export const useAuthApi = () => {
         }
       }
 
-      authStore.setTokens(res)
+      authStore.setAuth(res)
       return res
     }
 
@@ -56,7 +56,7 @@ export const useAuthApi = () => {
       body: data
     })
 
-    authStore.setTokens(res)
+    authStore.setAuth(res)
     return res
   }
 

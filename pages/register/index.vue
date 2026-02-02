@@ -1,20 +1,21 @@
 <template>
     <header class="register-header">
-        <!-- top bar -->
         <div class="top-bar">
             <div class="title">Create Your Account</div>
         </div>
 
-        <p class="subtitle">
+        <p class="subtitle" v-if="mode === 'invite'">
             Invited by Mentor : {{ mentorDisplayName }}<br />
             From {{ teamToken }}
         </p>
+
+        <p class="subtitle" v-else-if="mode === 'token'">
+            Invitation Token Active
+        </p>
     </header>
 
-    <!-- Form Card -->
     <BaseCard maxWidth="320px">
         <a-form layout="vertical" @finish="onSubmit">
-            <!-- First / Last Name -->
             <a-form-item label="First Name" name="firstName" :rules="req">
                 <a-input placeholder="Value" />
             </a-form-item>
@@ -23,12 +24,10 @@
                 <a-input placeholder="Value" />
             </a-form-item>
 
-            <!-- Display Name -->
             <a-form-item label="Display Name" name="displayName" :rules="req">
                 <a-input placeholder="Value" />
             </a-form-item>
 
-            <!-- Email -->
             <a-form-item label="Email" name="email" :rules="[
                 { required: true, message: 'Email is required' },
                 { type: 'email', message: 'Invalid email' }
@@ -36,7 +35,6 @@
                 <a-input placeholder="Value" />
             </a-form-item>
 
-            <!-- Password -->
             <a-form-item label="Password" name="password" :rules="req">
                 <a-input-password placeholder="Value" />
             </a-form-item>
@@ -48,7 +46,6 @@
                 <a-input-password placeholder="Value" />
             </a-form-item>
 
-            <!-- Gender -->
             <a-form-item label="Gender" name="gender">
                 <a-select placeholder="Select">
                     <a-select-option value="male">Male</a-select-option>
@@ -57,28 +54,26 @@
                 </a-select>
             </a-form-item>
 
-            <!-- Date of Birth -->
             <a-form-item label="Date of Birth" name="dob">
                 <a-date-picker class="full-width" placeholder="Select date" />
             </a-form-item>
 
-            <!-- University -->
             <a-form-item label="University" name="university">
                 <a-input placeholder="Value" />
             </a-form-item>
 
-            <!-- Student ID -->
             <a-form-item label="Student ID" name="studentId">
                 <a-input placeholder="Value" />
             </a-form-item>
 
-            <!-- Submit -->
             <a-form-item>
-                <a-button type="primary" html-type="submit" block>
+                <a-button type="primary" html-type="submit" block :loading="loading">
                     Sign Up
                 </a-button>
             </a-form-item>
-            <div class="login-link">Already have an account?
+
+            <div class="login-link">
+                Already have an account?
                 <NuxtLink to="/login">Sign In</NuxtLink>
             </div>
         </a-form>
@@ -87,49 +82,59 @@
 
 <script setup lang="ts">
 import { useRoute, navigateTo } from '#app'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useInviteApi } from '~/composables/useInviteApi'
 import { useAuthApi } from '~/composables/useAuthApi'
 
 definePageMeta({ layout: 'mobile' })
 
-// APIs
+const route = useRoute()
 const { validate } = useInviteApi()
 const { register } = useAuthApi()
 
-// 1️⃣ รับ invite จาก URL
-const route = useRoute()
-const inviteCode = ref<string | null>(null)
+// query params
+const token = ref<string | null>(null)
+const invite = ref<string | null>(null)
 
-// display only
+// display (invite only)
 const mentorDisplayName = ref('')
 const teamToken = ref('')
 
-onMounted(async () => {
-  inviteCode.value = route.query.invite as string
+// detect mode
+const mode = computed<'token' | 'invite' | 'invalid'>(() => {
+  if (token.value) return 'token'
+  if (invite.value) return 'invite'
+  return 'invalid'
+})
 
-  if (!inviteCode.value) {
+onMounted(async () => {
+  token.value = route.query.token as string || null
+  invite.value = route.query.invite as string || null
+
+  if (mode.value === 'invalid') {
     navigateTo('/')
     return
   }
 
-  try {
-    // ✅ ใช้ Invite API (mock / real)
-    const res: any = await validate(inviteCode.value)
+  // invite flow → validate
+  if (mode.value === 'invite') {
+    try {
+      const res: any = await validate(invite.value!)
 
-    if (!res.valid) {
+      if (!res.valid) {
+        navigateTo('/')
+        return
+      }
+
+      mentorDisplayName.value = res.mentor?.display_name ?? ''
+      teamToken.value = res.team?.token ?? ''
+    } catch {
       navigateTo('/')
-      return
     }
-
-    mentorDisplayName.value = res.mentor?.display_name ?? ''
-    teamToken.value = res.team?.token ?? ''
-  } catch {
-    navigateTo('/')
   }
 })
 
-// 2️⃣ validation rules
+// validation
 const req = [{ required: true, message: 'Required' }]
 
 const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
@@ -141,24 +146,18 @@ const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => a
   }
 })
 
-// 3️⃣ submit → Register API (mock)
 const loading = ref(false)
 
 const onSubmit = async (values: any) => {
   loading.value = true
 
   try {
-    await register({
-      invite_code: inviteCode.value,
-
-      // required
+    const payload: any = {
       email: values.email,
-      username: values.email, // ใช้ email เป็น username (mock & real)
+      username: values.email,
       password: values.password,
       first_name: values.firstName,
       last_name: values.lastName,
-
-      // optional
       display_name: values.displayName,
       gender: values.gender,
       birth_date: values.dob
@@ -166,17 +165,27 @@ const onSubmit = async (values: any) => {
         : null,
       university: values.university,
       student_id: values.studentId
-    })
+    }
+
+    // attach token / invite
+    if (mode.value === 'token') {
+      payload.token = token.value
+    }
+
+    if (mode.value === 'invite') {
+      payload.invite_code = invite.value
+    }
+
+    await register(payload)
 
     navigateTo('/register/success')
   } catch (err) {
-    alert('สมัครไม่สำเร็จ หรือ invite หมดอายุ')
+    alert('สมัครไม่สำเร็จ หรือ invite / token ไม่ถูกต้อง')
   } finally {
     loading.value = false
   }
 }
 </script>
-
 
 <style scoped>
 .register-header {

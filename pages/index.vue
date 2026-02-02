@@ -1,107 +1,50 @@
 <template>
-  <div class="h-screen flex items-center justify-center text-center px-6">
-    <div v-if="loading" class="text-gray-500">
-      กำลังตรวจสอบคำเชิญ…
-    </div>
+  <div class="h-screen flex items-center justify-center bg-gray-50">
+    <div class="flex flex-col items-center gap-4">
+      <!-- Spinner -->
+      <div
+        class="h-10 w-10 rounded-full border-4 border-gray-300 border-t-gray-600 animate-spin"
+      />
 
-    <div v-else-if="inviteType === 'invalid'" class="text-red-500">
-      ❌ ลิงก์เชิญไม่ถูกต้องหรือหมดอายุ
+      <!-- Text -->
+      <p class="text-gray-600 text-sm">
+        กำลังตรวจสอบลิงก์ของคุณ…
+      </p>
+
+      <!-- Sub text -->
+      <p class="text-gray-400 text-xs">
+        กรุณารอสักครู่
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { useRoute, navigateTo } from '#app'
-
-type InviteType = 'register' | 'team_change' | 'intern' | 'invalid'
+import { onMounted } from 'vue'
 
 const route = useRoute()
-const inviteType = ref<InviteType>('invalid')
-const loading = ref(true)
 
-const IS_DEV = import.meta.env.DEV
+onMounted(() => {
+  const token = route.query.token as string | undefined
 
-onMounted(async () => {
-  const inviteCode = route.query.invite as string | undefined
-
-  // 🟡 DEV: ไม่มี invite → ไป login ได้
-  if (!inviteCode && IS_DEV) {
+  if (!token) {
     navigateTo('/login')
     return
   }
 
-  // 🔴 PROD: ไม่มี invite → invalid
-  if (!inviteCode) {
-    inviteType.value = 'invalid'
-    loading.value = false
+  const path = route.fullPath
+
+  if (path.includes('/auth/register')) {
+    navigateTo(`/register?token=${token}`)
     return
   }
 
- // 🟡 DEV MOCK
-if (IS_DEV) {
-  inviteType.value = 'register'
-  // เปลี่ยนค่าเพื่อเทส:
-  // inviteType.value = 'team_change'
-  // inviteType.value = 'intern'
-  // inviteType.value = 'invalid'
-
-  loading.value = false
-
-  switch (inviteType.value) {
-    case 'register':
-      navigateTo(`/register?invite=${inviteCode}`)
-      break
-
-    case 'team_change':
-      navigateTo(`/login?invite=${inviteCode}`)
-      break
-
-    case 'intern':
-      navigateTo('/intern')
-      break
-
-    default:
-      inviteType.value = 'invalid'
-      break
+  if (path.includes('/auth/login')) {
+    navigateTo(`/login?token=${token}`)
+    return
   }
 
-  return
-}
-
-
-  // 🔴 REAL API (backend มาแล้ว)
-  try {
-    const res = await $fetch<{ valid: boolean; invite_type: InviteType }>(
-      `/api/invites/${inviteCode}`
-    )
-
-    if (!res.valid) {
-      inviteType.value = 'invalid'
-      loading.value = false
-      return
-    }
-
-    inviteType.value = res.invite_type
-
-    switch (res.invite_type) {
-      case 'register':
-        navigateTo(`/register?invite=${inviteCode}`)
-        break
-      case 'team_change':
-        navigateTo(`/login?invite=${inviteCode}`)
-        break
-      case 'intern':
-        navigateTo('/intern')
-        break
-      default:
-        inviteType.value = 'invalid'
-        break
-    }
-  } catch {
-    inviteType.value = 'invalid'
-  } finally {
-    loading.value = false
-  }
+  navigateTo('/login')
 })
 </script>

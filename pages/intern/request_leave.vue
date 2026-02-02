@@ -15,14 +15,13 @@
       </BaseCard>
     </div>
 
-    <BottomBar active="profile" />
   </div>
 </template>
 
 <script setup>
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
-import BaseCard from '@/components/BaseCard.vue'
-import RequestLeaveForm from '@/components/RequestLeaveForm.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
+import RequestLeaveForm from '~/components/intern/RequestLeaveForm.vue'
 import BottomBar from '@/components/BottomBar.vue'
 
 const goBack = () => {

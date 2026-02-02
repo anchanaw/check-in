@@ -22,7 +22,7 @@
 import { reactive, onMounted } from 'vue'
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import EditProfileHeader from '~/components/profile/EditProfileHeader.vue'
 import EditProfileForm from '~/components/profile/EditProfileForm.vue'
 import BottomBar from '@/components/BottomBar.vue'

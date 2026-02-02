@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import { computed } from 'vue'
 import { StarFilled } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'

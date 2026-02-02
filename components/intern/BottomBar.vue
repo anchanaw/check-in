@@ -19,11 +19,11 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const items = [
-  { label: 'CHECK-IN', to: '/intern', match: '/intern', icon: '/icons/checkin.svg' },
-  { label: 'DASHBOARD', to: '/intern/dashboard', match: '/intern/dashboard', icon: '/icons/dashboard.svg' },
-  { label: 'RANKING', to: '/intern/rank', match: '/intern/rank', icon: '/icons/rank.svg' },
-  { label: 'ASSIGNMENT', to: '/intern/assignment', match: '/intern/assignment', icon: '/icons/assignment.svg' },
-  { label: 'PROFILE', to: '/intern/profile', match: '/intern/profile', icon: '/icons/profile.svg' },
+  { label: 'CHECK-IN', to: '/intern', match: '/intern', icon: '/icons/intern/checkin.svg' },
+  { label: 'DASHBOARD', to: '/intern/dashboard', match: '/intern/dashboard', icon: '/icons/intern/dashboard.svg' },
+  { label: 'RANKING', to: '/intern/rank', match: '/intern/rank', icon: '/icons/intern/rank.svg' },
+  { label: 'ASSIGNMENT', to: '/intern/assignment', match: '/intern/assignment', icon: '/icons/intern/assignment.svg' },
+  { label: 'PROFILE', to: '/intern/profile', match: '/intern/profile', icon: '/icons/intern/profile.svg' },
 ]
 
 const isActive = (item) => {

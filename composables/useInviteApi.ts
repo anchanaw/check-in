@@ -1,6 +1,6 @@
 import { useApi } from './core'
 import { mockInviteResponse } from './invite.mock'
-const USE_MOCK = import.meta.env.DEV
+const USE_MOCK = import.meta.env.VITE_USE_INVITE_MOCK === 'false'
 
 export const useInviteApi = () => {
   const { apiFetch } = useApi()

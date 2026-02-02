@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import RankingTable from '~/components/rank/RankingTable.vue'
 import YourRankCard from '~/components/rank/YourRankCard.vue'
 import BottomBar from '@/components/BottomBar.vue'

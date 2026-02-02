@@ -32,7 +32,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeftOutlined, StarOutlined } from '@ant-design/icons-vue'
 
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import AssignmentBonus from '~/components/assignment/AssignmentBonus.vue'
 import AssignmentForm from '~/components/assignment/AssignmentForm.vue'
 import BottomBar from '@/components/BottomBar.vue'

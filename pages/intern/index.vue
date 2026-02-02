@@ -30,8 +30,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CheckInHeader from '~/components/checkin/CheckInHeader.vue'
 import LocationCard from '~/components/checkin/LocationCard.vue'
 import CheckInStatusCard from '~/components/checkin/CheckInStatusCard.vue'
-import CheckinSuccessModal from '@/components/CheckinSuccessModal.vue'
-import CheckinFailModal from '@/components/CheckinFailModal.vue'
+import CheckinSuccessModal from '~/components/intern/CheckinSuccessModal.vue'
+import CheckinFailModal from '~/components/intern/CheckinFailModal.vue'
 import { useCheckinApi } from '~/composables/useCheckinApi'
 
 const { checkIn } = useCheckinApi()

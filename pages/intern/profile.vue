@@ -25,7 +25,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import ProfileHeader from '~/components/profile/ProfileHeader.vue'
 import ProfileInfoSection from '~/components/profile/ProfileInfoSection.vue'
 import ProfileActions from '~/components/profile/ProfileActions.vue'

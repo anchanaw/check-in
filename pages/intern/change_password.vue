@@ -21,7 +21,7 @@
 
 <script setup>
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import ChangePasswordForm from '~/components/profile/ChangePasswordForm.vue'
 import BottomBar from '@/components/BottomBar.vue'
 

@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import BaseCard from '@/components/BaseCard.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
 import TodayStatusCard from '@/components/dashboard/TodayStatusCard.vue'
 import CheckinHistoryTable from '@/components/dashboard/CheckinHistoryTable.vue'
 import BottomBar from '@/components/BottomBar.vue'
