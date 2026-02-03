@@ -1,6 +1,6 @@
 <template>
   <div class="ranking-page">
-    <h2 class="page-title">Ranking</h2>
+    <div class="page-title">Ranking</div>
 
     <div class="wrapper">
       <BaseCard>
@@ -28,6 +28,7 @@ import BottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 .page-title {
   text-align: center;
+  font-size: 24px;
   font-weight: 600;
   margin-bottom: 12px;
 }

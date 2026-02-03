@@ -2,24 +2,43 @@
   <BaseCard>
     <a-skeleton v-if="loading" active />
 
-    <a-space v-else direction="vertical" size="small">
+    <div v-else class="summary">
+      <!-- Checked-in -->
       <div class="row">
-        <span>Today checked-in</span>
-        <span class="green">✔ {{ data.checkinTime }}</span>
+        <div class="left">
+          <img src="/icons/check.svg" class="icon" />
+          <span class="label">Today checked-in</span>
+        </div>
+        <span class="value">{{ data.checkinTime }}</span>
       </div>
+
+      <!-- Rank -->
       <div class="row">
-        <span>Rank</span>
-        <strong>{{ data.rank }}</strong>
+        <div class="left">
+          <img src="/icons/trophy.svg" class="icon" />
+          <span class="label">Rank</span>
+        </div>
+        <span class="value">{{ data.rank }}</span>
       </div>
+
+      <!-- Total -->
       <div class="row">
-        <span>Total Hours</span>
-        <strong>{{ data.totalPoints }} pts</strong>
+        <div class="left">
+          <img src="/icons/total.svg" class="icon" />
+          <span class="label">Total Hours</span>
+        </div>
+        <span class="value">{{ data.totalPoints }} pts</span>
       </div>
+
+      <!-- Average -->
       <div class="row">
-        <span>Average check-in time</span>
-        <strong>{{ data.avgTime }}</strong>
+        <div class="left">
+          <img src="/icons/clock.svg" class="icon" />
+          <span class="label">Average check-in time</span>
+        </div>
+        <span class="value">{{ data.avgTime }}</span>
       </div>
-    </a-space>
+    </div>
   </BaseCard>
 </template>
 
@@ -33,12 +52,46 @@ defineProps({
 </script>
 
 <style scoped>
+.summary {
+  display: flex;
+  flex-direction: column;
+}
+
+/* row */
 .row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
 }
-.green {
-  color: #22c55e;
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* ฝั่งซ้าย */
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* icon */
+.icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* label */
+.label {
+  font-size: 16px;
+  color: #111;
+}
+
+/* value */
+.value {
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>

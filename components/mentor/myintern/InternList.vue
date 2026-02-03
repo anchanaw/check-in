@@ -8,7 +8,7 @@
         <div v-for="intern in interns" :key="intern.id" class="row clickable" @click="$emit('select', intern)">
           <div class="left">
             <span :class="['dot', intern.status]" />
-            <strong>{{ intern.name }}</strong>
+            <strong class="name">{{ intern.name }}</strong>
           </div>
 
           <div class="right">
@@ -98,6 +98,10 @@ defineEmits(['select'])
   gap: 8px;
 }
 
+.left .name {
+  font-size: 16px;
+  font-weight: 400;
+}
 .right {
   display: flex;
   align-items: center;

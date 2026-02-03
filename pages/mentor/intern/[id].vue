@@ -1,19 +1,31 @@
 <template>
   <a-layout class="page">
-    <!-- Header -->
-    <a-page-header
-      :title="intern.name"
-      @back="goBack"
-    />
+    <!-- Back button (อยู่นอกการ์ด) -->
+    <div class="top-back">
+      <BackButton />
+    </div>
 
-    <a-space direction="vertical" size="middle" style="width:100%">
-      <InternSummaryCard :data="intern" :loading="loading" />
-      <GiveBonusCard />
-      <BonusHistoryCard :items="bonusHistory" />
-      <LeaveHistoryCard :items="leaveHistory" />
-    </a-space>
+    <!-- Centered content -->
+    <div class="center-wrapper">
+      <BaseCard class="outer-card">
+        <!-- Header (ไม่มีลูกศรแล้ว) -->
+        <div class="header">
+          <div class="name">
+            {{ intern.name }}
+          </div>
+        </div>
 
-    <MentorBottomBar active="team"/>
+        <!-- Content -->
+        <a-space direction="vertical" :size="14" style="width:100%">
+          <InternSummaryCard :data="intern" :loading="loading" />
+          <GiveBonusCard />
+          <BonusHistoryCard :items="bonusHistory" />
+          <LeaveHistoryCard :items="leaveHistory" />
+        </a-space>
+      </BaseCard>
+    </div>
+
+    <MentorBottomBar active="team" />
   </a-layout>
 </template>
 
@@ -26,6 +38,8 @@ import GiveBonusCard from '@/components/mentor/myintern/GiveBonusCard.vue'
 import BonusHistoryCard from '@/components/mentor/myintern/BonusHistoryCard.vue'
 import LeaveHistoryCard from '@/components/mentor/myintern/LeaveHistoryCard.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+import BackButton from '@/components/base/BackButton.vue'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -72,11 +86,40 @@ onMounted(async () => {
 
 const goBack = () => router.back()
 </script>
-
 <style scoped>
 .page {
   min-height: 100vh;
   padding: 12px 12px 80px;
   background: #6ec1ff;
+}
+
+/* ปุ่ม back ด้านบน */
+.top-back {
+  margin-bottom: 8px;
+}
+
+/* จัดกลาง */
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* กรอบขาวใหญ่ */
+.outer-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+/* Header ในการ์ด */
+.header {
+  text-align: start;
+  margin-bottom: 5px;
+}
+
+.name {
+  font-size: 24px;
+  font-weight: 600;
+  display: inline-block;
+  padding-bottom: 4px;
 }
 </style>
