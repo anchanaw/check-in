@@ -2,43 +2,24 @@
   <div class="noti-page">
     <!-- Header -->
     <div class="noti-header">
-      <div class="header-left">
-        <a-button
-          type="text"
-          shape="circle"
-          @click="goBack"
-        >
-          <ArrowLeftOutlined />
-        </a-button>
+      <a-button type="text" shape="circle" @click="goBack" class="back-btn">
+        <ArrowLeftOutlined />
+      </a-button>
 
-        <span class="title">Notifications</span>
-      </div>
+      <span class="title">Notifications</span>
 
-      <a-button
-        type="text"
-        danger
-        shape="circle"
-        :disabled="!notifications.length"
-        @click="clearAll"
-      >
-        <DeleteOutlined />
+
+      <a-button class="clear-btn" type="text" danger shape="circle" :disabled="!notifications.length" @click="clearAll">
+        <img src="/public/icons/delete.svg" class="icon" alt="delete" />
       </a-button>
     </div>
 
     <!-- Content -->
     <div class="noti-list">
-      <NotificationItem
-        v-for="noti in notifications"
-        :key="noti.id"
-        :data="noti"
-        @detail="onDetail"
-        @remove="removeNoti"
-      />
+      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
+        @remove="removeNoti" />
 
-      <a-empty
-        v-if="!loading && !notifications.length"
-        description="No mentor notifications"
-      />
+      <a-empty v-if="!loading && !notifications.length" description="No mentor notifications" />
     </div>
   </div>
 </template>
@@ -127,16 +108,31 @@ const clearAll = () => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+}
+
+.back-btn {
+  font-size: 24px;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 500;
 }
 
 /* Content */
 .noti-list {
   padding: 12px;
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
 }
 </style>

@@ -70,8 +70,12 @@ const iconComponent = computed(() => {
 
 <style scoped>
 .noti-card {
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 8px;
+}
+
+.noti-card :deep(.ant-card-body) {
+  padding: 11px 16px;
 }
 
 .noti-card.unread {

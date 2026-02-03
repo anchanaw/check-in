@@ -2,32 +2,45 @@
   <BaseCard>
     <a-skeleton v-if="loading" active />
 
-    <div v-else>
-      <div
-        v-for="intern in interns"
-        :key="intern.id"
-        class="row clickable"
-        @click="$emit('select', intern)"
-      >
-        <div class="left">
-          <span :class="['dot', intern.status]" />
-          <strong>{{ intern.name }}</strong>
-        </div>
+    <div v-else class="content">
+      <!-- Intern list box -->
+      <div class="inner-box">
+        <div v-for="intern in interns" :key="intern.id" class="row clickable" @click="$emit('select', intern)">
+          <div class="left">
+            <span :class="['dot', intern.status]" />
+            <strong>{{ intern.name }}</strong>
+          </div>
 
-        <div class="right">
-          <span v-if="intern.time" class="time">
-            {{ intern.time }}
-          </span>
-          <span class="order">{{ intern.order }}</span>
+          <div class="right">
+            <span v-if="intern.time" class="time">
+              {{ intern.time }}
+            </span>
+            <span class="order">{{ intern.order }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Legend -->
-      <div class="legend">
-        <div><span class="dot checked-in" /> Checked-in</div>
-        <div><span class="dot leave-pending" /> Leave Pending</div>
-        <div><span class="dot not-checked" /> Not Checked-in</div>
-        <div><span class="dot on-leave" /> On Leave</div>
+      <!-- Legend box -->
+      <div class="inner-box legend-box">
+        <div class="legend-item">
+          <span class="dot checked-in"></span>
+          <span>Checked-in</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="dot leave-pending"></span>
+          <span>Leave Pending</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="dot not-checked"></span>
+          <span>Not Checked-in</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="dot on-leave"></span>
+          <span>On Leave</span>
+        </div>
       </div>
     </div>
   </BaseCard>
@@ -45,11 +58,30 @@ defineEmits(['select'])
 </script>
 
 <style scoped>
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* กล่องขาวด้านใน */
+.inner-box {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* row ของรายชื่อ */
 .row {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 10px 12px;
   border-bottom: 1px solid #eee;
+}
+
+.row:last-child {
+  border-bottom: none;
 }
 
 .clickable {
@@ -68,18 +100,55 @@ defineEmits(['select'])
 
 .right {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   font-size: 12px;
 }
 
+.time {
+  color: #22c55e;
+}
+
+.order {
+  color: #555;
+}
+
+/* กล่อง legend */
+.legend-box {
+  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 13px;
+}
+
+/* item แต่ละอัน */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* จุดสี */
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-.checked-in { background: #22c55e; }
-.leave-pending { background: #facc15; }
-.not-checked { background: #9ca3af; }
-.on-leave { background: #3b82f6; }
+.checked-in {
+  background: #22c55e;
+}
+
+.leave-pending {
+  background: #facc15;
+}
+
+.not-checked {
+  background: #9ca3af;
+}
+
+.on-leave {
+  background: #3b82f6;
+}
 </style>

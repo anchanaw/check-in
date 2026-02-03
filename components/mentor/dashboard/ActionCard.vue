@@ -10,7 +10,7 @@
       class="action-btn"
       @click="go(action.route)"
     >
-      <span>{{ action.label }}</span>
+      <span class="action-label">{{ action.label }}</span>
       <span>›</span>
     </a-button>
   </BaseCard>
@@ -58,9 +58,15 @@ const go = (route) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: #1A507B;
+
 }
 
 .action-btn:last-child {
   margin-bottom: 0;
+}
+.action-label {
+  font-weight: 500;
+  font-size: 16px;
 }
 </style>

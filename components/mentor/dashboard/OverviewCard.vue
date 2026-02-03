@@ -1,6 +1,6 @@
 <template>
   <BaseCard>
-    <a-typography-text strong>Overview</a-typography-text>
+    <a-typography-text strong class="overview-title">Overview</a-typography-text>
 
     <a-skeleton v-if="loading" active />
 
@@ -39,5 +39,9 @@ defineProps({
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
+}
+
+.overview-title {
+  font-size: 20px;
 }
 </style>

@@ -1,21 +1,20 @@
 <template>
   <a-layout class="page">
-    <a-typography-title :level="4">
-      Intern under my supervision
-    </a-typography-title>
+    <div class="center-wrapper">
+      <div class="content">
+        <a-typography-title :level="4" class="header-title">
+          Intern under my supervision
+        </a-typography-title>
 
-    <!-- Filter -->
-    <InternFilter
-      :teams="teams"
-      v-model="selectedTeam"
-    />
+        <div class="main-section">
+          <!-- Filter -->
+          <InternFilter :teams="teams" v-model="selectedTeam" />
 
-    <!-- List -->
-    <InternList
-  :loading="loading"
-  :interns="filteredInterns"
-  @select="goToInternDetail"
-/>
+          <!-- List -->
+          <InternList :loading="loading" :interns="filteredInterns" @select="goToInternDetail" />
+        </div>
+      </div>
+    </div>
 
     <MentorBottomBar />
   </a-layout>
@@ -69,5 +68,32 @@ const filteredInterns = computed(() => {
   min-height: 100vh;
   padding: 16px 16px 80px;
   background: #6ec1ff;
+}
+
+.main-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;   /* 👈 ระยะที่ต้องการ */
+}
+
+/* ครอบเพื่อจัดกึ่งกลาง */
+.center-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* กล่องเนื้อหาหลัก */
+.content {
+  width: 100%;
+  max-width: 360px;
+  /* คุมให้เหมือนมือถือ */
+}
+
+.header-title {
+  font-size: 24px;
+  /* override ได้ */
+  font-weight: 600;
+  margin-bottom: 14px;
+  text-align: center;
 }
 </style>
