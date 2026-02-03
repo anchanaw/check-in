@@ -25,7 +25,7 @@ const router = useRouter()
 const actions = [
   {
     label: '📨 Tasks',
-    route: '/mentor/bonus'
+    route: '/mentor/tasks'
   },
   {
     label: '👤 View intern list',
