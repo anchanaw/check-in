@@ -8,6 +8,7 @@
       type="primary"
       block
       class="action-btn"
+      @click="go(action.route)"
     >
       <span>{{ action.label }}</span>
       <span>›</span>
@@ -16,16 +17,33 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-const actions = ref([
-  { label: '📨 Tasks' },
-  { label: '👤 View intern list' },
-  { label: '⭐ Review bonus tasks' },
-  { label: '📄 Review leave requests' }
-])
+const router = useRouter()
 
-// TODO: link route / API later
+const actions = [
+  {
+    label: '📨 Tasks',
+    route: '/mentor/bonus'
+  },
+  {
+    label: '👤 View intern list',
+    route: '/mentor/team'
+  },
+  {
+    label: '⭐ Review bonus tasks',
+    route: '/mentor/bonus'
+  },
+  {
+    label: '📄 Review leave requests',
+    route: '/mentor/leave_request'
+  }
+]
+
+const go = (route) => {
+  router.push(route)
+}
 </script>
 
 <style scoped>
