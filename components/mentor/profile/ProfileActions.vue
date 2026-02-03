@@ -26,9 +26,7 @@ const goEditProfile = () => {
 }
 
 const goInviteIntern = () => {
-  // 🔹 ตอนนี้ยังไม่ต่อ API
-  console.log('invite intern')
-  // TODO: open invite intern modal
+  router.push('/mentor/invite_intern')
 }
 </script>
 
