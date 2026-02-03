@@ -23,7 +23,7 @@ export const useApi = () => {
     } catch (err: any) {
       // ❌ ยังไม่ทำ refresh ที่ core (กัน loop)
       if (err?.status === 401) {
-        authStore.clearTokens()
+        authStore.clearAuth()
         navigateTo('/login')
       }
       throw err

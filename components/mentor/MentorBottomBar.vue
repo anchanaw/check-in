@@ -28,8 +28,8 @@ const items = [
     },
     {
         label: 'INTERN',
-        to: '/mentor/intern',
-        match: '/mentor/intern',
+        to: '/mentor/team',
+        match: '/mentor/team',
         icon: '/icons/mentor/intern.svg'
     },
     {
