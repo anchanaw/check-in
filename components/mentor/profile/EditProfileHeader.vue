@@ -2,19 +2,53 @@
   <div class="header">
     <div class="avatar">
       <UserOutlined class="useroutlined"/>
-      <EditOutlined class="edit-icon" />
+
+      <!-- edit icon -->
+      <EditOutlined
+        class="edit-icon"
+        @click="openFile"
+      />
+
+      <!-- hidden input -->
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        class="hidden-input"
+        @change="onChange"
+      />
     </div>
+
     <div class="name">{{ user.name }}</div>
     <div class="role">{{ user.role }}</div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { UserOutlined, EditOutlined } from '@ant-design/icons-vue'
 
 defineProps({
   user: Object
 })
+
+const fileInput = ref(null)
+
+const openFile = () => {
+  fileInput.value?.click()
+}
+
+const onChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  console.log('selected avatar file:', file)
+
+  /**
+   * TODO:
+   * upload avatar API
+   */
+}
 </script>
 
 <style scoped>
@@ -43,6 +77,11 @@ defineProps({
   font-size: 14px;
   background: #fff;
   border-radius: 50%;
+  cursor: pointer;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .name {
@@ -53,6 +92,7 @@ defineProps({
   font-size: 12px;
   color: #666;
 }
+
 .useroutlined {
   font-size: 50px;
   color: #ccc;

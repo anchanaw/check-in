@@ -9,27 +9,43 @@
   >
     <template #bodyCell="{ column, record }">
       <template v-if="column.key === 'status'">
-        <div
-          class="status-toggle"
-          :class="{ on: record.active }"
-          @click="toggleStatus(record)"
-        >
-          <div class="knob"></div>
-        </div>
+        <StatusSwitch
+          v-model="record.active"
+          @update:modelValue="onToggleStatus(record)"
+        />
       </template>
     </template>
   </a-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import StatusSwitch from '@/components/base/StatusSwitch.vue'
+
+type Task = {
+  id: number
+  key: number
+  title: string
+  bonus: string
+  deadline: string
+  active: boolean
+}
 
 const loading = ref(true)
-const tasks = ref([])
+const tasks = ref<Task[]>([])
 
-const toggleStatus = (record) => {
-  record.active = !record.active
-  console.log('PATCH /tasks/' + record.id, record.active)
+const onToggleStatus = (record: Task) => {
+  console.log(
+    `PATCH /tasks/${record.id}`,
+    { active: record.active }
+  )
+
+  /**
+   * TODO:
+   * await api.patch(`/tasks/${record.id}`, {
+   *   active: record.active
+   * })
+   */
 }
 
 const columns = [
@@ -47,6 +63,7 @@ const columns = [
 
 onMounted(async () => {
   await new Promise(r => setTimeout(r, 800))
+
   tasks.value = [
     {
       id: 1,
@@ -57,6 +74,7 @@ onMounted(async () => {
       active: true
     }
   ]
+
   loading.value = false
 })
 </script>
@@ -69,33 +87,5 @@ onMounted(async () => {
   overflow: visible;
 }
 
-.status-toggle {
-  width: 30px;
-  height: 48px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  display: flex;
-  justify-content: center;
-  padding: 4px;
-  cursor: pointer;
-  transition: background-color 0.25s ease;
-}
-
-.status-toggle.on {
-  background: #3b82f6;
-}
-
-.status-toggle .knob {
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  transition: transform 0.25s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.status-toggle.on .knob {
-  transform: translateY(22px);
-}
 
 </style>
