@@ -11,12 +11,8 @@
       </a-form-item>
 
       <!-- Change Password -->
-      <a-button
-        block
-        class="change-password"
-        html-type="button"
-        @click="goChangePassword"
-      >
+      <a-button block class="change-password" html-type="button" @click="goChangePassword">
+        <img src="/icons/unlock.svg" class="btn-icon" />
         Change Password
       </a-button>
     </Section>
@@ -41,22 +37,11 @@
     </Section>
 
     <!-- Actions -->
-    <a-button
-      type="primary"
-      block
-      html-type="submit"
-      class="save-btn"
-    >
+    <a-button type="primary" block html-type="submit" class="save-btn">
       Save Changes
     </a-button>
 
-    <a-button
-      block
-      danger
-      html-type="button"
-      class="cancel-btn"
-      @click="$emit('cancel')"
-    >
+    <a-button block danger html-type="button" class="cancel-btn" @click="$emit('cancel')">
       Cancel
     </a-button>
   </a-form>
@@ -108,9 +93,19 @@ const submit = () => {
 </script>
 <style scoped>
 .change-password {
-  background: #7a6fd1;
-  color: #fff;
+  background: #A5E2FE;
+  color: #000000;
+  font-size: 16px;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .save-btn {

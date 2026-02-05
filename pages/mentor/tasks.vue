@@ -5,17 +5,20 @@
       <span class="header-title">Tasks</span>
     </div>
 
+    <!-- Content -->
     <div class="wrapper">
-      <BaseCard>
+      <BaseCard class="tasks-card">
         <TaskTable />
 
-        <a-button
-          type="primary"
-          class="create-btn"
-          @click="openCreate"
-        >
-          Create Task
-        </a-button>
+        <div class="footer">
+          <a-button
+            type="primary"
+            class="create-btn"
+            @click="openCreate"
+          >
+            Create Task
+          </a-button>
+        </div>
       </BaseCard>
     </div>
 
@@ -57,31 +60,52 @@ const onSaveTask = (payload) => {
 .tasks-page {
   background-color: #6ec1ff;
   min-height: 100vh;
-  padding-bottom: 72px;
+  padding-bottom: 80px;
 }
 
+/* ===== Header ===== */
 .top-header {
-  text-align: center;
-  padding: 12px;
+  background: #74c3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header-title {
   font-weight: 600;
-  font-size: 18px;
+  font-size: 24px;
+  margin-bottom: 33px;
 }
 
+/* ===== Content ===== */
 .wrapper {
   display: flex;
   justify-content: center;
-  padding: 0 12px;
+  padding: 12px;
 }
 
-.wrapper :deep(.base-card) {
+/* การ์ดขาว */
+.tasks-card {
   width: 100%;
   max-width: 360px;
 }
 
-.create-btn {
-  margin-top: 12px;
+/* override padding BaseCard ถ้าจำเป็น */
+.tasks-card :deep(.base-card) {
+  padding: 12px;
 }
+
+/* footer ปุ่ม */
+.footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.create-btn {
+  border-radius: 8px;
+  height: 36px;
+  font-size: 14px;
+}
+
 </style>

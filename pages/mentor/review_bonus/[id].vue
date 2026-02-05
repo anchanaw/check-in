@@ -1,20 +1,23 @@
 <template>
   <a-layout class="page">
-    <!-- Header -->
-    <a-page-header
-      title="Review Bonus Tasks"
-      @back="goBack"
-    />
+    <a-page-header class="page-header">
+      <div class="header-grid">
+        <div class="left">
+          <BackButton @click="goBack" />
+        </div>
+        <div class="center">
+          Review Bonus Tasks
+        </div>
+        <div></div>
+      </div>
+    </a-page-header>
 
-    <a-space direction="vertical" size="middle" style="width:100%">
-      <BonusTaskSummaryCard :task="task" :loading="loading" />
-      <BonusTaskContentCard :task="task" :loading="loading" />
-      <BonusTaskActionBar
-        :loading="actionLoading"
-        @approve="approve"
-        @reject="reject"
-      />
-    </a-space>
+    <div class="content-center">
+      <a-space direction="vertical" size="middle" class="space-wrapper">
+        <BonusTaskSummaryCard :task="task" :loading="loading" />
+        <BonusTaskContentWithAction :task="task" :loading="actionLoading" @approve="approve" @reject="reject" />
+      </a-space>
+    </div>
 
     <MentorBottomBar />
   </a-layout>
@@ -24,9 +27,9 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import BackButton from '@/components/base/BackButton.vue'
 import BonusTaskSummaryCard from '@/components/mentor/bonus/BonusTaskSummaryCard.vue'
-import BonusTaskContentCard from '@/components/mentor/bonus/BonusTaskContentCard.vue'
-import BonusTaskActionBar from '@/components/mentor/bonus/BonusTaskActionBar.vue'
+import BonusTaskContentWithAction from '@/components/mentor/bonus/BonusTaskContentWithAction.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 const route = useRoute()
@@ -83,7 +86,60 @@ const goBack = () => router.back()
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 12px 12px 80px;
   background: #6ec1ff;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 80px;
+}
+
+/* ================= HEADER ================= */
+.page-header {
+  background: #74c3ff;
+  padding: 0 !important;
+}
+
+.page-header :deep(.ant-page-header-content),
+.page-header :deep(.ant-page-header-heading) {
+  padding: 0;
+  margin: 0;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  height: 56px;
+  padding: 0 8px;
+}
+
+.left {
+  display: flex;
+  justify-content: center;
+}
+
+.center {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ================= CONTENT ================= */
+.content-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
+}
+
+.space-wrapper {
+  width: 100%;
+  max-width: 390px;
+  /* ความกว้างมือถือ */
+}
+
+:deep(.ant-space-item) {
+  display: flex;
+  justify-content: center;
 }
 </style>

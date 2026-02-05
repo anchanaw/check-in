@@ -1,6 +1,6 @@
 <template>
   <a-layout class="page">
-    <a-typography-title :level="4">
+    <a-typography-title :level="4" class="header-title">
       Review Bonus Tasks
     </a-typography-title>
 
@@ -59,5 +59,13 @@ const goToReview = (task) => {
   min-height: 100vh;
   padding: 16px 16px 80px;
   background: #6ec1ff;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
 }
 </style>

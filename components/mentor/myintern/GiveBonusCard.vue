@@ -157,5 +157,8 @@ const submit = () => {
   height: 44px;
   font-size: 16px;
   border-radius: 12px;
+  background-color: #74C3FF;
+  border: none;        /* เอาขอบออก */
+  outline: none;       /* กันกรณีมีเส้นตอน focus */
 }
 </style>

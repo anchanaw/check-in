@@ -91,7 +91,7 @@ const filteredInterns = computed(() => {
 
 .header-title {
   font-size: 24px;
-  /* override ได้ */
+  margin-top: 0;
   font-weight: 600;
   margin-bottom: 14px;
   text-align: center;
