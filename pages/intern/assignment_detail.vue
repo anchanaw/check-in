@@ -33,9 +33,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeftOutlined, StarOutlined } from '@ant-design/icons-vue'
 
 import BaseCard from '~/components/base/BaseCard.vue'
-import AssignmentBonus from '~/components/assignment/AssignmentBonus.vue'
-import AssignmentForm from '~/components/assignment/AssignmentForm.vue'
-import BottomBar from '@/components/BottomBar.vue'
+import AssignmentBonus from '~/components/intern/assignment/AssignmentBonus.vue'
+import AssignmentForm from '~/components/intern/assignment/AssignmentForm.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 
 // 🔹 route & router
 const route = useRoute()

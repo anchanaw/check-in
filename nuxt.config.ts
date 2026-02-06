@@ -46,7 +46,11 @@ export default defineNuxtConfig({
       allowedHosts: ['.ngrok-free.dev'],
     },
   },
-
+  runtimeConfig: {
+    public: {
+      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000'
+    }
+  },
   app: {
     head: {
       meta: [

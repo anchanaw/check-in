@@ -1,20 +1,23 @@
+// middleware/auth.global.ts
 export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore()
 
-// ✅ DEV: mock เป็น intern แล้วเด้งไป /intern
-if (import.meta.dev && !auth.isLoggedIn) {
-  auth.isLoggedIn = true
-  auth.role = 'manager'
+  // ✅ public pages ที่ไม่ต้อง login
+  const publicRoutes = ['/login', '/register']
 
-  if (!to.path.startsWith('/manager')) {
-    return navigateTo('/manager')
-  }
-  return
-}
-
-
-  // 🔒 PROD: ต้อง login จริง
-  if (!auth.isLoggedIn && to.path !== '/login') {
+  // 🔒 ยังไม่ login และไม่ใช่ public → ไป login
+  if (!auth.isLoggedIn && !publicRoutes.includes(to.path)) {
     return navigateTo('/login')
+  }
+
+  // 🔐 role guard (เฉพาะตอน login แล้ว)
+  if (auth.isLoggedIn) {
+    if (auth.role === 'intern' && to.path.startsWith('/manager')) {
+      return navigateTo('/intern')
+    }
+
+    if (auth.role === 'manager' && to.path.startsWith('/intern')) {
+      return navigateTo('/manager')
+    }
   }
 })

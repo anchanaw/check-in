@@ -35,7 +35,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import NotificationItem from '@/components/NotificationItem.vue'
+import NotificationItem from '@/components/intern/NotificationItem.vue'
 import {
   ArrowLeftOutlined,
   DeleteOutlined

@@ -26,10 +26,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import BaseCard from '~/components/base/BaseCard.vue'
-import ProfileHeader from '~/components/profile/ProfileHeader.vue'
-import ProfileInfoSection from '~/components/profile/ProfileInfoSection.vue'
-import ProfileActions from '~/components/profile/ProfileActions.vue'
-import BottomBar from '@/components/BottomBar.vue'
+import ProfileHeader from '~/components/intern/profile/ProfileHeader.vue'
+import ProfileInfoSection from '~/components/intern/profile/ProfileInfoSection.vue'
+import ProfileActions from '~/components/intern/profile/ProfileActions.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 
 /**
  * TODO:

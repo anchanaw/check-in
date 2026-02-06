@@ -22,17 +22,19 @@
   <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
 
   <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
+  <BottomBar/>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-import CheckInHeader from '~/components/checkin/CheckInHeader.vue'
-import LocationCard from '~/components/checkin/LocationCard.vue'
-import CheckInStatusCard from '~/components/checkin/CheckInStatusCard.vue'
+import CheckInHeader from '~/components/intern/checkin/CheckInHeader.vue'
+import LocationCard from '~/components/intern/checkin/LocationCard.vue'
+import CheckInStatusCard from '~/components/intern/checkin/CheckInStatusCard.vue'
 import CheckinSuccessModal from '~/components/intern/CheckinSuccessModal.vue'
 import CheckinFailModal from '~/components/intern/CheckinFailModal.vue'
 import { useCheckinApi } from '~/composables/useCheckinApi'
+import BottomBar from '~/components/intern/BottomBar.vue'
 
 const { checkIn } = useCheckinApi()
 

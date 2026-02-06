@@ -4,14 +4,15 @@ import { navigateTo } from '#app'
 
 export const useApi = () => {
   const authStore = useAuthStore()
+  const config = useRuntimeConfig()
 
-  const apiFetch = async (
+  const apiFetch = async <T>(
     url: string,
     options: any = {}
   ) => {
     try {
-      return await $fetch(url, {
-        baseURL: 'http://localhost:3000',
+      return await $fetch<T>(url, {
+        baseURL: config.public.apiBase,
         ...options,
         headers: {
           ...(options.headers || {}),

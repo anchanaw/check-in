@@ -21,9 +21,9 @@
 
 <script setup>
 import BaseCard from '~/components/base/BaseCard.vue'
-import RankingTable from '~/components/rank/RankingTable.vue'
-import YourRankCard from '~/components/rank/YourRankCard.vue'
-import BottomBar from '@/components/BottomBar.vue'
+import RankingTable from '~/components/intern/rank/RankingTable.vue'
+import YourRankCard from '~/components/intern/rank/YourRankCard.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 </script>
 
 <style scoped>

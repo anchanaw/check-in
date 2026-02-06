@@ -23,7 +23,6 @@
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import BaseCard from '~/components/base/BaseCard.vue'
 import ChangePasswordForm from '~/components/intern/profile/ChangePasswordForm.vue'
-import BottomBar from '~/components/intern/BottomBar.vue'
 
 const goBack = () => {
   history.back()

@@ -22,8 +22,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import AssignmentCard from '~/components/assignment/AssignmentCard.vue'
-import BottomBar from '@/components/BottomBar.vue'
+import AssignmentCard from '~/components/intern/assignment/AssignmentCard.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 
 /**
  * TODO:

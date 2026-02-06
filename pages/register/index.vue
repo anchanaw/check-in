@@ -112,7 +112,7 @@ onMounted(async () => {
   invite.value = route.query.invite as string || null
 
   if (mode.value === 'invalid') {
-    navigateTo('/')
+    navigateTo('/login')
     return
   }
 
@@ -122,14 +122,14 @@ onMounted(async () => {
       const res: any = await validate(invite.value!)
 
       if (!res.valid) {
-        navigateTo('/')
+        navigateTo('/login')
         return
       }
 
       mentorDisplayName.value = res.mentor?.display_name ?? ''
       teamToken.value = res.team?.token ?? ''
     } catch {
-      navigateTo('/')
+      navigateTo('/login')
     }
   }
 })

@@ -6,13 +6,13 @@
 
   <!-- Card เฉพาะฟอร์ม -->
   <BaseCard maxWidth="320px">
-    <a-form layout="vertical" @finish="onSubmit">
+    <a-form :model="formState" layout="vertical" @finish="onSubmit">
       <a-form-item
         label="Username"
         name="username"
         :rules="[{ required: true, message: 'Please enter username' }]"
       >
-        <a-input />
+        <a-input v-model:value="formState.username" />
       </a-form-item>
 
       <a-form-item
@@ -20,8 +20,12 @@
         name="password"
         :rules="[{ required: true, message: 'Please enter password' }]"
       >
-        <a-input-password />
+        <a-input-password v-model:value="formState.password" />
       </a-form-item>
+
+      <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">
+      <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
+    </a-form-item>
 
       <a-form-item>
         <a-button type="primary" html-type="submit" block>
@@ -38,56 +42,42 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter, useRoute } from 'vue-router'
+import { reactive } from 'vue'
+import { useRoute, navigateTo } from '#app'
 import { useAuthApi } from '~/composables/useAuthApi'
-import { useAuthStore } from '~/stores/auth.store'
-import { useUserStore } from '~/stores/user.store'
 
 definePageMeta({ layout: 'mobile' })
 
-const router = useRouter()
 const route = useRoute()
-
 const { login } = useAuthApi()
-const authStore = useAuthStore()
-const userStore = useUserStore()
 
 const inviteCode = route.query.invite as string | undefined
 
-const onSubmit = async (values: any) => {
+const formState = reactive({
+  username: '',
+  password: '',
+  remember: false
+})
+
+const onSubmit = async (values: {
+  username: string
+  password: string
+}) => {
   try {
-    const res: any = await login({
+    const res = await login({
       username: values.username,
       password: values.password,
-      ...(inviteCode && { invite_code: inviteCode }) // (optional) เฉพาะ intern flow
+      ...(inviteCode && { invite_code: inviteCode })
     })
 
-    // 1️⃣ เก็บ token
-    authStore.setAuth({
-      access_token: res.access_token,
-      refresh_token: res.refresh_token,
-      user: res.user
-    })
-
-    // 2️⃣ เก็บ user (display only)
-    userStore.setUser({
-      username: res.user.username,
-      display_name: res.user.display_name
-    })
-
-    // 3️⃣ redirect ตาม role
+    // 🚦 redirect ตาม role (auth ถูก set แล้วใน useAuthApi)
     switch (res.user.role) {
       case 'intern':
-        router.push('/intern')
-        break
-      case 'mentor':
-        router.push('/mentor')
-        break
+        return navigateTo('/intern')
       case 'manager':
-        router.push('/manager')
-        break
+        return navigateTo('/manager')
       default:
-        router.push('/login')
+        return navigateTo('/login')
     }
   } catch (err) {
     alert('Username or password incorrect')

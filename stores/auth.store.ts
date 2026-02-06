@@ -1,38 +1,30 @@
 // stores/auth.store.ts
 import { defineStore } from 'pinia'
-
-type User = {
-  username: string
-  role: string
-}
+import type { UserRole } from '~/types/auth'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
+    isLoggedIn: false,
     access_token: null as string | null,
     refresh_token: null as string | null,
-    user: null as User | null
+    role: null as UserRole | null
   }),
 
-  getters: {
-    isLoggedIn: (state) => !!state.access_token,
-    userRole: (state) => state.user?.role ?? null
-  },
-
   actions: {
-    setAuth(res: {
-      access_token: string
-      refresh_token: string
-      user: User
-    }) {
-      this.access_token = res.access_token
-      this.refresh_token = res.refresh_token
-      this.user = res.user
+    setAuth(payload: { access_token: string; refresh_token: string; role: UserRole }) {
+      this.isLoggedIn = true
+      this.access_token = payload.access_token
+      this.refresh_token = payload.refresh_token
+      this.role = payload.role
     },
 
     clearAuth() {
+      this.isLoggedIn = false
       this.access_token = null
       this.refresh_token = null
-      this.user = null
+      this.role = null
     }
-  }
+  },
+
+  persist: true
 })

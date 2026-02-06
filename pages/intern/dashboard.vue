@@ -22,9 +22,9 @@
 
 <script setup>
 import BaseCard from '~/components/base/BaseCard.vue'
-import TodayStatusCard from '@/components/dashboard/TodayStatusCard.vue'
-import CheckinHistoryTable from '@/components/dashboard/CheckinHistoryTable.vue'
-import BottomBar from '@/components/BottomBar.vue'
+import TodayStatusCard from '@/components/intern/dashboard/TodayStatusCard.vue'
+import CheckinHistoryTable from '@/components/intern/dashboard/CheckinHistoryTable.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 </script>
 
 <style scoped>
