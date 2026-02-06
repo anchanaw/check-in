@@ -4,18 +4,18 @@
 
         <template v-else>
             <a-card size="small">
-                <div class="num">{{ stats.mentor }}</div>
                 <div class="label">Total Mentor</div>
+                <div class="num">{{ stats.mentor }}</div>
             </a-card>
 
             <a-card size="small">
-                <div class="num">{{ stats.intern }}</div>
                 <div class="label">Total Intern</div>
+                <div class="num">{{ stats.intern }}</div>
             </a-card>
 
             <a-card size="small">
-                <div class="num">{{ stats.team }}</div>
                 <div class="label">Total Team</div>
+                <div class="num">{{ stats.team }}</div>
             </a-card>
         </template>
     </div>
@@ -35,19 +35,36 @@ defineProps<{
 <style scoped>
 .stats {
     display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 12px;
+    margin-bottom: 16px;
     justify-content: space-between;
 }
 
-.num {
-    text-align: center;
-    font-weight: 600;
+/* การ์ด */
+:deep(.ant-card) {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 12px;
+
+    /* ⭐ สลับตำแหน่ง */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
+/* label ขึ้นบน */
 .label {
-    font-size: 11px;
-    color: #666;
+    font-size: 13px;
+    color: #000000;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+/* ตัวเลขลงล่าง */
+.num {
+    font-weight: 700;
+    font-size: 22px;
     text-align: center;
 }
+
 </style>

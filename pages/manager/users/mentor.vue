@@ -18,7 +18,7 @@
       </BaseCard>
 
       <!-- add mentor -->
-      <a-button type="primary" class="add-btn" @click="onAdd">
+      <a-button type="primary" html-type="button" class="add-btn" @click="onAdd">
         Add Mentor
       </a-button>
     </div>
@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { navigateTo } from '#app'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
@@ -62,7 +63,7 @@ onMounted(async () => {
 
 /* ===== actions ===== */
 const onAdd = () => {
-  console.log('navigate to add mentor')
+  navigateTo('/manager/users/addmentor')
   // navigateTo('/manager/users/mentor/create')
 }
 

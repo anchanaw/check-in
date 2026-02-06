@@ -47,10 +47,10 @@ const items = [
     icon: '/icons/manager/users.svg'
   },
   {
-    label: 'RANKING',
-    to: '/manager/rank',
-    match: '/manager/rank',
-    icon: '/icons/manager/rank.svg'
+    label: 'TASKS',
+    to: '/manager/tasks',
+    match: '/manager/tasks',
+    icon: '/icons/manager/task.svg'
   },
   {
     label: 'PROFILE',

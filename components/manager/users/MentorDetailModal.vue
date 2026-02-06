@@ -5,7 +5,6 @@
     centered
     @cancel="emit('update:open', false)"
   >
-    <BaseCard class="detail-card">
       <!-- name -->
       <div class="name">
         {{ mentor?.name || '-' }}
@@ -47,7 +46,6 @@
           {{ mentor?.status || '-' }}
         </a-tag>
       </div>
-    </BaseCard>
   </a-modal>
 </template>
 
