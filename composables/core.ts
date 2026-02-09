@@ -10,19 +10,24 @@ export const useApi = () => {
     url: string,
     options: any = {}
   ) => {
+    console.log('apiFetch called:', url)
+
+    // 🔑 public endpoints (ไม่ต้องแนบ token)
+    const isPublicEndpoint =
+      url.includes('/login') || url.includes('/register')
+
     try {
       return await $fetch<T>(url, {
         baseURL: config.public.apiBase,
         ...options,
         headers: {
           ...(options.headers || {}),
-          ...(authStore.access_token
+          ...(!isPublicEndpoint && authStore.access_token
             ? { Authorization: `Bearer ${authStore.access_token}` }
             : {})
         }
       })
     } catch (err: any) {
-      // ❌ ยังไม่ทำ refresh ที่ core (กัน loop)
       if (err?.status === 401) {
         authStore.clearAuth()
         navigateTo('/login')

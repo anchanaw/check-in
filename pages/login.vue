@@ -82,6 +82,7 @@ const onSubmit = async (values: {
   } catch (err) {
     alert('Username or password incorrect')
   }
+    console.log('LOGIN CLICKED', values)
 }
 </script>
 
