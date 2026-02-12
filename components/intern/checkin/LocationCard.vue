@@ -4,19 +4,39 @@
 
     <a-form layout="vertical">
       <a-form-item label="Latitude">
-        <a-input placeholder="Value" />
+        <a-input :value="latitude ?? ''" disabled />
       </a-form-item>
 
       <a-form-item label="Longitude">
-        <a-input placeholder="Value" />
+        <a-input :value="longitude ?? ''" disabled />
       </a-form-item>
 
-      <a-button class="reset-btn" type="primary" size="small">
+      <a-button
+        class="reset-btn"
+        type="primary"
+        size="small"
+        @click="handleReset"
+      >
         Reset
       </a-button>
     </a-form>
   </BaseCard>
 </template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  latitude: number | null
+  longitude: number | null
+}>()
+
+const emit = defineEmits<{
+  (e: 'reset'): void
+}>()
+
+const handleReset = () => {
+  emit('reset')
+}
+</script>
 
 <style scoped>
 .card {

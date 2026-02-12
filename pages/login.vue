@@ -7,25 +7,17 @@
   <!-- Card เฉพาะฟอร์ม -->
   <BaseCard maxWidth="320px">
     <a-form :model="formState" layout="vertical" @finish="onSubmit">
-      <a-form-item
-        label="Username"
-        name="username"
-        :rules="[{ required: true, message: 'Please enter username' }]"
-      >
-        <a-input v-model:value="formState.username" />
+      <a-form-item label="Email" name="identifier" :rules="[{ required: true, message: 'Please enter email' }]">
+        <a-input v-model:value="formState.identifier" />
       </a-form-item>
 
-      <a-form-item
-        label="Password"
-        name="password"
-        :rules="[{ required: true, message: 'Please enter password' }]"
-      >
+      <a-form-item label="Password" name="password" :rules="[{ required: true, message: 'Please enter password' }]">
         <a-input-password v-model:value="formState.password" />
       </a-form-item>
 
       <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">
-      <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
-    </a-form-item>
+        <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
+      </a-form-item>
 
       <a-form-item>
         <a-button type="primary" html-type="submit" block>
@@ -34,10 +26,6 @@
       </a-form-item>
     </a-form>
 
-    <p class="footer">
-      Don’t have an account?
-      <NuxtLink to="/register">Register</NuxtLink>
-    </p>
   </BaseCard>
 </template>
 
@@ -45,46 +33,66 @@
 import { reactive } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useAuthApi } from '~/composables/useAuthApi'
+import { useAuthStore } from '~/stores/auth.store'
+import type { UserRole } from '~/types/auth'
 
 definePageMeta({ layout: 'mobile' })
 
 const route = useRoute()
-const { login } = useAuthApi()
+const { loginManager } = useAuthApi() // 👈 ใช้ manager endpoint
+const authStore = useAuthStore()
 
 const inviteCode = route.query.invite as string | undefined
 
 const formState = reactive({
-  username: '',
+  identifier: '',
   password: '',
   remember: false
 })
 
 const onSubmit = async (values: {
-  username: string
+  identifier: string
   password: string
 }) => {
   try {
-    const res = await login({
-      username: values.username,
-      password: values.password,
-      ...(inviteCode && { invite_code: inviteCode })
+    const identifier = values.identifier.trim()
+
+    // 🔐 1️⃣ ยิง manager endpoint
+    const res = await loginManager({
+      email: identifier,
+      password: values.password
     })
 
-    // 🚦 redirect ตาม role (auth ถูก set แล้วใน useAuthApi)
-    switch (res.user.role) {
-      case 'intern':
-        return navigateTo('/intern')
-      case 'manager':
-        return navigateTo('/manager')
-      default:
-        return navigateTo('/login')
+    const tokens = res.data as unknown as {
+      access_token: string
+      refresh_token: string
     }
-  } catch (err) {
-    alert('Username or password incorrect')
+
+    if (!tokens?.access_token) {
+      alert('Invalid login response')
+      return
+    }
+
+    // 🔥 2️⃣ hard code role
+    const role: UserRole = 'manager'
+
+    // 🔐 3️⃣ set auth
+    authStore.setAuth({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      role
+    })
+
+    // 🔐 4️⃣ redirect
+    return navigateTo('/manager')
+
+  } catch (err: any) {
+    console.error(err)
+    alert(err?.data?.message || 'login error')
   }
-    console.log('LOGIN CLICKED', values)
 }
 </script>
+
 
 <style scoped>
 .logo {

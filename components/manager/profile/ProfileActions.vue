@@ -4,6 +4,10 @@
       Edit Profile
     </a-button>
 
+    <a-button block   class="company-btn" @click="goCompanySetting">
+      Company Settings
+    </a-button>
+
     <a-button danger block @click="$emit('logout')">
       Logout
     </a-button>
@@ -21,6 +25,9 @@ const goEditProfile = () => {
   router.push('/manager/edit_profile')
 }
 
+const goCompanySetting = () => {
+  router.push('/manager/company_setting')
+}
 </script>
 
 <style scoped>
@@ -31,8 +38,16 @@ const goEditProfile = () => {
   gap: 8px;
 }
 
-.invite {
+.company-btn {
   background: #6b4eff;
+  border: none;
   color: #fff;
+  font-weight: 500;
+  transition: 0.3s ease;
 }
+
+.company-btn:hover {
+  background: #5a3fe0;
+}
+
 </style>

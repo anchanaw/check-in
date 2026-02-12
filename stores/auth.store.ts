@@ -11,7 +11,7 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    setAuth(payload: { access_token: string; refresh_token: string; role: UserRole }) {
+    setAuth(payload: { access_token: string; refresh_token: string; role: UserRole | null }) {
       this.isLoggedIn = true
       this.access_token = payload.access_token
       this.refresh_token = payload.refresh_token

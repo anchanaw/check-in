@@ -1,99 +1,124 @@
 <template>
-  <a-layout class="page">
-    <div class="center-wrapper">
-      <div class="content">
-        <a-typography-title :level="4" class="header-title">
-          Intern under my supervision
-        </a-typography-title>
+  <div class="page">
 
-        <div class="main-section">
-          <!-- Filter -->
-          <InternFilter :teams="teams" v-model="selectedTeam" />
-
-          <!-- List -->
-          <InternList :loading="loading" :interns="filteredInterns" @select="goToInternDetail" />
-        </div>
-      </div>
+    <!-- Header -->
+    <div class="top-header">
+      <BackButton class="back-btn" />
+      <div class="title">Team</div>
     </div>
 
-    <MentorBottomBar />
-  </a-layout>
+    <!-- Card -->
+    <BaseCard class="card">
+
+      <TeamItemCard
+        v-for="team in teams"
+        :key="team.id"
+        :team="team"
+        @click="goDetail(team.id)"
+      />
+
+    </BaseCard>
+
+    <!-- Create Button -->
+    <div class="create-wrapper">
+      <a-button
+        type="primary"
+        block
+        size="large"
+        @click="goCreateLink"
+      >
+        Create Link
+      </a-button>
+    </div>
+
+    <ManagerBottomBar />
+
+  </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import InternFilter from '@/components/mentor/myintern/InternFilter.vue'
-import InternList from '@/components/mentor/myintern/InternList.vue'
-import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import BaseCard from '@/components/base/BaseCard.vue'
+import BackButton from '@/components/base/BackButton.vue'
+import TeamItemCard from '@/components/mentor/myintern/TeamItemCard.vue'
+
 const router = useRouter()
 
-const goToInternDetail = (intern) => {
-  router.push(`/mentor/intern/${intern.id}`)
+interface Team {
+  id: number
+  name: string
+  intern_count: number
+  invite_active: boolean
 }
 
-/* mock */
-const loading = ref(true)
-const selectedTeam = ref(null)
-
-const teams = ref([
-  { label: 'Team A', value: 'A' },
-  { label: 'Team B', value: 'B' }
-])
-
-const interns = ref([])
+const teams = ref<Team[]>([])
+const loading = ref(false)
 
 onMounted(async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 700))
+  try {
+    // 🔜 ต่อ API ตรงนี้
+    // teams.value = await apiFetch('/manager/teams')
 
-  interns.value = [
-    { id: 1, name: 'Sompong', team: 'A', status: 'checked-in', time: '09.00 AM', order: '#1' },
-    { id: 2, name: 'Anon', team: 'A', status: 'not-checked', order: '#3' },
-    { id: 3, name: 'Somchai', team: 'B', status: 'leave-pending', order: '#2' },
-    { id: 4, name: 'Somying', team: 'B', status: 'on-leave' }
-  ]
-
-  loading.value = false
+    // mock data
+    teams.value = [
+      {
+        id: 1,
+        name: 'Frontend - Batch 1',
+        intern_count: 2,
+        invite_active: true
+      },
+      {
+        id: 2,
+        name: 'Frontend - Batch 2',
+        intern_count: 3,
+        invite_active: false
+      }
+    ]
+  } finally {
+    loading.value = false
+  }
 })
 
-const filteredInterns = computed(() => {
-  if (!selectedTeam.value) return interns.value
-  return interns.value.filter(i => i.team === selectedTeam.value)
-})
+const goDetail = (id: number) => {
+  router.push(`/mentor/teams/${id}`)
+}
+
+const goCreateLink = () => {
+  router.push('/mentor/create-link')
+}
 </script>
 
-<style scoped>
-.page {
+<style scoped>.page {
   min-height: 100vh;
-  padding: 16px 16px 80px;
-  background: #6ec1ff;
+  background: #6CBCFA;
+  padding: 16px;
 }
 
-.main-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;   /* 👈 ระยะที่ต้องการ */
+.card {
+  border-radius: 16px;
+  margin-bottom: 20px;
 }
 
-/* ครอบเพื่อจัดกึ่งกลาง */
-.center-wrapper {
-  display: flex;
-  justify-content: center;
+.create-wrapper {
+  padding: 0 16px;
+  margin-bottom: 80px;
 }
 
-/* กล่องเนื้อหาหลัก */
-.content {
-  width: 100%;
-  max-width: 360px;
-  /* คุมให้เหมือนมือถือ */
+.top-header {
+  position: relative;
+  height: 60px;
+  margin-bottom: 12px;
+    display: flex;
+    align-items: center;
 }
 
-.header-title {
+.title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 24px;
-  margin-top: 0;
   font-weight: 600;
-  margin-bottom: 14px;
-  text-align: center;
 }
 </style>

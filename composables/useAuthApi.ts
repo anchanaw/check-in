@@ -1,39 +1,43 @@
 // composables/useAuthApi.ts
-import { useAuthStore } from '~/stores/auth.store'
 import type { LoginResponse, RegisterResponse } from '~/types/auth'
 
 export const useAuthApi = () => {
-  const authStore = useAuthStore()
   const config = useRuntimeConfig()
 
-  // ===== LOGIN =====
+  // ===== INTERN LOGIN =====
   const login = async (data: {
-    username: string
+    email?: string
+    username?: string
     password: string
   }) => {
-    console.log('AUTH API LOGIN CALLED')
-
-    const res = await $fetch<LoginResponse>(
-      '/api/auth/login',
+    return await $fetch<LoginResponse>(
+      '/auth/login',
       {
         baseURL: config.public.apiBase,
         method: 'POST',
         body: data
       }
     )
+  }
 
-    authStore.setAuth({
-      access_token: res.access_token,
-      refresh_token: res.refresh_token,
-      role: res.user.role
-    })
-
-    return res
+  // ===== MANAGER LOGIN =====
+  const loginManager = async (data: {
+    email: string
+    password: string
+  }) => {
+    return await $fetch<LoginResponse>(
+      '/auth/manager/login',
+      {
+        baseURL: config.public.apiBase,
+        method: 'POST',
+        body: data
+      }
+    )
   }
 
   // ===== REGISTER =====
   const register = async (data: any) => {
-    const res = await $fetch<RegisterResponse>(
+    return await $fetch<RegisterResponse>(
       '/api/auth/register',
       {
         baseURL: config.public.apiBase,
@@ -41,10 +45,7 @@ export const useAuthApi = () => {
         body: data
       }
     )
-
-    return res
   }
 
-  // 👇 สำคัญ: export ทั้งคู่
-  return { login, register }
+  return { login, loginManager, register }
 }

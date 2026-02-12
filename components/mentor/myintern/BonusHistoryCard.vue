@@ -1,7 +1,12 @@
 <template>
   <BaseCard>
     <!-- Title -->
-    <div class="title">History</div>
+    <div class="title-row">
+      <div class="title">History</div>
+      <div class="view-all" @click="goViewAll">
+        View all
+      </div>
+    </div>
 
     <!-- Table header -->
     <div class="header-row">
@@ -10,11 +15,7 @@
     </div>
 
     <!-- Rows -->
-    <div
-      v-for="item in items"
-      :key="item.id"
-      class="row"
-    >
+    <div v-for="item in items" :key="item.id" class="row">
       <span class="point">
         +{{ item.point }} {{ item.reason }}
       </span>
@@ -27,6 +28,15 @@
 
 <script setup>
 import BaseCard from '@/components/base/BaseCard.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goViewAll = () => {
+  router.push('/mentor/bonus_history') 
+  // เปลี่ยน path ให้ตรงกับ route จริงของคุณ
+}
+
 defineProps({ items: Array })
 </script>
 
@@ -68,4 +78,31 @@ defineProps({ items: Array })
 .date {
   color: #111;
 }
+
+/* Title row */
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Title */
+.title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* View all */
+.view-all {
+  font-size: 14px;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.view-all:hover {
+  text-decoration: underline;
+}
+
 </style>

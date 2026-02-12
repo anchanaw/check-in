@@ -60,26 +60,40 @@ const leaveHistory = ref([])
 
 onMounted(async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 700)) // mock
 
-  intern.value = {
-    name: 'Sompong',
-    checkedIn: true,
-    checkinTime: '09.00 AM',
-    rank: '#1',
-    totalPoints: 250,
-    avgTime: '09.02 AM'
+  const internId = route.params.id
+  console.log('Intern ID:', internId)
+
+  await new Promise(r => setTimeout(r, 500)) // mock delay
+
+  // 🔥 mock data ตาม id
+  const mockData = {
+    1: {
+      name: 'Sompong',
+      checkedIn: true,
+      checkinTime: '09.00 AM',
+      rank: '#1',
+      totalPoints: 250,
+      avgTime: '09.02 AM'
+    },
+    2: {
+      name: 'Anon',
+      checkedIn: false,
+      checkinTime: '',
+      rank: '#3',
+      totalPoints: 180,
+      avgTime: '-'
+    }
   }
 
-  bonusHistory.value = [
-    { id: 1, reason: 'Good performance', date: '15 Jan', point: +1 },
-    { id: 2, reason: 'Help team', date: '19 Jan', point: +1 }
-  ]
-
-  leaveHistory.value = [
-    { id: 1, reason: 'Sick Leave', date: '10 Jan', status: 'approved' },
-    { id: 2, reason: 'Personal Matter', date: '22 Jan', status: 'pending' }
-  ]
+  intern.value = mockData[internId] || {
+    name: 'Unknown',
+    checkedIn: false,
+    checkinTime: '',
+    rank: '-',
+    totalPoints: 0,
+    avgTime: '-'
+  }
 
   loading.value = false
 })

@@ -1,23 +1,28 @@
-// middleware/auth.global.ts
 export default defineNuxtRouteMiddleware((to) => {
-  const auth = useAuthStore()
+  if (import.meta.server) return
 
-  // ✅ public pages ที่ไม่ต้อง login
+    if (import.meta.dev) return
+
+  const auth = useAuthStore()
   const publicRoutes = ['/login', '/register']
 
-  // 🔒 ยังไม่ login และไม่ใช่ public → ไป login
   if (!auth.isLoggedIn && !publicRoutes.includes(to.path)) {
     return navigateTo('/login')
   }
 
-  // 🔐 role guard (เฉพาะตอน login แล้ว)
-  if (auth.isLoggedIn) {
-    if (auth.role === 'intern' && to.path.startsWith('/manager')) {
-      return navigateTo('/intern')
-    }
+  if (auth.isLoggedIn && auth.role) {
+    const homeByRole = {
+      intern: '/intern',
+      manager: '/manager',
+      mentor: '/mentor'
+    } as const
 
-    if (auth.role === 'manager' && to.path.startsWith('/intern')) {
-      return navigateTo('/manager')
+    const roleRoots = Object.values(homeByRole)
+    const ownHome = homeByRole[auth.role]
+    const isRoleRoot = roleRoots.some((root) => to.path.startsWith(root))
+
+    if (isRoleRoot && !to.path.startsWith(ownHome)) {
+      return navigateTo(ownHome)
     }
   }
 })

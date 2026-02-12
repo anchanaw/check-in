@@ -1,7 +1,7 @@
 <template>
   <CheckInHeader :userName="user.display_name" :date="dateTime.date" />
   <div class="content">
-    <LocationCard />
+<LocationCard :latitude="latitude" :longitude="longitude" />
     <CheckInStatusCard />
   </div>
 
@@ -10,15 +10,7 @@
       ⭐ Check-in
     </a-button>
   </div>
-
-  <a-button type="primary" @click="checkinSuccess = true">
-    Mock Success
-  </a-button>
-
-  <a-button danger @click="checkinFail = true">
-    Mock Fail
-  </a-button>
-
+  
   <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
 
   <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
@@ -40,6 +32,9 @@ const { checkIn } = useCheckinApi()
 
 definePageMeta({ layout: 'app' ,middleware:'auth'})
 
+const latitude = ref<number | null>(null)
+const longitude = ref<number | null>(null)
+const locationError = ref('')
 const checkinSuccess = ref(false)
 const checkinFail = ref(false)
 
@@ -51,6 +46,32 @@ const user = {
 // เวลา real-time
 const now = ref(new Date())
 let timer
+
+const getLocation = () => {
+  return new Promise<{ lat: number, lng: number }>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject('Geolocation not supported')
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        })
+      },
+      (error) => {
+        reject(error.message)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    )
+  })
+}
 
 onMounted(() => {
   timer = setInterval(() => {
@@ -69,12 +90,31 @@ const dateTime = computed(() => {
     time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 })
+const onCheckIn = async () => {
+  try {
+    const location = await getLocation()
 
-const onCheckIn = () => {
-  // mock result (รอ API)
-  const success = Math.random() > 0.5
-  success ? checkinSuccess.value = true : checkinFail.value = true
+    latitude.value = location.lat
+    longitude.value = location.lng
+
+    console.log('LAT:', latitude.value)
+    console.log('LNG:', longitude.value)
+
+    // 🔥 ถ้ามี API จริง ใช้แบบนี้
+    // await checkIn({
+    //   latitude: latitude.value,
+    //   longitude: longitude.value
+    // })
+
+    checkinSuccess.value = true
+
+  } catch (error) {
+    console.error(error)
+    locationError.value = String(error)
+    checkinFail.value = true
+  }
 }
+
 </script>
 
 

@@ -10,57 +10,41 @@
         <span class="label">Points</span>
 
         <div class="points-stepper">
-          <a-button
-            class="step-btn"
-            @click="decrease"
-            :disabled="points <= 1"
-          >
+          <a-button class="step-btn" @click="decrease" :disabled="points <= -10">
             −
           </a-button>
 
-          <div class="points-value">{{ points }}</div>
+          <a-input-number v-model:value="points" :min="-10" :max="10" :step="1" class="points-input" />
 
-          <a-button
-            class="step-btn"
-            @click="increase"
-          >
+          <a-button class="step-btn" @click="increase" :disabled="points >= 10">
             +
           </a-button>
         </div>
       </div>
 
       <!-- Reason -->
-      <a-textarea
-  v-model:value="reason"
-  placeholder="Reason"
-  :rows="3"
-  class="reason-input"
-  :status="reasonError ? 'error' : ''"
-/>
+      <a-textarea v-model:value="reason" placeholder="Reason" :rows="3" class="reason-input"
+        :status="reasonError ? 'error' : ''" />
 
-<!-- error message -->
-<div v-if="reasonError" class="error-text">
-  Reason is required
-</div>
+      <!-- error message -->
+      <div v-if="reasonError" class="error-text">
+        Reason is required
+      </div>
 
-<a-button
-  type="primary"
-  block
-  class="submit-btn"
-  :disabled="!canSubmit"
-  @click="submit"
->
-  Add points
-</a-button>
+      <a-button block class="submit-btn" :class="{ remove: points < 0 }" :disabled="!canSubmit || points === 0"
+        @click="submit">
+        {{ points >= 0 ? 'Add points' : 'Remove points' }}
+      </a-button>
+
     </a-space>
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-const points = ref(1)
+const points = ref(0) // เริ่มที่ 0
 const reason = ref('')
 
 /* stepper */
@@ -69,7 +53,7 @@ const increase = () => {
 }
 
 const decrease = () => {
-  if (points.value > 1) points.value--
+  if (points.value > -10) points.value--
 }
 
 /* validation */
@@ -82,9 +66,9 @@ const canSubmit = computed(() => {
 })
 
 const submit = () => {
-  if (!canSubmit.value) return
+  if (!canSubmit.value || points.value === 0) return
 
-  console.log('ADD BONUS', {
+  console.log('SUBMIT BONUS', {
     points: points.value,
     reason: reason.value.trim()
   })
@@ -130,6 +114,21 @@ const submit = () => {
   gap: 8px;
 }
 
+.points-input {
+  width: 70px;
+}
+
+/* จัดเลขให้อยู่กลาง */
+:deep(.points-input .ant-input-number-input) {
+  text-align: center;
+}
+
+/* จัดให้ทั้งกล่องดูบาลานซ์ */
+:deep(.points-input .ant-input-number) {
+  width: 70px;
+  text-align: center;
+}
+
 .step-btn {
   width: 32px;
   height: 32px;
@@ -158,7 +157,11 @@ const submit = () => {
   font-size: 16px;
   border-radius: 12px;
   background-color: #74C3FF;
-  border: none;        /* เอาขอบออก */
-  outline: none;       /* กันกรณีมีเส้นตอน focus */
+  border: none;
+  outline: none;
+}
+
+.submit-btn.remove {
+  background-color: #ff4d4f;
 }
 </style>

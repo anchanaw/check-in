@@ -1,12 +1,12 @@
 import { defineNuxtConfig } from "nuxt/config";
 
-// nuxt.config.ts
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
   css: ['~/assets/css/mobile.css'],
 
-  modules: ['@pinia/nuxt',
+  modules: [
+    '@pinia/nuxt',
     [
       '@vite-pwa/nuxt',
       {
@@ -41,16 +41,29 @@ export default defineNuxtConfig({
     ],
   ],
 
+  // ✅ DEV PROXY (ทำงานเฉพาะตอน npm run dev)
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'https://jiw-lovat.vercel.app',
+        changeOrigin: true,
+      },
+    },
+  },
+
   vite: {
     server: {
       allowedHosts: ['.ngrok-free.dev'],
     },
   },
+
+  // ⚠️ เก็บไว้ได้ แต่ "ไม่ต้องใช้ในโค้ด frontend แล้ว"
   runtimeConfig: {
     public: {
-      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000'
+      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || ''
     }
   },
+
   app: {
     head: {
       meta: [

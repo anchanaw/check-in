@@ -18,6 +18,9 @@
       <div class="date">
         {{ request.date }} ({{ request.duration }})
       </div>
+      <div class="description"> 
+        {{ request.description }}
+      </div>
     </div>
 
     <div class="actions" v-if="request.status === 'Pending'">

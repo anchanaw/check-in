@@ -33,6 +33,10 @@ import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 
 const loading = ref(true)
 
+definePageMeta({
+  middleware: 'role'
+})
+
 /** mock state (ตรงกับ API จริงในอนาคต) */
 const stats = ref({
   mentor: 0,
