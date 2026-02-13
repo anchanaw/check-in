@@ -17,7 +17,7 @@
   <BottomBar/>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 import CheckInHeader from '~/components/intern/checkin/CheckInHeader.vue'
@@ -45,10 +45,15 @@ const user = {
 
 // เวลา real-time
 const now = ref(new Date())
-let timer
+let timer: number | undefined
 
 const getLocation = () => {
   return new Promise<{ lat: number, lng: number }>((resolve, reject) => {
+    if (!import.meta.client) {
+      reject('Not running in browser')
+      return
+    }
+
     if (!navigator.geolocation) {
       reject('Geolocation not supported')
       return
@@ -62,7 +67,19 @@ const getLocation = () => {
         })
       },
       (error) => {
-        reject(error.message)
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            reject('Permission denied')
+            break
+          case error.POSITION_UNAVAILABLE:
+            reject('Location unavailable')
+            break
+          case error.TIMEOUT:
+            reject('Location timeout')
+            break
+          default:
+            reject('Unknown error')
+        }
       },
       {
         enableHighAccuracy: true,
@@ -72,6 +89,7 @@ const getLocation = () => {
     )
   })
 }
+
 
 onMounted(() => {
   timer = setInterval(() => {
@@ -100,17 +118,16 @@ const onCheckIn = async () => {
     console.log('LAT:', latitude.value)
     console.log('LNG:', longitude.value)
 
-    // 🔥 ถ้ามี API จริง ใช้แบบนี้
-    // await checkIn({
-    //   latitude: latitude.value,
-    //   longitude: longitude.value
-    // })
+    await checkIn({
+      latitude: latitude.value!,
+      longitude: longitude.value!
+    })
 
     checkinSuccess.value = true
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    locationError.value = String(error)
+    locationError.value = error?.data?.message || String(error)
     checkinFail.value = true
   }
 }

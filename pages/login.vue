@@ -1,48 +1,45 @@
 <template>
-  <!-- โลโก้บนพื้นฟ้า -->
-  <div class="logo">
-    <img src="/logo.png" alt="A-VALUE" class="logo-img" />
+  <div class="login-page">
+    <!-- โลโก้บนพื้นฟ้า -->
+    <div class="logo">
+      <img src="/logo.png" alt="A-VALUE" class="logo-img" />
+    </div>
+
+    <!-- Card เฉพาะฟอร์ม -->
+    <BaseCard maxWidth="320px">
+      <a-form :model="formState" layout="vertical" @finish="onSubmit">
+        <a-form-item label="Email" name="identifier" :rules="[{ required: true, message: 'Please enter email' }]">
+          <a-input v-model:value="formState.identifier" />
+        </a-form-item>
+
+        <a-form-item label="Password" name="password" :rules="[{ required: true, message: 'Please enter password' }]">
+          <a-input-password v-model:value="formState.password" />
+        </a-form-item>
+
+        <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">
+          <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
+        </a-form-item>
+
+        <a-form-item>
+          <a-button type="primary" html-type="submit" block>
+            Sign In
+          </a-button>
+        </a-form-item>
+      </a-form>
+
+    </BaseCard>
   </div>
-
-  <!-- Card เฉพาะฟอร์ม -->
-  <BaseCard maxWidth="320px">
-    <a-form :model="formState" layout="vertical" @finish="onSubmit">
-      <a-form-item label="Email" name="identifier" :rules="[{ required: true, message: 'Please enter email' }]">
-        <a-input v-model:value="formState.identifier" />
-      </a-form-item>
-
-      <a-form-item label="Password" name="password" :rules="[{ required: true, message: 'Please enter password' }]">
-        <a-input-password v-model:value="formState.password" />
-      </a-form-item>
-
-      <a-form-item name="remember" :wrapper-col="{ offset: 8, span: 16 }">
-        <a-checkbox v-model:checked="formState.remember">Remember me</a-checkbox>
-      </a-form-item>
-
-      <a-form-item>
-        <a-button type="primary" html-type="submit" block>
-          Sign In
-        </a-button>
-      </a-form-item>
-    </a-form>
-
-  </BaseCard>
 </template>
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { useRoute, navigateTo } from '#app'
-import { useAuthApi } from '~/composables/useAuthApi'
+import { navigateTo } from '#app'
+import { useApi } from '~/composables/core'
 import { useAuthStore } from '~/stores/auth.store'
-import type { UserRole } from '~/types/auth'
+import form from 'ant-design-vue/es/form'
 
-definePageMeta({ layout: 'mobile' })
-
-const route = useRoute()
-const { loginManager } = useAuthApi() // 👈 ใช้ manager endpoint
+const { apiFetch } = useApi()
 const authStore = useAuthStore()
-
-const inviteCode = route.query.invite as string | undefined
 
 const formState = reactive({
   identifier: '',
@@ -50,51 +47,42 @@ const formState = reactive({
   remember: false
 })
 
-const onSubmit = async (values: {
-  identifier: string
-  password: string
-}) => {
+const onSubmit = async () => {
   try {
-    const identifier = values.identifier.trim()
-
-    // 🔐 1️⃣ ยิง manager endpoint
-    const res = await loginManager({
-      email: identifier,
-      password: values.password
+    const res: any = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: {
+        email: formState.identifier.trim(),
+        password: formState.password
+      }
     })
 
-    const tokens = res.data as unknown as {
-      access_token: string
-      refresh_token: string
-    }
+    const token = res.data.token
+    const role = res.data.user.role
 
-    if (!tokens?.access_token) {
-      alert('Invalid login response')
-      return
-    }
+    authStore.setAuth(token, role)
 
-    // 🔥 2️⃣ hard code role
-    const role: UserRole = 'manager'
-
-    // 🔐 3️⃣ set auth
-    authStore.setAuth({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      role
-    })
-
-    // 🔐 4️⃣ redirect
-    return navigateTo('/manager')
+    // 🔥 ใช้ role ตรง ๆ
+    if (role === 'manager') return navigateTo('/manager')
+    if (role === 'mentor') return navigateTo('/mentor')
+    if (role === 'intern') return navigateTo('/intern')
 
   } catch (err: any) {
-    console.error(err)
-    alert(err?.data?.message || 'login error')
+    alert(err?.data?.message || 'Login failed')
   }
 }
 </script>
 
-
 <style scoped>
+.login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 100vh;
+  background-color: #6CBCFA;
+}
+
 .logo {
   display: flex;
   justify-content: center;

@@ -42,7 +42,8 @@ const request = reactive({
   type: 'Sick Leave',
   date: '26 Jan',
   duration: '1 day',
-  status: 'Pending'
+  status: 'Pending',
+  description: 'Fever and cough.'
 })
 
 const approve = () => {

@@ -4,10 +4,9 @@ import type { LoginResponse, RegisterResponse } from '~/types/auth'
 export const useAuthApi = () => {
   const config = useRuntimeConfig()
 
-  // ===== INTERN LOGIN =====
+  // ===== LOGIN (ทุก role ใช้เส้นเดียว) =====
   const login = async (data: {
-    email?: string
-    username?: string
+    email: string
     password: string
   }) => {
     return await $fetch<LoginResponse>(
@@ -20,25 +19,16 @@ export const useAuthApi = () => {
     )
   }
 
-  // ===== MANAGER LOGIN =====
-  const loginManager = async (data: {
+  // ===== REGISTER =====
+  const register = async (data: {
+    inviteCode: string
     email: string
     password: string
+    firstName: string
+    lastName: string
   }) => {
-    return await $fetch<LoginResponse>(
-      '/auth/manager/login',
-      {
-        baseURL: config.public.apiBase,
-        method: 'POST',
-        body: data
-      }
-    )
-  }
-
-  // ===== REGISTER =====
-  const register = async (data: any) => {
     return await $fetch<RegisterResponse>(
-      '/api/auth/register',
+      '/auth/register',   // 🔥 เอา /api ออก
       {
         baseURL: config.public.apiBase,
         method: 'POST',
@@ -47,5 +37,5 @@ export const useAuthApi = () => {
     )
   }
 
-  return { login, loginManager, register }
+  return { login, register }
 }

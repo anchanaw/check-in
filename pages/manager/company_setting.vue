@@ -2,7 +2,7 @@
     <div class="company-page">
         <div class="page">
             <div class="top-header">
-                <BackButton/>
+                <BackButton />
                 <span class="title">Company Setting</span>
             </div>
 
@@ -11,7 +11,7 @@
             <a-form layout="vertical" :model="form" @finish="submit">
                 <CompanyInfoCard v-model:name="form.name" />
 
-                <CompanyLocationCard v-model:latitude="form.latitude" v-model:longitude="form.longitude" />
+                <CompanyLocationCard v-model:latitude="form.latitude" v-model:longitude="form.longitude"   v-model:radius="form.radius" />
 
                 <CheckinTimeCard v-model:start="form.start_time" v-model:end="form.end_time" />
 
@@ -38,6 +38,7 @@ const form = reactive({
     name: '',
     latitude: '',
     longitude: '',
+    radius: 0,
     start_time: null,
     end_time: null
 })
@@ -71,25 +72,27 @@ const submit = async () => {
 }
 
 .top-header {
-  position: relative;
-  height: 56px;
-  display: flex;
-  align-items: center;
+    position: relative;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .back-btn {
-  position: absolute;
-  left: 16px;
+    position: absolute;
+    left: 16px;
 }
 
 .title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  white-space: nowrap;   /* 🔥 ตัวนี้สำคัญ */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    white-space: nowrap;
+    /* 🔥 ตัวนี้สำคัญ */
 }
 
 

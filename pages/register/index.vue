@@ -46,26 +46,6 @@
                 <a-input-password placeholder="Value" />
             </a-form-item>
 
-            <a-form-item label="Gender" name="gender">
-                <a-select placeholder="Select">
-                    <a-select-option value="male">Male</a-select-option>
-                    <a-select-option value="female">Female</a-select-option>
-                    <a-select-option value="other">Other</a-select-option>
-                </a-select>
-            </a-form-item>
-
-            <a-form-item label="Date of Birth" name="dob">
-                <a-date-picker class="full-width" placeholder="Select date" />
-            </a-form-item>
-
-            <a-form-item label="University" name="university">
-                <a-input placeholder="Value" />
-            </a-form-item>
-
-            <a-form-item label="Student ID" name="studentId">
-                <a-input placeholder="Value" />
-            </a-form-item>
-
             <a-form-item>
                 <a-button type="primary" html-type="submit" block :loading="loading">
                     Sign Up
@@ -79,60 +59,27 @@
         </a-form>
     </BaseCard>
 </template>
-
 <script setup lang="ts">
 import { useRoute, navigateTo } from '#app'
-import { ref, onMounted, computed } from 'vue'
-import { useInviteApi } from '~/composables/useInviteApi'
-import { useAuthApi } from '~/composables/useAuthApi'
+import { ref } from 'vue'
+import { useApi } from '~/composables/core'
 
 definePageMeta({ layout: 'mobile' })
 
 const route = useRoute()
-const { validate } = useInviteApi()
-const { register } = useAuthApi()
+const { apiFetch } = useApi()
 
-// query params
-const token = ref<string | null>(null)
-const invite = ref<string | null>(null)
-
-// display (invite only)
+// 🔥 รับ invite จาก query เท่านั้น
+const inviteCode = route.query.invite as string | undefined
 const mentorDisplayName = ref('')
 const teamToken = ref('')
+const mode = ref<'invite' | 'token' | null>(null)
 
-// detect mode
-const mode = computed<'token' | 'invite' | 'invalid'>(() => {
-  if (token.value) return 'token'
-  if (invite.value) return 'invite'
-  return 'invalid'
-})
+if (!inviteCode) {
+  navigateTo('/login')
+}
 
-onMounted(async () => {
-  token.value = route.query.token as string || null
-  invite.value = route.query.invite as string || null
-
-  if (mode.value === 'invalid') {
-    navigateTo('/login')
-    return
-  }
-
-  // invite flow → validate
-  if (mode.value === 'invite') {
-    try {
-      const res: any = await validate(invite.value!)
-
-      if (!res.valid) {
-        navigateTo('/login')
-        return
-      }
-
-      mentorDisplayName.value = res.mentor?.display_name ?? ''
-      teamToken.value = res.team?.token ?? ''
-    } catch {
-      navigateTo('/login')
-    }
-  }
-})
+const loading = ref(false)
 
 // validation
 const req = [{ required: true, message: 'Required' }]
@@ -146,41 +93,26 @@ const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => a
   }
 })
 
-const loading = ref(false)
-
 const onSubmit = async (values: any) => {
   loading.value = true
 
   try {
-    const payload: any = {
-      email: values.email,
-      username: values.email,
-      password: values.password,
-      first_name: values.firstName,
-      last_name: values.lastName,
-      display_name: values.displayName,
-      gender: values.gender,
-      birth_date: values.dob
-        ? values.dob.format('YYYY-MM-DD')
-        : null,
-      university: values.university,
-      student_id: values.studentId
-    }
+    await apiFetch('/auth/register', {
+      method: 'POST',
+      body: {
+        inviteCode,                 // 🔥 สำคัญมาก
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName
+      }
+    })
 
-    // attach token / invite
-    if (mode.value === 'token') {
-      payload.token = token.value
-    }
+    // สมัครเสร็จ → ไป login
+    navigateTo('/login')
 
-    if (mode.value === 'invite') {
-      payload.invite_code = invite.value
-    }
-
-    await register(payload)
-
-    navigateTo('/register/success')
-  } catch (err) {
-    alert('สมัครไม่สำเร็จ หรือ invite / token ไม่ถูกต้อง')
+  } catch (err: any) {
+    alert(err?.data?.message || 'Register failed')
   } finally {
     loading.value = false
   }

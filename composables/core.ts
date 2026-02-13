@@ -1,4 +1,3 @@
-// composables/core.ts
 import { useAuthStore } from '~/stores/auth.store'
 import { navigateTo } from '#app'
 
@@ -6,31 +5,30 @@ export const useApi = () => {
   const authStore = useAuthStore()
   const config = useRuntimeConfig()
 
-  const apiFetch = async <T>(
-    url: string,
-    options: any = {}
-  ) => {
-    console.log('apiFetch called:', url)
+  const apiFetch = async <T>(url: string, options: any = {}) => {
+    const publicEndpoints = ['/auth/login', '/auth/register']
+    const isPublicEndpoint = publicEndpoints.some(endpoint =>
+      url.startsWith(endpoint)
+    )
 
-    // 🔑 public endpoints (ไม่ต้องแนบ token)
-    const isPublicEndpoint =
-      url.includes('/login') || url.includes('/register')
+    const headers: any = {
+      ...(options.headers || {})
+    }
+
+    if (!isPublicEndpoint && authStore.access_token) {
+      headers.Authorization = `Bearer ${authStore.access_token}`
+    }
 
     try {
       return await $fetch<T>(url, {
         baseURL: config.public.apiBase,
         ...options,
-        headers: {
-          ...(options.headers || {}),
-          ...(!isPublicEndpoint && authStore.access_token
-            ? { Authorization: `Bearer ${authStore.access_token}` }
-            : {})
-        }
+        headers
       })
     } catch (err: any) {
       if (err?.status === 401) {
         authStore.clearAuth()
-        navigateTo('/login')
+        return navigateTo('/login')
       }
       throw err
     }

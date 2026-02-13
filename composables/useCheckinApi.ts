@@ -1,17 +1,15 @@
-import { useApi } from './core'
-
 export const useCheckinApi = () => {
   const { apiFetch } = useApi()
 
-  return {
-    checkIn(data: {
-      latitude: number
-      longitude: number
-    }) {
-      return apiFetch('/api/checkin', {
-        method: 'POST',
-        body: data
-      })
-    }
+  const checkIn = async (data: {
+    latitude: number
+    longitude: number
+  }) => {
+    return await apiFetch('/check-ins', {
+      method: 'POST',
+      body: data
+    })
   }
+
+  return { checkIn }
 }

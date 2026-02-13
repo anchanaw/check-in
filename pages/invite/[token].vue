@@ -43,34 +43,15 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
-import BaseCard from '@/components/base/BaseCard.vue'
+import { useRoute, useRouter } from '#app'
 
 const route = useRoute()
 const router = useRouter()
 
-const loading = ref(false)
 const token = route.params.token as string
 
-onMounted(async () => {
-  loading.value = true
-  try {
-    console.log('Invite token:', token)
-
-    // 🔜 ต่อ API ตรงนี้
-    // await apiFetch('/invite/validate', {
-    //   method: 'POST',
-    //   body: { token }
-    // })
-
-  } finally {
-    loading.value = false
-  }
-})
-
 const goLogin = () => {
-  router.push(`/login?invite=${token}`)
+  router.push('/login') // login ไม่เกี่ยวกับ invite
 }
 
 const goRegister = () => {

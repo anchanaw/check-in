@@ -22,6 +22,15 @@
         </template>
       </a-input>
     </a-form-item>
+
+    <a-form-item label="Radius (meters)">
+      <a-input-number v-model:value="localRadius" :min="0" :step="10" style="width: 100%;">
+        <template #suffix>
+          m
+        </template>
+      </a-input-number>
+    </a-form-item>
+
   </BaseCard>
 </template>
 
@@ -32,10 +41,15 @@ import { computed } from 'vue'
 
 const props = defineProps({
   latitude: String,
-  longitude: String
+  longitude: String,
+  radius: Number
 })
 
-const emit = defineEmits(['update:latitude', 'update:longitude'])
+const emit = defineEmits([
+  'update:latitude',
+  'update:longitude',
+  'update:radius'
+])
 
 const localLat = computed({
   get: () => props.latitude,
@@ -46,6 +60,12 @@ const localLng = computed({
   get: () => props.longitude,
   set: (val) => emit('update:longitude', val)
 })
+
+const localRadius = computed({
+  get: () => props.radius,
+  set: (val) => emit('update:radius', val)
+})
+
 </script>
 
 <style scoped>
