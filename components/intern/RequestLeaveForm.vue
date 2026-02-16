@@ -74,6 +74,7 @@
 
 <script setup>
 import { reactive } from 'vue'
+import dayjs from 'dayjs'
 
 const emit = defineEmits(['submit', 'cancel'])
 
@@ -87,15 +88,39 @@ const form = reactive({
 })
 
 const submit = () => {
+  if (!form.date) return
+
+  let startDate
+  let endDate
+
+  if (form.timeType === 'all_day') {
+    // เริ่ม 00:00:00
+    startDate = dayjs(form.date)
+      .startOf('day')
+      .toISOString()
+
+    // จบ 23:59:59
+    endDate = dayjs(form.date)
+      .endOf('day')
+      .toISOString()
+  } else {
+    // custom time
+    const baseDate = dayjs(form.date).format('YYYY-MM-DD')
+
+    startDate = dayjs(`${baseDate} ${dayjs(form.from).format('HH:mm')}`)
+      .toISOString()
+
+    endDate = dayjs(`${baseDate} ${dayjs(form.to).format('HH:mm')}`)
+      .toISOString()
+  }
+
   emit('submit', {
-    type: form.type,
-    date: form.date,
-    timeType: form.timeType,
-    from: form.timeType === 'custom' ? form.from : null,
-    to: form.timeType === 'custom' ? form.to : null,
+    startDate,
+    endDate,
     reason: form.reason
   })
 }
+
 </script>
 
 <style scoped>

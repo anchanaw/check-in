@@ -26,7 +26,7 @@
       </BaseCard>
     </div>
 
-    <BottomBar active="profile" />
+    <MentorBottomBar active="profile" />
   </div>
 </template>
 
@@ -36,7 +36,7 @@ import BaseCard from '~/components/base/BaseCard.vue'
 import ProfileHeader from '~/components/mentor/profile/ProfileHeader.vue'
 import ProfileInfoSection from '~/components/mentor/profile/ProfileInfoSection.vue'
 import ProfileActions from '~/components/mentor/profile/ProfileActions.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 /**
  * TODO:

@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   modelValue: {
     type: Number,
     default: 1
@@ -16,9 +16,14 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const increase = () => emit('update:modelValue', modelValue + 1)
+const increase = () => {
+  emit('update:modelValue', props.modelValue + 1)
+}
+
 const decrease = () => {
-  if (modelValue > 0) emit('update:modelValue', modelValue - 1)
+  if (props.modelValue > 0) {
+    emit('update:modelValue', props.modelValue - 1)
+  }
 }
 </script>
 

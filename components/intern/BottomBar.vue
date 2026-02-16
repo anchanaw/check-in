@@ -22,7 +22,7 @@ const items = [
   { label: 'CHECK-IN', to: '/intern', match: '/intern', icon: '/icons/intern/checkin.svg' },
   { label: 'DASHBOARD', to: '/intern/dashboard', match: '/intern/dashboard', icon: '/icons/intern/dashboard.svg' },
   { label: 'RANKING', to: '/intern/rank', match: '/intern/rank', icon: '/icons/intern/rank.svg' },
-  { label: 'ASSIGNMENT', to: '/intern/assignment', match: '/intern/assignment', icon: '/icons/intern/assignment.svg' },
+  { label: 'ASSIGNMENT', to: '/intern/tasks', match: '/intern/tasks', icon: '/icons/intern/assignment.svg' },
   { label: 'PROFILE', to: '/intern/profile', match: '/intern/profile', icon: '/icons/intern/profile.svg' },
 ]
 

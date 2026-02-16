@@ -31,7 +31,7 @@
       </a-button>
     </div>
 
-    <ManagerBottomBar />
+    <MentorBottomBar />
 
   </div>
 </template>
@@ -42,6 +42,7 @@ import { useRouter } from 'vue-router'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import TeamItemCard from '@/components/mentor/myintern/TeamItemCard.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue' 
 
 const router = useRouter()
 

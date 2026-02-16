@@ -33,7 +33,7 @@
       </BaseCard>
     </div>
 
-    <BottomBar />
+    <MentorBottomBar />
   </a-layout>
 </template>
 
@@ -44,7 +44,7 @@ import { useMentorNotifications } from '@/composables/mentor/useMentorNotificati
 import BaseCard from '~/components/base/BaseCard.vue'
 import OverviewCard from '@/components/mentor/dashboard/OverviewCard.vue'
 import ActionCard from '@/components/mentor/dashboard/ActionCard.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 import { BellOutlined } from '@ant-design/icons-vue'
 import { useCurrentUser } from '@/composables/mentor/useCurrentUser'
 

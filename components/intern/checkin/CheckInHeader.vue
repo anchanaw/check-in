@@ -17,10 +17,10 @@
 <script setup>
 import { BellOutlined } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 
 defineProps({
-    userName: String,
-    date: String
+  userName: String
 })
 
 const router = useRouter()
@@ -28,7 +28,12 @@ const router = useRouter()
 const goToNoti = () => {
   router.push('/intern/notifications')
 }
+
+// 🔥 วันที่วันนี้แบบไทย
+const today = dayjs()
+const date = `${today.format('DD MMM')} ${today.year() + 543}`
 </script>
+
 
 <style scoped>
 .header {

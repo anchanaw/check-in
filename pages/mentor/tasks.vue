@@ -11,11 +11,7 @@
         <TaskTable />
 
         <div class="footer">
-          <a-button
-            type="primary"
-            class="create-btn"
-            @click="openCreate"
-          >
+          <a-button type="primary" class="create-btn" @click="openCreate">
             Create Task
           </a-button>
         </div>
@@ -23,22 +19,19 @@
     </div>
 
     <!-- Create Task Modal -->
-    <CreateTaskModal
-      :open="createOpen"
-      @close="createOpen = false"
-      @save="onSaveTask"
-    />
+    <CreateTaskModal :open="createOpen" @close="createOpen = false" @save="onSaveTask" />
 
-    <BottomBar active="tasks" />
+    <MentorBottomBar active="/mentor" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 import BaseCard from '@/components/base/BaseCard.vue'
 import TaskTable from '@/components/mentor/task/TaskTable.vue'
 import CreateTaskModal from '@/components/mentor/task/CreateTaskModal.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 const createOpen = ref(false)
 
@@ -46,13 +39,28 @@ const openCreate = () => {
   createOpen.value = true
 }
 
-const onSaveTask = (payload) => {
-  console.log('save task:', payload)
-  createOpen.value = false
-  /**
-   * TODO:
-   * POST /tasks
-   */
+const onSaveTask = async (payload) => {
+  try {
+    console.log('save task:', payload)
+
+    await axios.post(
+      `/tasks/${taskId}/submissions`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    )
+
+    createOpen.value = false
+
+    // 🔥 รีโหลดตารางหลังสร้างสำเร็จ
+    window.location.reload()
+
+  } catch (error) {
+    console.error('Create task error:', error)
+  }
 }
 </script>
 
@@ -107,5 +115,4 @@ const onSaveTask = (payload) => {
   height: 36px;
   font-size: 14px;
 }
-
 </style>

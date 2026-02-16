@@ -24,40 +24,47 @@ const items = [
         label: 'DASHBOARD',
         to: '/mentor',
         match: '/mentor',
+        group: ['dashboard', 'tasks'],
         icon: '/icons/mentor/dashboard.svg'
     },
     {
         label: 'INTERN',
         to: '/mentor/team',
         match: '/mentor/team',
+        group: ['review_bonus', 'team'],
         icon: '/icons/mentor/intern.svg'
     },
     {
         label: 'BONUS',
         to: '/mentor/bonus',
         match: '/mentor/bonus',
+        group: ['bonus'],
         icon: '/icons/mentor/bonus.svg'
     },
     {
         label: 'RANKING',
         to: '/mentor/rank',
         match: '/mentor/rank',
+        group: ['rank'],
         icon: '/icons/mentor/rank.svg'
     },
     {
         label: 'PROFILE',
         to: '/mentor/profile',
         match: '/mentor/profile',
+        group: ['invite_intern', 'profile'],
         icon: '/icons/mentor/profile.svg'
     }
 ]
 
 const isActive = (item) => {
-    if (item.match === '/mentor') {
-        return route.path === '/mentor'
-    }
-    return route.path.startsWith(item.match)
+  const current = route.path.split('/')[2] // เอา segment หลัง /mentor
+
+  if (!current) return item.to === '/mentor'
+
+  return item.group.includes(current)
 }
+
 </script>
 
 <style scoped>

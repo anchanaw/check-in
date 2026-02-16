@@ -1,17 +1,20 @@
 <template>
   <a-table
-    class="task-table"
     :columns="columns"
     :data-source="tasks"
     :loading="loading"
-    bordered
-    :pagination="false"
   >
     <template #bodyCell="{ column, record }">
+      <!-- format points -->
+      <template v-if="column.dataIndex === 'points'">
+        +{{ record.points }}
+      </template>
+
+      <!-- switch -->
       <template v-if="column.key === 'status'">
         <StatusSwitch
-          v-model="record.active"
-          @update:modelValue="onToggleStatus(record)"
+          v-model="record.isBonus"
+          @update:modelValue="() => onToggleStatus(record)"
         />
       </template>
     </template>
@@ -20,46 +23,59 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import StatusSwitch from '@/components/base/StatusSwitch.vue'
 
 type Task = {
   id: number
   key: number
   title: string
-  bonus: string
+  points: number
   deadline: string
-  active: boolean
+  isBonus: boolean
 }
 
 const loading = ref(true)
 const tasks = ref<Task[]>([])
 
-const onToggleStatus = (record: Task) => {
-  console.log(
-    `PATCH /tasks/${record.id}`,
-    { active: record.active }
-  )
+const onToggleStatus = async (record: Task) => {
+  try {
+    await axios.patch(`/tasks/${record.id}`, {
+      isBonus: record.isBonus
+    })
 
-  /**
-   * TODO:
-   * await api.patch(`/tasks/${record.id}`, {
-   *   active: record.active
-   * })
-   */
+    console.log('Updated!')
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 const columns = [
   { title: 'Task title', dataIndex: 'title' },
-  { title: 'Bonus', dataIndex: 'bonus', width: 60, align: 'center' },
-  { title: 'Dead line', dataIndex: 'deadline', width: 80, align: 'center' },
+
+  {
+    title: 'Points',
+    dataIndex: 'points',
+    width: 80,
+    align: 'center'
+  },
+
+  {
+    title: 'Deadline',
+    dataIndex: 'deadline',
+    width: 120,
+    align: 'center'
+  },
+
   {
     title: 'Status',
     key: 'status',
-    dataIndex: 'active',
-    width: 70,
+    dataIndex: 'isBonus',
+    width: 80,
     align: 'center'
   }
 ]
+
 
 onMounted(async () => {
   await new Promise(r => setTimeout(r, 800))
@@ -69,9 +85,9 @@ onMounted(async () => {
       id: 1,
       key: 1,
       title: 'Share your day',
-      bonus: '+2',
+      points: 2,
       deadline: '26/1/26',
-      active: true
+      isBonus: true
     }
   ]
 

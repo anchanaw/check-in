@@ -8,16 +8,15 @@
       Invite Intern
     </a-button>
 
-    <a-button danger block @click="$emit('logout')">
-      Logout
-    </a-button>
+    <a-button danger block @click="logout">
+  Logout
+</a-button>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
-
-defineEmits(['logout'])
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
 
@@ -28,6 +27,15 @@ const goEditProfile = () => {
 const goInviteIntern = () => {
   router.push('/mentor/invite_intern')
 }
+
+const authStore = useAuthStore()
+
+const logout = () => {
+  authStore.$reset()
+  localStorage.removeItem('access_token')
+  router.replace('/login')
+}
+
 </script>
 
 <style scoped>

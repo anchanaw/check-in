@@ -5,23 +5,69 @@
     <div class="status-list">
       <div class="row">
         <span>Check-in Time :</span>
-        <span>-</span>
+        <span>{{ checkInTime }}</span>
       </div>
+
       <div class="row">
         <span>Rank (Today) :</span>
-        <span>-</span>
+        <span>{{ rankToday }}</span>
       </div>
+
       <div class="row">
         <span>Rank Score :</span>
-        <span>-</span>
+        <span>{{ rankScore }}</span>
       </div>
+
       <div class="row">
         <span>Total Hours :</span>
-        <span>-</span>
+        <span>{{ totalHours }}</span>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import dayjs from 'dayjs'
+import axios from 'axios'
+
+const checkInTime = ref('-')
+const rankToday = ref('-')
+const rankScore = ref('-')
+const totalHours = ref('-')
+
+onMounted(async () => {
+  try {
+    /* 🔹 1. เช็คอินวันนี้ */
+    const checkRes = await axios.get('/check-ins/me')
+
+    // สมมติ backend ส่ง:
+    // { checkedInToday: true, createdAt: "...", hours: 8 }
+
+    if (checkRes.data.checkedInToday) {
+      checkInTime.value = dayjs(checkRes.data.createdAt).format('hh:mm A')
+      totalHours.value = checkRes.data.hours ?? '-'
+    }
+
+    /* 🔹 2. Ranking */
+    const rankRes = await axios.get('/points/ranking')
+
+    const myUserId = 1 // 👉 เปลี่ยนเป็น authStore.user.id
+
+    const myIndex = rankRes.data.findIndex(
+      (u) => u.userId === myUserId
+    )
+
+    if (myIndex !== -1) {
+      rankToday.value = `#${myIndex + 1}`
+      rankScore.value = `${rankRes.data[myIndex].totalPoints} pts`
+    }
+
+  } catch (err) {
+    console.error('Today status error:', err)
+  }
+})
+</script>
 
 <style scoped>
 .card-title {

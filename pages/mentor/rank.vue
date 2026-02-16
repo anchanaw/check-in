@@ -8,14 +8,14 @@
       </BaseCard>
     </div>
 
-    <BottomBar active="ranking" />
+    <MentorBottomBar active="ranking" />
   </div>
 </template>
 
 <script setup>
 import BaseCard from '~/components/base/BaseCard.vue'
 import RankingTable from '~/components/mentor/RankingTable.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 </script>
 
 <style scoped>

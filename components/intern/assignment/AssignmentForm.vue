@@ -43,15 +43,23 @@ const emit = defineEmits(['submit'])
 
 const form = reactive({
   description: '',
-  image: null
+  file: null   // 🔥 เปลี่ยน image → file
 })
 
 const onFileChange = (info) => {
-  form.image = info.file
+  form.file = info.file.originFileObj
 }
 
 const submit = () => {
-  emit('submit', { ...form })
+  const formData = new FormData()
+
+  formData.append('description', form.description)
+
+  if (form.file) {
+    formData.append('file', form.file)
+  }
+
+  emit('submit', formData)
 }
 </script>
 

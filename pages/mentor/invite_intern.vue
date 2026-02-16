@@ -23,7 +23,7 @@
             </BaseCard>
         </div>
 
-        <BottomBar active="profile" />
+        <MentorBottomBar active="profile" />
     </div>
 </template>
 
@@ -35,7 +35,7 @@ import { useRouter } from 'vue-router'
 import BaseCard from '~/components/base/BaseCard.vue'
 import InviteTeamSelect from '~/components/mentor/invite/InviteTeamSelect.vue'
 import InviteLinkCard from '~/components/mentor/invite/InviteLinkCard.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 /**
  * TODO:
