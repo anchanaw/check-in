@@ -57,12 +57,14 @@ const onSubmit = async () => {
       }
     })
 
+    // 🔥 ใช้ค่าจาก response โดยตรง
     const token = res.data.token
-    const role = res.data.user.role
+    const role = res.data.user.role.toLowerCase()
 
-    authStore.setAuth(token, role)
+    // set auth ก่อน
+    authStore.setAuth(token, role, formState.remember)
 
-    // 🔥 ใช้ role ตรง ๆ
+    // redirect
     if (role === 'manager') return navigateTo('/manager')
     if (role === 'mentor') return navigateTo('/mentor')
     if (role === 'intern') return navigateTo('/intern')
@@ -71,6 +73,7 @@ const onSubmit = async () => {
     alert(err?.data?.message || 'Login failed')
   }
 }
+
 </script>
 
 <style scoped>

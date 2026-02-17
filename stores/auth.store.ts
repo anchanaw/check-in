@@ -15,18 +15,29 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    setAuth(token: string, role: string) {
+    setAuth(token: string, role: string, remember: boolean) {
       this.isLoggedIn = true
       this.access_token = token
       this.role = role as any
+
+      if (remember) {
+        localStorage.setItem('access_token', token)
+        localStorage.setItem('role', role)
+      } else {
+        sessionStorage.setItem('access_token', token)
+        sessionStorage.setItem('role', role)
+      }
     },
 
     clearAuth() {
       this.isLoggedIn = false
       this.access_token = null
       this.role = null
-    }
-  },
 
-  persist: true
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('role')
+      sessionStorage.removeItem('access_token')
+      sessionStorage.removeItem('role')
+    }
+  }
 })

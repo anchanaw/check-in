@@ -1,25 +1,44 @@
 // composables/useCurrentUser.ts
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+
+interface User {
+  name: string
+  role: string
+  team: string
+}
 
 export const useCurrentUser = () => {
-  const user = ref({
-    name: 'Sommai',
-    role: 'Mentor',
-    team: 'Frontend Development'
+  const user = ref<User>({
+    name: '',
+    role: '',
+    team: ''
   })
 
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
   const fetchUser = async () => {
-    /**
-     * TODO:
-     * const res = await api.get('/me')
-     * user.value = res.data
-     */
-    // ตอนนี้ใช้ mock
-    return user.value
+    try {
+      loading.value = true
+      error.value = null
+
+      const res = await axios.get('/users/me') // หรือ /me แล้วแต่ backend
+      user.value = res.data
+
+    } catch (err: any) {
+      error.value = err?.response?.data?.message ?? 'Failed to fetch user'
+    } finally {
+      loading.value = false
+    }
   }
+
+  onMounted(fetchUser)
 
   return {
     user,
+    loading,
+    error,
     fetchUser
   }
 }

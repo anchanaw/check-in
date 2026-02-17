@@ -10,7 +10,7 @@
 
 
       <a-button class="clear-btn" type="text" danger shape="circle" :disabled="!notifications.length" @click="clearAll">
-        <img src="/public/icons/delete.svg" class="icon" alt="delete" />
+        <img src="/icons/delete.svg" class="icon" alt="delete" />
       </a-button>
     </div>
 
@@ -24,64 +24,30 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
-import {
-  ArrowLeftOutlined,
-  DeleteOutlined
-} from '@ant-design/icons-vue'
-
+import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import NotificationItem from '@/components/mentor/NotificationItem.vue'
-// ↑ ถ้าใช้ร่วม intern ได้ OK
-// ถ้า mentor-only → ย้ายเป็น components/mentor/NotificationItem.vue
+import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
 
 const router = useRouter()
 
-const loading = ref(true)
-const notifications = ref([])
+// 🔥 ใช้ composable ตัวเดียวกับหน้า dashboard
+const {
+  notifications,
+  loading,
+  fetchNotifications
+} = useMentorNotifications()
 
-/**
- * MOCK – รอ API
- */
-const fetchNotifications = async () => {
-  loading.value = true
-
-  await new Promise(r => setTimeout(r, 600))
-
-  notifications.value = [
-    {
-      id: 1,
-      title: 'Leave request pending',
-      body: 'Intern A has requested leave',
-      unread: true
-    },
-    {
-      id: 2,
-      title: 'Task submitted',
-      body: 'Intern B submitted a task',
-      unread: false
-    }
-  ]
-
-  loading.value = false
-}
-
-onMounted(fetchNotifications)
-
-/**
- * Actions
- */
 const goBack = () => {
   router.push('/mentor')
 }
 
-const onDetail = (noti) => {
-  // TODO: ไปหน้ารายละเอียด (leave / task)
+const onDetail = (noti: any) => {
   console.log('detail:', noti)
 }
 
-const removeNoti = (id) => {
+const removeNoti = (id: string) => {
   notifications.value = notifications.value.filter(n => n.id !== id)
 }
 

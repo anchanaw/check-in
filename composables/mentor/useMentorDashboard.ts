@@ -1,8 +1,9 @@
-import { getMentorDashboard } from '@/services/mentor/dashboard.service'
+import { ref, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
 
-export const useMentorDashboard = () => {
-  const loading = ref(true)
-  const error = ref(false)
+export function useMentorDashboard() {
+  const loading = ref(false)
+  const error = ref<string | null>(null)
 
   const overview = ref({
     internCount: 0,
@@ -10,25 +11,56 @@ export const useMentorDashboard = () => {
     leaveRequests: 0
   })
 
-  const fetchDashboard = async () => {
-    loading.value = true
-    error.value = false
+  // helper รองรับทั้ง array และ object { data: [] }
+  const getLength = (res: any) => {
+    if (Array.isArray(res?.data)) return res.data.length
+    if (Array.isArray(res?.data?.data)) return res.data.data.length
+    return 0
+  }
 
+  let isMounted = true
+
+  const fetchOverview = async () => {
     try {
-      overview.value = await getMentorDashboard()
-    } catch (e) {
-      error.value = true
+      loading.value = true
+      error.value = null
+
+      const [internsRes, tasksRes, leaveRes] = await Promise.all([
+        axios.get('/users/interns'),
+        axios.get('/tasks/submissions/pending'),
+        axios.get('/leaves/pending')
+      ])
+
+      if (!isMounted) return
+
+      overview.value = {
+        internCount: getLength(internsRes),
+        taskToReview: getLength(tasksRes),
+        leaveRequests: getLength(leaveRes)
+      }
+
+    } catch (err: any) {
+      if (!isMounted) return
+
+      console.error('Mentor dashboard error:', err)
+      error.value = err?.response?.data?.message || 'Failed to load dashboard data'
     } finally {
-      loading.value = false
+      if (isMounted) {
+        loading.value = false
+      }
     }
   }
 
-  onMounted(fetchDashboard)
+  onMounted(fetchOverview)
+
+  onUnmounted(() => {
+    isMounted = false
+  })
 
   return {
     loading,
     error,
     overview,
-    refetch: fetchDashboard
+    fetchOverview
   }
 }

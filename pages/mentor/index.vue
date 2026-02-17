@@ -40,6 +40,7 @@
 <script setup>
 import { useMentorDashboard } from '@/composables/mentor/useMentorDashboard'
 import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
+import { ref, onMounted } from 'vue'
 
 import BaseCard from '~/components/base/BaseCard.vue'
 import OverviewCard from '@/components/mentor/dashboard/OverviewCard.vue'
@@ -56,7 +57,6 @@ onMounted(() => {
   fetchUser()
 })
 </script>
-
 
 <style scoped>
 .page {

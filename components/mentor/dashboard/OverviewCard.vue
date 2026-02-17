@@ -21,15 +21,19 @@
   </BaseCard>
 </template>
 
-<script setup>
-defineProps({
-  loading: Boolean,
-  data: {
-    type: Object,
-    required: true
-  }
-})
+<script setup lang="ts">
+interface OverviewData {
+  internCount: number
+  taskToReview: number
+  leaveRequests: number
+}
+
+defineProps<{
+  loading: boolean
+  data: OverviewData
+}>()
 </script>
+
 
 <style scoped>
 .list {
