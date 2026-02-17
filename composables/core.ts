@@ -2,16 +2,18 @@ import { useAuthStore } from '~/stores/auth.store'
 import { navigateTo } from '#app'
 
 export const useApi = () => {
-  const authStore = useAuthStore()
-  const config = useRuntimeConfig()
-
   const apiFetch = async <T>(url: string, options: any = {}) => {
+
+    // 👇 เรียก store ภายใน function แทน
+    const authStore = useAuthStore()
+
     const publicEndpoints = ['/auth/login', '/auth/register']
     const isPublicEndpoint = publicEndpoints.some(endpoint =>
       url.startsWith(endpoint)
     )
 
     const headers: any = {
+      'Content-Type': 'application/json',
       ...(options.headers || {})
     }
 
@@ -20,16 +22,18 @@ export const useApi = () => {
     }
 
     try {
-      return await $fetch<T>(url, {
-        baseURL: config.public.apiBase,
+      return await $fetch<T>(`/api${url}`, {
         ...options,
         headers
       })
     } catch (err: any) {
-      if (err?.status === 401) {
+      const status = err?.response?.status || err?.status
+
+      if (status === 401) {
         authStore.clearAuth()
-        return navigateTo('/login')
+        await navigateTo('/login')
       }
+
       throw err
     }
   }

@@ -2,23 +2,20 @@
   <div>
     <div class="header">
       <div class="title">Today Status</div>
-      <div class="subtitle">Sprint 5 Jan - 17 Jan</div>
+      <div class="subtitle">
+        <SprintRange />
+      </div>
     </div>
 
-    <a-table
-      :columns="columns"
-      :data-source="data"
-      :loading="loading"
-      size="small"
-      bordered
-      :pagination="false"
-    />
+    <a-table :columns="columns" :data-source="data" :loading="loading" size="small" bordered :pagination="false" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-
+import SprintRange from '@/components/base/SprintRange.vue'
+import { useApi } from '~/composables/core'
+const { apiFetch } = useApi()
 const loading = ref(true)
 const data = ref([])
 
@@ -28,21 +25,31 @@ const columns = [
   { title: 'Score', dataIndex: 'score', width: 90 }
 ]
 
+
 onMounted(async () => {
   loading.value = true
+  try {
+    const res = await apiFetch('/points/ranking') as any
+    const rankingList = res.data
 
-  // 🔹 mock API (แทน fetch จริง)
-  await new Promise(r => setTimeout(r, 800))
+    data.value = rankingList.map((item: any, index: number) => ({
+      key: item.internId,
+      rank: `#${index + 1}`,
+      name: `${item.firstName} ${item.lastName}`,
+      score: `${item.totalPoints} pts`
+    }))
 
-  // 🔹 data ที่จะได้จาก API
-  data.value = [
-    { key: 1, rank: '#1', name: 'Sompong', score: '250 pts' },
-    { key: 2, rank: '#2', name: 'Anon', score: '180 pts' },
-    { key: 3, rank: '#3', name: 'Jane', score: '150 pts' }
-  ]
+  } catch (err) {
+    console.error('Failed to fetch ranking:', err)
+  } finally {
+    loading.value = false
+  }
+  console.log('RANK API RESULT:', res)
+  console.log('RANK DATA:', res.data)
 
-  loading.value = false
 })
+
+
 </script>
 
 <style scoped>

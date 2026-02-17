@@ -18,13 +18,24 @@
   </a-space>
 </template>
 
-<script setup>
-import BonusTaskItem from '@/components/mentor/BonusTaskItem.vue'
+<script setup lang="ts">
+import BonusTaskItem from '@/components/mentor/bonus/BonusTaskItem.vue'
 
-defineProps({
-  loading: Boolean,
-  tasks: Array
-})
+interface BonusTask {
+  id: string
+  internName: string
+  taskTitle: string
+  bonusPoint: number
+  content?: string
+  submittedAt?: string
+}
 
-defineEmits(['review'])
+defineProps<{
+  loading: boolean
+  tasks: BonusTask[]
+}>()
+
+defineEmits<{
+  (e: 'review', task: BonusTask): void
+}>()
 </script>

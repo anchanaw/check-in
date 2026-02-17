@@ -14,40 +14,28 @@
   </a-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
 
 import BonusTaskList from '@/components/mentor/bonus/BonusTaskList.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+import { useBonusReview } from '@/composables/mentor/useBonusReview'
 
+const { apiFetch } = useApi() 
 const router = useRouter()
-const loading = ref(true)
-const tasks = ref([])
+const {
+  loading,
+  tasks,
+  fetchPending
+} = useBonusReview()
 
-onMounted(async () => {
-  loading.value = true
-  await new Promise(r => setTimeout(r, 700)) // mock
-
-  tasks.value = [
-    {
-      id: 1,
-      internName: 'Sompong',
-      taskTitle: 'Share your day',
-      bonusPoint: 2
-    },
-    {
-      id: 2,
-      internName: 'Somchai',
-      taskTitle: 'Share your day',
-      bonusPoint: 2
-    }
-  ]
-
-  loading.value = false
+onMounted(() => {
+  fetchPending()
 })
 
-const goToReview = (task) => {
+const goToReview = (task: { id: any }) => {
   // TODO: ไปหน้า review detail
   router.push(`/mentor/review_bonus/${task.id}`)
   console.log('review task:', task)

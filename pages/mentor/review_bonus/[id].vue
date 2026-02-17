@@ -23,20 +23,26 @@
   </a-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
 
 import BackButton from '@/components/base/BackButton.vue'
 import BonusTaskSummaryCard from '@/components/mentor/bonus/BonusTaskSummaryCard.vue'
 import BonusTaskContentWithAction from '@/components/mentor/bonus/BonusTaskContentWithAction.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+import { useBonusReview } from '@/composables/mentor/useBonusReview'
 
 const route = useRoute()
 const router = useRouter()
 
+const { apiFetch } = useApi()
 const loading = ref(true)
 const actionLoading = ref(false)
+const id = route.params.id as string
+
+const { reviewSubmission } = useBonusReview()
 
 const task = ref({
   internName: '',
@@ -49,35 +55,73 @@ const task = ref({
 
 onMounted(async () => {
   loading.value = true
-  await new Promise(r => setTimeout(r, 700)) // mock
 
-  task.value = {
-    internName: 'Sompong',
-    title: 'Share your day',
-    submittedAt: 'Today, 16.00 PM',
-    bonusPoint: 2,
-    description:
-      'This report provides an analysis of the latest trends and statistics. The intern has conducted research and presented detailed findings on the given topic.',
-    imageUrl: 'https://picsum.photos/200/200'
+  try {
+    const submissionRes = await apiFetch<{
+      success: boolean
+      data: any[]
+    }>('/tasks/submissions/pending')
+
+    const submission = submissionRes.data.find(
+      (s: any) => s.id === id
+    )
+
+
+    if (!submission) return
+
+    // ดึง task detail
+    const taskRes = await apiFetch<{
+      success: boolean
+      data: any
+    }>(`/tasks/${submission.taskId}`)
+
+    const taskData = taskRes.data
+
+    // ดึง intern
+    const internRes = await apiFetch<{
+      success: boolean
+      data: any[]
+    }>('/users/interns')
+    const intern = internRes.data.find(
+      (i: any) => i.id === submission.internId
+    )
+
+    task.value = {
+      internName: intern
+        ? `${intern.firstName} ${intern.lastName}`
+        : 'Unknown',
+      title: taskData.title,
+      submittedAt: submission.submittedAt,
+      bonusPoint: taskData.points,
+      description: submission.content,
+      imageUrl: '' // ถ้ามี image field ค่อยใส่
+    }
+
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 })
 
-const approve = async (note) => {
+const approve = async (note: string) => {
   actionLoading.value = true
-  console.log('APPROVE', route.params.id, note)
-  await new Promise(r => setTimeout(r, 600)) // mock
-  actionLoading.value = false
-  router.back()
+  try {
+    await reviewSubmission(id, 'approved', note)
+    router.back()
+  } catch (err) {
+    console.error(err)
+  } finally {
+    actionLoading.value = false
+  }
 }
 
-const reject = async (note) => {
+const reject = async (note: string) => {
   actionLoading.value = true
-  console.log('REJECT', route.params.id, note)
-  await new Promise(r => setTimeout(r, 600)) // mock
-  actionLoading.value = false
-  router.back()
+  try {
+    await reviewSubmission(id, 'rejected', note)
+    router.back()
+  } finally {
+    actionLoading.value = false
+  }
 }
 
 const goBack = () => router.back()

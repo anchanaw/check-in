@@ -36,36 +36,68 @@
   </a-card>
 </template>
 
-<script setup>
-import {
-  InfoCircleOutlined,
-  CalendarOutlined,
-  FileDoneOutlined
-} from '@ant-design/icons-vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
+import NotificationItem from '@/components/mentor/NotificationItem.vue'
 
-const props = defineProps({
-  data: {
-    type: Object,
-    required: true
-  },
-  unread: {
-    type: Boolean,
-    default: false
+const router = useRouter()
+
+const loading = ref(true)
+const notifications = ref<any[]>([])
+
+onMounted(async () => {
+  const { apiFetch } = useApi() // ✅ เรียกตรงนี้
+
+  loading.value = true
+  try {
+    const taskRes: any = await apiFetch('/tasks/submissions/pending')
+    const leaveRes: any = await apiFetch('/leaves/pending')
+
+    notifications.value = [
+      ...taskRes.data.map((t: any) => ({
+        id: `task-${t.id}`,
+        type: 'task',
+        title: 'Task submitted',
+        body: 'Intern submitted a bonus task',
+        refId: t.id,
+        unread: true
+      })),
+      ...leaveRes.data.map((l: any) => ({
+        id: `leave-${l.id}`,
+        type: 'leave',
+        title: 'Leave request pending',
+        body: 'Intern requested leave',
+        refId: l.id,
+        unread: true
+      }))
+    ]
+
+  } finally {
+    loading.value = false
   }
 })
 
-defineEmits(['detail', 'remove'])
+const goBack = () => router.back()
 
-const iconComponent = computed(() => {
-  switch (props.data.type) {
-    case 'leave':
-      return CalendarOutlined
-    case 'task':
-      return FileDoneOutlined
-    default:
-      return InfoCircleOutlined
+const onDetail = (noti: any) => {
+  if (noti.type === 'task') {
+    router.push(`/mentor/review_bonus/${noti.refId}`)
   }
-})
+
+  if (noti.type === 'leave') {
+    router.push(`/mentor/leave_review/${noti.refId}`)
+  }
+}
+
+const removeNoti = (id: string) => {
+  notifications.value = notifications.value.filter(n => n.id !== id)
+}
+
+const clearAll = () => {
+  notifications.value = []
+}
 </script>
 
 <style scoped>

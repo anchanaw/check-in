@@ -14,7 +14,7 @@
       <!-- RIGHT -->
       <div class="right">
         <div class="point">+{{ task.bonusPoint }} points</div>
-        <a-button size="middle" type="primary" class="review-btn" @click="$emit('review')">
+        <a-button size="middle" type="primary" class="review-btn"  @click="$emit('review')">
           Review
         </a-button>
       </div>
@@ -22,17 +22,25 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 
-defineProps({
-  task: {
-    type: Object,
-    required: true
-  }
-})
+interface BonusTask {
+  id: string
+  internName: string
+  taskTitle: string
+  bonusPoint: number
+  content?: string
+  submittedAt?: string
+}
 
-defineEmits(['review'])
+defineProps<{
+  task: BonusTask
+}>()
+
+defineEmits<{
+  (e: 'review'): void
+}>()
 </script>
 
 <style scoped>

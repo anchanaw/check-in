@@ -16,8 +16,8 @@
 
     <!-- Content -->
     <div class="noti-list">
-      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
-        @remove="removeNoti" />
+      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" :unread="noti.unread"
+        @remove="removeNotification" />
 
       <a-empty v-if="!loading && !notifications.length" description="No mentor notifications" />
     </div>
@@ -25,35 +25,23 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { ArrowLeftOutlined } from '@ant-design/icons-vue'
-import NotificationItem from '@/components/mentor/NotificationItem.vue'
+import { onMounted } from 'vue'
 import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
+import NotificationItem from '@/components/mentor/NotificationItem.vue'
+import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 
-const router = useRouter()
-
-// 🔥 ใช้ composable ตัวเดียวกับหน้า dashboard
 const {
   notifications,
   loading,
-  fetchNotifications
+  fetchNotifications,
+  removeNotification,
+  clearAll
 } = useMentorNotifications()
 
-const goBack = () => {
-  router.push('/mentor')
-}
+onMounted(fetchNotifications)
 
-const onDetail = (noti: any) => {
-  console.log('detail:', noti)
-}
+console.log('NOTI DATA:', notifications.value)
 
-const removeNoti = (id: string) => {
-  notifications.value = notifications.value.filter(n => n.id !== id)
-}
-
-const clearAll = () => {
-  notifications.value = []
-}
 </script>
 
 <style scoped>

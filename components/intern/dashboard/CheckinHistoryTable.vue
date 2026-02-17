@@ -9,8 +9,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
 
+const { apiFetch } = useApi()
 const columns = [
   { title: 'Date', dataIndex: 'date' },
   { title: 'Time', dataIndex: 'time' },
@@ -24,7 +25,7 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    const res = await axios.get('/check-ins/attendance')
+    const res = await apiFetch('/check-ins/attendance')
 
     /**
      * 🔥 สมมติ backend ส่งแบบนี้:

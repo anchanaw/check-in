@@ -43,7 +43,9 @@ import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import TeamItemCard from '@/components/mentor/myintern/TeamItemCard.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue' 
+import { useApi } from '~/composables/core'
 
+const { apiFetch } = useApi()
 const router = useRouter()
 
 interface Team {
@@ -59,24 +61,33 @@ const loading = ref(false)
 onMounted(async () => {
   loading.value = true
   try {
-    // 🔜 ต่อ API ตรงนี้
-    // teams.value = await apiFetch('/manager/teams')
+    const res = await apiFetch('/users/interns') as { data: any[] }
 
-    // mock data
-    teams.value = [
-      {
-        id: 1,
-        name: 'Frontend - Batch 1',
-        intern_count: 2,
-        invite_active: true
-      },
-      {
-        id: 2,
-        name: 'Frontend - Batch 2',
-        intern_count: 3,
-        invite_active: false
+    const interns = res.data
+
+    // 🔥 group intern ตาม team
+    const teamMap: Record<number, Team> = {}
+
+    interns.forEach((intern: any) => {
+      const teamId = intern.team_id
+      const teamName = intern.team_name
+
+      if (!teamMap[teamId]) {
+        teamMap[teamId] = {
+          id: teamId,
+          name: teamName,
+          intern_count: 0,
+          invite_active: true // ยังไม่มี API บอก → default ก่อน
+        }
       }
-    ]
+
+      teamMap[teamId].intern_count++
+    })
+
+    teams.value = Object.values(teamMap)
+
+  } catch (err) {
+    console.error('Team fetch error:', err)
   } finally {
     loading.value = false
   }

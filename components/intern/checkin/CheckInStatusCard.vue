@@ -17,14 +17,15 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
 
 const checkedIn = ref(false)
 const loading = ref(true)
+const { apiFetch } = useApi()
 
 onMounted(async () => {
   try {
-    const res = await axios.get('/check-ins/me')
+    const res = await apiFetch('/check-ins/me')
 
     // 🔥 สมมติ backend ส่งแบบนี้:
     // { checkedInToday: true }

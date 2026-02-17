@@ -1,9 +1,10 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
 
 export function useMentorDashboard() {
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const { apiFetch } = useApi()
 
   const overview = ref({
     internCount: 0,
@@ -26,9 +27,9 @@ export function useMentorDashboard() {
       error.value = null
 
       const [internsRes, tasksRes, leaveRes] = await Promise.all([
-        axios.get('/users/interns'),
-        axios.get('/tasks/submissions/pending'),
-        axios.get('/leaves/pending')
+        apiFetch('/users/interns'),
+        apiFetch('/tasks/submissions/pending'),
+        apiFetch('/leaves/pending')
       ])
 
       if (!isMounted) return

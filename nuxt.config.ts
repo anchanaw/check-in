@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: 'https://jiw-lovat.vercel.app',
+        target: 'https://vercel-project-five-pi.vercel.app',
         changeOrigin: true,
       },
     },

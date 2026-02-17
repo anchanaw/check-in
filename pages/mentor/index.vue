@@ -4,11 +4,11 @@
     <div class="header">
       <a-space direction="vertical" size="2">
         <a-typography-title class="name">
-          Hi, {{ user.name }}
+          Hi, {{ user?.name }}
         </a-typography-title>
 
         <a-typography-text class="role">
-          {{ user.role }} · {{ user.team }}
+          {{ user?.role }}
         </a-typography-text>
       </a-space>
 
@@ -51,11 +51,13 @@ import { useCurrentUser } from '@/composables/mentor/useCurrentUser'
 
 const { user, fetchUser } = useCurrentUser()
 const { loading, overview } = useMentorDashboard()
-const { unreadCount } = useMentorNotifications()
+const { unreadCount, fetchNotifications } = useMentorNotifications()
 
 onMounted(() => {
   fetchUser()
+  fetchNotifications()
 })
+
 </script>
 
 <style scoped>

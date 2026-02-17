@@ -11,40 +11,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
 import SprintRange from '@/components/base/SprintRange.vue'
 
+const { apiFetch } = useApi()
 const columns = [
   { title: 'Rank', dataIndex: 'rank', width: 70 },
   { title: 'Name', dataIndex: 'name' },
   { title: 'Score', dataIndex: 'score', width: 100 }
 ]
 
-const data = ref([])
+const data = ref<Array<{ key: any; rank: string; name: string; score: string }>>([])
 const loading = ref(false)
 
 onMounted(async () => {
+  loading.value = true
   try {
-    loading.value = true
+    const res = await apiFetch('/points/ranking') as { data: { data: any[] } }
+    const rankingList = res.data.data
 
-    const res = await axios.get('/points/ranking')
-
-    // 🔥 สมมติ backend ส่งแบบนี้:
-    // [
-    //   { userId: 1, name: "Sompong", totalPoints: 250 }
-    // ]
-
-    data.value = res.data.map((user, index) => ({
-      key: user.userId,
+    data.value = rankingList.map((item: any, index: number) => ({
+      key: item.internId,
       rank: `#${index + 1}`,
-      name: user.name,
-      score: `${user.totalPoints} pts`
+      name: `${item.firstName} ${item.lastName}`,
+      score: `${item.totalPoints} pts`
     }))
 
   } catch (err) {
-    console.error('Ranking error:', err)
+    console.error('Failed to fetch ranking:', err)
   } finally {
     loading.value = false
   }

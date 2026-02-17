@@ -29,8 +29,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
 
+const { apiFetch } = useApi()
 const checkInTime = ref('-')
 const rankToday = ref('-')
 const rankScore = ref('-')
@@ -39,7 +40,7 @@ const totalHours = ref('-')
 onMounted(async () => {
   try {
     /* 🔹 1. เช็คอินวันนี้ */
-    const checkRes = await axios.get('/check-ins/me')
+    const checkRes = await apiFetch('/check-ins/me')
 
     // สมมติ backend ส่ง:
     // { checkedInToday: true, createdAt: "...", hours: 8 }
@@ -50,7 +51,7 @@ onMounted(async () => {
     }
 
     /* 🔹 2. Ranking */
-    const rankRes = await axios.get('/points/ranking')
+    const rankRes = await apiFetch('/points/ranking')
 
     const myUserId = 1 // 👉 เปลี่ยนเป็น authStore.user.id
 
