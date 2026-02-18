@@ -28,8 +28,9 @@ const columns = [
 
 onMounted(async () => {
   loading.value = true
+  let res: any
   try {
-    const res = await apiFetch('/points/ranking') as any
+    res = await apiFetch('/points/ranking') as any
     const rankingList = res.data
 
     data.value = rankingList.map((item: any, index: number) => ({

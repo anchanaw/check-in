@@ -18,7 +18,7 @@
         <!-- Content -->
         <a-space direction="vertical" :size="14" style="width:100%">
           <InternSummaryCard :data="intern" :loading="loading" />
-          <GiveBonusCard />
+          <GiveBonusCard @updated="() => loadIntern(route.params.id as string)" />
           <BonusHistoryCard :items="bonusHistory" />
           <LeaveHistoryCard :items="leaveHistory" />
         </a-space>
@@ -29,9 +29,10 @@
   </a-layout>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useApi } from '~/composables/core'
 
 import InternSummaryCard from '@/components/mentor/myintern/InternSummaryCard.vue'
 import GiveBonusCard from '@/components/mentor/myintern/GiveBonusCard.vue'
@@ -40,66 +41,86 @@ import LeaveHistoryCard from '@/components/mentor/myintern/LeaveHistoryCard.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 import BackButton from '@/components/base/BackButton.vue'
 
-
+const { apiFetch } = useApi()
 const route = useRoute()
-const router = useRouter()
 
-const loading = ref(true)
+const loading = ref(false)
 
 const intern = ref({
   name: '',
-  checkedIn: true,
+  checkedIn: false,
   checkinTime: '',
   rank: '',
   totalPoints: 0,
-  avgTime: ''
+  avgTime: '-'
 })
 
-const bonusHistory = ref([])
-const leaveHistory = ref([])
+const bonusHistory = ref<any[]>([])
+const leaveHistory = ref<any[]>([])
 
-onMounted(async () => {
+const loadIntern = async (internId: string) => {
+  if (!internId || internId === 'undefined') {
+    console.error('❌ Invalid internId:', internId)
+    return
+  }
+
   loading.value = true
 
-  const internId = route.params.id
-  console.log('Intern ID:', internId)
+  try {
+    // 1️⃣ ดึงข้อมูล intern
+    const internRes = await apiFetch('/users/interns') as { data: any[] }
+    const user = internRes.data.find(
+      i => String(i.id) === String(internId)
+    )
 
-  await new Promise(r => setTimeout(r, 500)) // mock delay
+    // 2️⃣ ดึงคะแนน
+    const pointRes = await apiFetch(`/users/interns/${internId}/points`) as { data: { totalPoints: number; history: any[] } }
+    const totalPoints = pointRes.data?.totalPoints || 0
+    bonusHistory.value = pointRes.data?.history || []
 
-  // 🔥 mock data ตาม id
-  const mockData = {
-    1: {
-      name: 'Sompong',
-      checkedIn: true,
-      checkinTime: '09.00 AM',
-      rank: '#1',
-      totalPoints: 250,
-      avgTime: '09.02 AM'
-    },
-    2: {
-      name: 'Anon',
-      checkedIn: false,
-      checkinTime: '',
-      rank: '#3',
-      totalPoints: 180,
-      avgTime: '-'
+    // 3️⃣ ดึง ranking
+    const rankingRes = await apiFetch('/points/ranking') as { data: any[] }
+    const rankingIndex = rankingRes.data.findIndex(
+      (r: any) => String(r.userId) === String(internId)
+    )
+    const rank = rankingIndex >= 0 ? `#${rankingIndex + 1}` : '-'
+
+    // 4️⃣ ดึง attendance
+    const attendanceRes = await apiFetch(`/users/interns/${internId}/attendance`) as { data: { todayCheckIn?: any; averageCheckInTime?: string; leaves?: any[] } }
+    const attendance = attendanceRes.data
+
+    const todayCheckIn = attendance?.todayCheckIn
+    const avgTime = attendance?.averageCheckInTime || '-'
+
+    intern.value = {
+      name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+      checkedIn: !!todayCheckIn,
+      checkinTime: todayCheckIn?.time || '',
+      rank,
+      totalPoints,
+      avgTime
     }
+
+    leaveHistory.value = attendance?.leaves || []
+
+  } catch (err) {
+    console.error('Intern detail error:', err)
+  } finally {
+    loading.value = false
   }
+}
 
-  intern.value = mockData[internId] || {
-    name: 'Unknown',
-    checkedIn: false,
-    checkinTime: '',
-    rank: '-',
-    totalPoints: 0,
-    avgTime: '-'
-  }
-
-  loading.value = false
-})
-
-const goBack = () => router.back()
+watch(
+  () => route.params.id,
+  (id) => {
+    if (typeof id === 'string') {
+      loadIntern(id)
+    }
+  },
+  { immediate: true }
+)
 </script>
+
 <style scoped>
 .page {
   min-height: 100vh;

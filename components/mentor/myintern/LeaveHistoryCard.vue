@@ -11,41 +11,54 @@
     </div>
 
     <!-- Data rows -->
-    <div
-      v-for="item in items"
-      :key="item.id"
-      class="row"
-    >
-      <span class="reason">{{ item.reason }}</span>
-      <span class="date">{{ item.date }}</span>
+    <!-- Empty -->
+    <div v-if="!items || items.length === 0" class="empty">
+      No leave history
+    </div>
 
-      <span
-  class="status-tag"
-  :class="statusClass(item.status)"
->
-  {{ formatStatus(item.status) }}
-</span>
+    <!-- Data rows -->
+    <div v-else v-for="item in items" :key="item.id" class="row">
+      <span class="reason">{{ item.reason }}</span>
+      <span class="date">{{ formatDate(item.date) }}</span>
+
+      <span class="status-tag" :class="statusClass(item.status)">
+        {{ formatStatus(item.status) }}
+      </span>
     </div>
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 
-defineProps({
-  items: Array
-})
+interface LeaveItem {
+  id: string
+  reason: string
+  date: string
+  status: 'approved' | 'pending' | 'rejected' | 'on-leave'
+}
 
-const statusClass = (status) => {
+defineProps<{
+  items: LeaveItem[]
+}>()
+
+const statusClass = (status: LeaveItem['status']) => {
   if (status === 'approved' || status === 'on-leave') return 'on-leave'
   if (status === 'pending') return 'pending'
+  if (status === 'rejected') return 'rejected'
   return ''
 }
 
-const formatStatus = (status) => {
+const formatStatus = (status: LeaveItem['status']) => {
   if (status === 'approved' || status === 'on-leave') return 'On leave'
   if (status === 'pending') return 'Pending'
+  if (status === 'rejected') return 'Rejected'
   return status
+}
+
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString()
 }
 </script>
 
@@ -108,5 +121,26 @@ const formatStatus = (status) => {
 .date {
   color: #111;
 }
-</style>
 
+.on-leave {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.pending {
+  background: #fffbe6;
+  color: #faad14;
+}
+
+.rejected {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 16px 0;
+}
+
+</style>

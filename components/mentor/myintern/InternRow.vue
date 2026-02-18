@@ -34,7 +34,7 @@ import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   intern: {
-    id: number
+    id: string   // ✅ เปลี่ยนเป็น string
     name: string
     status: string
     checkin_time?: string
@@ -45,9 +45,13 @@ const props = defineProps<{
 const router = useRouter()
 
 function goDetail() {
+  if (!props.intern.id) {
+    console.error('Invalid intern id:', props.intern.id)
+    return
+  }
+
   router.push(`/mentor/intern/${props.intern.id}`)
 }
-
 </script>
 
 <style scoped>

@@ -49,7 +49,7 @@ const { apiFetch } = useApi()
 const router = useRouter()
 
 interface Team {
-  id: number
+  id: string
   name: string
   intern_count: number
   invite_active: boolean
@@ -64,24 +64,26 @@ onMounted(async () => {
     const res = await apiFetch('/users/interns') as { data: any[] }
 
     const interns = res.data
-
-    // 🔥 group intern ตาม team
-    const teamMap: Record<number, Team> = {}
+    const teamMap: Record<string, Team> = {}
 
     interns.forEach((intern: any) => {
-      const teamId = intern.team_id
-      const teamName = intern.team_name
+      if (!intern.teams || intern.teams.length === 0) return
 
-      if (!teamMap[teamId]) {
-        teamMap[teamId] = {
-          id: teamId,
-          name: teamName,
-          intern_count: 0,
-          invite_active: true // ยังไม่มี API บอก → default ก่อน
+      intern.teams.forEach((team: any) => {
+        const teamId = team.id
+        const teamName = team.name
+
+        if (!teamMap[teamId]) {
+          teamMap[teamId] = {
+            id: String(teamId),
+            name: teamName,
+            intern_count: 0,
+            invite_active: true
+          }
         }
-      }
 
-      teamMap[teamId].intern_count++
+        teamMap[teamId].intern_count++
+      })
     })
 
     teams.value = Object.values(teamMap)
@@ -93,7 +95,7 @@ onMounted(async () => {
   }
 })
 
-const goDetail = (id: number) => {
+const goDetail = (id: string) => {
   router.push(`/mentor/teams/${id}`)
 }
 

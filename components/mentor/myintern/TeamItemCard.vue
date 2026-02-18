@@ -22,16 +22,14 @@
 
 <script setup lang="ts">
 import { RightOutlined } from '@ant-design/icons-vue'
+import type { Team } from '@/types/team'
 
 defineProps<{
-  team: {
-    id: number
-    name: string
-    intern_count: number
-    invite_active: boolean
-  }
+  team: Team
 }>()
+
 </script>
+
 <style scoped>
 .team-item {
   display: flex;

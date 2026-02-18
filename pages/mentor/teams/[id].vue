@@ -42,16 +42,18 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import InternRow from '@/components/mentor/myintern/InternRow.vue'
 import InternLegend from '@/components/mentor/myintern/InternLegend.vue'
 
+const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 
 interface Intern {
-  id: number
+  id: string
   name: string
   status: 'checked-in' | 'not-checked' | 'leave-pending' | 'on-leave'
   checkin_time?: string
@@ -64,56 +66,52 @@ const team = ref({
 })
 
 const interns = ref<Intern[]>([])
+const loading = ref(false)
 
-onMounted(() => {
-  const teamId = Number(route.params.id)
+onMounted(async () => {
+  const teamId = route.params.id as string
+  loading.value = true
 
-  console.log('Team ID:', teamId)
+  try {
+    // 1️⃣ ดึง intern ทั้งหมด
+    const internRes = await apiFetch('/users/interns') as { data: any[] }
+    const allInterns = internRes.data
 
-  interface TeamData {
-    name: string
-    invite_link: string
-    interns: Intern[]
-  }
+    // 2️⃣ filter intern ตาม team
+    const teamInterns = allInterns.filter(intern =>
+      intern.teams?.some((t: any) => t.id === teamId)
+    )
 
-  const mockTeams: Record<number, TeamData> = {
-    1: {
-      name: 'Frontend - Batch 1',
-      invite_link: 'http://invite.link/join/abc',
-      interns: [
-        { id: 1, name: 'Sompong', status: 'checked-in', checkin_time: '09:00 AM', order: 1 },
-        { id: 2, name: 'Anon', status: 'not-checked', order: 3 },
-        { id: 3, name: 'Somchai', status: 'leave-pending', order: 2 },
-        { id: 4, name: 'Somying', status: 'on-leave', order: 4 }
-      ]
-    },
-    2: {
-      name: 'Frontend - Batch 2',
-      invite_link: 'http://invite.link/join/xyz',
-      interns: [
-        { id: 5, name: 'Mali', status: 'checked-in', checkin_time: '08:55 AM', order: 1 },
-        { id: 6, name: 'Narin', status: 'not-checked', order: 2 },
-        { id: 7, name: 'Krit', status: 'on-leave', order: 3 }
-      ]
+    // ตั้งชื่อทีมจาก intern คนแรก
+    const teamInfo = teamInterns[0]?.teams?.find((t: any) => t.id === teamId)
+
+    team.value = {
+      name: teamInfo?.name || 'Unknown Team',
+      invite_link: '-' // ยังไม่มี API invite link
     }
+
+    // 3️⃣ ดึง ranking
+    const rankingRes = await apiFetch('/points/ranking') as { data: any[] }
+
+    const rankingMap: Record<string, number> = {}
+    rankingRes.data.forEach((item: any, index: number) => {
+      rankingMap[item.userId] = index + 1
+    })
+
+    // 4️⃣ map interns
+    interns.value = teamInterns.map((intern: any) => ({
+      id: String(intern.id),
+      name: `${intern.firstName} ${intern.lastName}`,
+      status: 'not-checked', // ยังไม่ได้คำนวณ attendance
+      order: rankingMap[intern.id] || 0
+    }))
+
+  } catch (err) {
+    console.error('Team detail error:', err)
+  } finally {
+    loading.value = false
   }
-
-  const data = mockTeams[teamId]
-
-  if (!data) {
-    team.value = { name: 'Unknown Team', invite_link: '-' }
-    interns.value = []
-    return
-  }
-
-  team.value = {
-    name: data.name,
-    invite_link: data.invite_link
-  }
-
-  interns.value = data.interns
 })
-
 
 function goTeamSetting() {
   router.push(`/mentor/team/${route.params.id}/settings`)

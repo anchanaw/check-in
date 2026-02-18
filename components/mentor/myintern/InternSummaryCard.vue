@@ -9,7 +9,8 @@
           <img src="/icons/check.svg" class="icon" />
           <span class="label">Today checked-in</span>
         </div>
-        <span class="value">{{ data.checkinTime }}</span>
+        <span class="value"> {{ data.checkinTime || '-' }}
+        </span>
       </div>
 
       <!-- Rank -->
@@ -42,13 +43,20 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 
-defineProps({
-  data: Object,
-  loading: Boolean
-})
+interface SummaryData {
+  checkinTime: string
+  rank: string
+  totalPoints: number
+  avgTime: string
+}
+
+defineProps < {
+  data: SummaryData
+  loading: boolean
+} > ()
 </script>
 
 <style scoped>

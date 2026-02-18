@@ -31,7 +31,7 @@
         Reason is required
       </div>
 
-      <a-button block class="submit-btn" :class="{ remove: points < 0 }" :disabled="!canSubmit || points === 0"
+      <a-button block class="submit-btn" :class="{ remove: points < 0 }" :disabled="!canSubmit" :loading="loading"
         @click="submit">
         {{ points >= 0 ? 'Add points' : 'Remove points' }}
       </a-button>
@@ -42,10 +42,19 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { useApi } from '~/composables/core'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-const points = ref(0) // เริ่มที่ 0
+const { apiFetch } = useApi()
+const route = useRoute()
+
+const internId = route.params.id as string
+
+const points = ref(0)
 const reason = ref('')
+const loading = ref(false)
 
 /* stepper */
 const increase = () => {
@@ -62,19 +71,41 @@ const reasonError = computed(() => {
 })
 
 const canSubmit = computed(() => {
-  return !reasonError.value
+  return !reasonError.value && points.value !== 0
 })
 
-const submit = () => {
-  if (!canSubmit.value || points.value === 0) return
+const submit = async () => {
+  if (!canSubmit.value || loading.value) return
 
-  console.log('SUBMIT BONUS', {
-    points: points.value,
-    reason: reason.value.trim()
-  })
+  try {
+    loading.value = true
 
-  // TODO: API
+    await apiFetch(`/users/interns/${internId}/points`, {
+      method: 'POST',
+      body: {
+        points: points.value,
+        reason: reason.value.trim()
+      }
+    })
+
+    message.success('Bonus updated successfully')
+
+    emit('updated') // 🔥 ตรงนี้
+
+    points.value = 0
+    reason.value = ''
+
+  } catch (err) {
+    message.error('Failed to update bonus')
+  } finally {
+    loading.value = false
+  }
 }
+
+const emit = defineEmits<{
+  (e: 'updated'): void
+}>()
+
 </script>
 
 <style scoped>

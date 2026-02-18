@@ -15,29 +15,54 @@
     </div>
 
     <!-- Rows -->
-    <div v-for="item in items" :key="item.id" class="row">
-      <span class="point">
-        +{{ item.point }} {{ item.reason }}
-      </span>
-      <span class="date">
-        {{ item.date }}
-      </span>
-    </div>
+    <!-- Empty -->
+<div v-if="!items || items.length === 0" class="empty">
+  No bonus history
+</div>
+
+<!-- Rows -->
+<div v-else v-for="item in items" :key="item.id" class="row">
+  <span
+    class="point"
+    :class="{ positive: item.point > 0, negative: item.point < 0 }"
+  >
+    {{ item.point > 0 ? '+' : '' }}{{ item.point }}
+    {{ item.reason }}
+  </span>
+
+  <span class="date">
+    {{ formatDate(item.date) }}
+  </span>
+</div>
+
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 import { useRouter } from 'vue-router'
 
-const router = useRouter()
-
-const goViewAll = () => {
-  router.push('/mentor/bonus_history') 
-  // เปลี่ยน path ให้ตรงกับ route จริงของคุณ
+interface BonusItem {
+  id: string
+  point: number
+  reason: string
+  date: string
 }
 
-defineProps({ items: Array })
+defineProps<{
+  items: BonusItem[]
+}>()
+
+const router = useRouter()
+
+const formatDate = (date: string) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString()
+}
+
+const goViewAll = () => {
+  router.push('/mentor/bonus_history')
+}
 </script>
 
 <style scoped>
