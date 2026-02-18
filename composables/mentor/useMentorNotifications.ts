@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { useApi } from '~/composables/core'
 
-// ✅ shared state
 const notifications = ref<any[]>([])
 const unreadCount = ref(0)
 const loading = ref(false)
@@ -16,8 +15,25 @@ export const useMentorNotifications = () => {
       const taskRes: any = await apiFetch('/tasks/submissions/pending')
       const leaveRes: any = await apiFetch('/leaves/pending')
 
+      console.log('TASK RES FULL:', taskRes)
+      console.log('LEAVE RES FULL:', leaveRes)
+
+      // 🔥 รองรับทั้ง 2 แบบ
+      const taskList =
+        taskRes?.data?.data ??
+        taskRes?.data ??
+        []
+
+      const leaveList =
+        leaveRes?.data?.data ??
+        leaveRes?.data ??
+        []
+
+      console.log('TASK LIST:', taskList)
+      console.log('LEAVE LIST:', leaveList)
+
       notifications.value = [
-        ...taskRes.data.map((t: any) => ({
+        ...taskList.map((t: any) => ({
           id: `task-${t.id}`,
           type: 'task',
           title: 'Task submitted',
@@ -25,7 +41,7 @@ export const useMentorNotifications = () => {
           refId: t.id,
           unread: true
         })),
-        ...leaveRes.data.map((l: any) => ({
+        ...leaveList.map((l: any) => ({
           id: `leave-${l.id}`,
           type: 'leave',
           title: 'Leave request pending',
@@ -37,8 +53,10 @@ export const useMentorNotifications = () => {
 
       unreadCount.value = notifications.value.length
 
+      console.log('FINAL NOTIFICATIONS:', notifications.value)
+
     } catch (err) {
-      console.error(err)
+      console.error('Notification error:', err)
     } finally {
       loading.value = false
     }

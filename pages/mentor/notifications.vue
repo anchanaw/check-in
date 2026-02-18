@@ -2,9 +2,7 @@
   <div class="noti-page">
     <!-- Header -->
     <div class="noti-header">
-      <a-button type="text" shape="circle" @click="goBack" class="back-btn">
-        <ArrowLeftOutlined />
-      </a-button>
+        <BackButton />
 
       <span class="title">Notifications</span>
 
@@ -28,7 +26,7 @@
 import { onMounted } from 'vue'
 import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
 import NotificationItem from '@/components/mentor/NotificationItem.vue'
-import { ArrowLeftOutlined } from '@ant-design/icons-vue'
+import BackButton from '~/components/base/BackButton.vue'
 
 const {
   notifications,
@@ -39,8 +37,6 @@ const {
 } = useMentorNotifications()
 
 onMounted(fetchNotifications)
-
-console.log('NOTI DATA:', notifications.value)
 
 </script>
 
