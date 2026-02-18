@@ -3,24 +3,28 @@
     <div class="title">{{ title }}</div>
 
     <div class="list">
-      <div
-        v-for="(item, index) in items"
-        :key="index"
-        class="row"
-      >
+      <div v-for="(item, index) in items" :key="index" class="row">
         <span>{{ item.label }}</span>
-        <span class="value">{{ item.value }}</span>
+        <span class="value">
+          {{ item.value ?? '-' }}
+        </span>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-defineProps({
-  title: String,
-  items: Array
-})
+<script setup lang="ts">
+interface InfoItem {
+  label: string
+  value: string | number | null | undefined
+}
+
+defineProps < {
+  title: string
+  items: InfoItem[]
+} > ()
 </script>
+
 
 <style scoped>
 .section {

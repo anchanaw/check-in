@@ -4,38 +4,52 @@
       Edit Profile
     </a-button>
 
-    <a-button block class="invite" @click="goInviteIntern">
-      Invite Intern
-    </a-button>
+    <!-- 🔥 แสดง Invite เฉพาะ mentor -->
 
     <a-button danger block @click="logout">
-  Logout
-</a-button>
+      Logout
+    </a-button>
   </div>
 </template>
 
-<script setup>
+
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
 import { useAuthStore } from '@/stores/auth.store'
 
+const props = defineProps<{
+  mode: 'mentor' | 'intern'
+}>()
+
+const emit = defineEmits<{
+  (e: 'edit'): void
+  (e: 'invite'): void
+  (e: 'logout'): void
+}>()
+
 const router = useRouter()
+const authStore = useAuthStore()
 
 const goEditProfile = () => {
-  router.push('/mentor/edit_profile')
+  emit('edit')
 }
 
 const goInviteIntern = () => {
-  router.push('/mentor/invite_intern')
+  emit('invite')
 }
-
-const authStore = useAuthStore()
 
 const logout = () => {
-  authStore.$reset()
-  localStorage.removeItem('access_token')
-  router.replace('/login')
+  Modal.confirm({
+    title: 'Are you sure you want to logout?',
+    onOk() {
+      authStore.$reset()
+      localStorage.removeItem('access_token')
+      emit('logout')
+      router.replace('/login')
+    }
+  })
 }
-
 </script>
 
 <style scoped>

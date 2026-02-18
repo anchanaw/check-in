@@ -25,12 +25,12 @@
 
                 <!-- Actions -->
                 <div class="actions">
-                    <a-button danger class="action-btn reject" :loading="loading" @click="$emit('reject', note)">
+                    <a-button danger class="action-btn reject" :loading="submitting" @click="reviewTask('rejected')">
                         Reject
                     </a-button>
 
-                    <a-button type="primary" class="action-btn approve" :loading="loading"
-                        @click="$emit('approve', note)">
+                    <a-button type="primary" class="action-btn approve" :loading="submitting"
+                        @click="reviewTask('approved')">
                         Approve & Add points
                     </a-button>
                 </div>
@@ -39,22 +39,61 @@
     </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import { message } from 'ant-design-vue'
+import { useApi } from '~/composables/core'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-defineProps({
-    task: {
-        type: Object,
-        required: true
-    },
-    loading: Boolean
-})
+const { apiFetch } = useApi()
 
-defineEmits(['approve', 'reject'])
+const props = defineProps < {
+    task: {
+        id: string
+    description: string
+    imageUrl?: string
+    }
+  loading: boolean
+} > ()
+
+const emit = defineEmits < {
+  (e: 'updated'): void
+}> ()
 
 const note = ref('')
+const submitting = ref(false)
+
+const reviewTask = async (status: 'approved' | 'rejected') => {
+    if (submitting.value) return
+
+    try {
+        submitting.value = true
+
+        await apiFetch(`/tasks/submissions/${props.task.id}/review`, {
+            method: 'PATCH',
+            body: {
+                status,
+                note: note.value.trim()
+            }
+        })
+
+        message.success(
+            status === 'approved'
+                ? 'Task approved successfully'
+                : 'Task rejected successfully'
+        )
+
+        emit('updated') // ให้ parent refresh list
+
+    } catch (err) {
+        console.error(err)
+        message.error('Failed to update task')
+    } finally {
+        submitting.value = false
+    }
+}
 </script>
+
 
 <style scoped>
 /* 🔥 หลบ padding เดิมของ BaseCard (24px) */

@@ -35,35 +35,35 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch, onBeforeUnmount } from 'vue'
+import { message } from 'ant-design-vue'
 import { UserOutlined, EditOutlined } from '@ant-design/icons-vue'
 
-const props = defineProps({
-  user: {
-    type: Object,
-    required: true
-  },
-  avatar: {
-    type: String,
-    default: null
-  },
-  editable: {
-    type: Boolean,
-    default: false
-  }
-})
+interface User {
+  name: string
+  role: string
+}
 
-const emit = defineEmits(['updateAvatar'])
+const props = defineProps<{
+  user: User
+  avatar?: string | null
+  editable?: boolean
+}>()
 
-const preview = ref(props.avatar)
-const fileInput = ref(null)
+const emit = defineEmits<{
+  (e: 'updateAvatar', file: File): void
+}>()
+
+const preview = ref<string | null>(props.avatar || null)
+const fileInput = ref<HTMLInputElement | null>(null)
+let objectUrl: string | null = null
 
 /* sync avatar จาก parent */
 watch(
   () => props.avatar,
   (val) => {
-    preview.value = val
+    preview.value = val || null
   }
 )
 
@@ -71,13 +71,42 @@ const triggerUpload = () => {
   fileInput.value?.click()
 }
 
-const onFileChange = (e) => {
-  const file = e.target.files[0]
+const onFileChange = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
 
-  preview.value = URL.createObjectURL(file)
+  // 🔥 ตรวจ type
+  if (!file.type.startsWith('image/')) {
+    message.error('Please upload an image file')
+    return
+  }
+
+  // 🔥 ตรวจขนาด (เช่น 2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    message.error('Image size must be less than 2MB')
+    return
+  }
+
+  // 🔥 revoke object URL เก่า
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl)
+  }
+
+  objectUrl = URL.createObjectURL(file)
+  preview.value = objectUrl
+
   emit('updateAvatar', file)
+
+  // reset input เพื่อให้เลือกไฟล์เดิมซ้ำได้
+  input.value = ''
 }
+
+onBeforeUnmount(() => {
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl)
+  }
+})
 </script>
 
 <style scoped>
