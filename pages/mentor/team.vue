@@ -61,24 +61,35 @@ const loading = ref(false)
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await apiFetch('/users/interns') as { data: any[] }
+    // 1️⃣ โหลด interns
+    const internRes = await apiFetch('/users/interns') as { data: any[] }
+    const interns = internRes.data
 
-    const interns = res.data
+    // 2️⃣ โหลด invites
+    const inviteRes = await apiFetch('/auth/invites') as { data: any[] }
+    const invites = inviteRes.data
+
     const teamMap: Record<string, Team> = {}
 
     interns.forEach((intern: any) => {
       if (!intern.teams || intern.teams.length === 0) return
 
       intern.teams.forEach((team: any) => {
-        const teamId = team.id
+        const teamId = String(team.id)
         const teamName = team.name
+
+        // 🔥 หา invite ของทีมนี้
+        const activeInvite = invites.find((i: any) =>
+          String(i.teamId) === teamId &&
+          i.usesCount < i.maxUses
+        )
 
         if (!teamMap[teamId]) {
           teamMap[teamId] = {
-            id: String(teamId),
+            id: teamId,
             name: teamName,
             intern_count: 0,
-            invite_active: true
+            invite_active: !!activeInvite
           }
         }
 
@@ -100,7 +111,7 @@ const goDetail = (id: string) => {
 }
 
 const goCreateLink = () => {
-  router.push('/mentor/create-link')
+  router.push('/mentor/teams/create')
 }
 </script>
 

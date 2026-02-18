@@ -64,7 +64,7 @@ onMounted(() => {
 .page {
   min-height: 100vh;
   padding: 16px 16px 80px;
-  background: #79c3f6;
+  background: #6CBCFA;
 }
 
 .card-spacing {

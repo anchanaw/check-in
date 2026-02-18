@@ -17,9 +17,16 @@
         <div class="team-name">{{ team.name }}</div>
 
         <div class="team-bottom">
-          <div class="invite-link">
-            {{ team.invite_link }}
+          <div v-if="invite" class="invite-section">
+            <div class="invite-link">
+              {{ baseUrl }}/register?code={{ invite.code }}
+            </div>
           </div>
+
+          <div v-else class="no-invite">
+            No active invite link
+          </div>
+
 
           <button class="team-btn" @click="goTeamSetting">
             Team Settings <span class="arrow">›</span>
@@ -67,6 +74,8 @@ const team = ref({
 
 const interns = ref<Intern[]>([])
 const loading = ref(false)
+const invite = ref<any | null>(null)
+const baseUrl = ref(typeof window !== 'undefined' ? window.location.origin : '')
 
 onMounted(async () => {
   const teamId = route.params.id as string
@@ -81,6 +90,16 @@ onMounted(async () => {
     const teamInterns = allInterns.filter(intern =>
       intern.teams?.some((t: any) => t.id === teamId)
     )
+
+    // โหลด invites ทั้งหมด
+    const inviteRes = await apiFetch('/auth/invites') as { data: any[] }
+
+    // ❗ ถ้า backend ไม่มี teamId จะเช็คไม่ได้
+    invite.value = inviteRes.data.find(
+      (i: any) =>
+        String(i.teamId) === String(teamId) &&
+        i.usesCount < i.maxUses
+    ) || null
 
     // ตั้งชื่อทีมจาก intern คนแรก
     const teamInfo = teamInterns[0]?.teams?.find((t: any) => t.id === teamId)
@@ -114,8 +133,9 @@ onMounted(async () => {
 })
 
 function goTeamSetting() {
-  router.push(`/mentor/team/${route.params.id}/settings`)
+  router.push(`/mentor/teams/${route.params.id}/settings`)
 }
+
 </script>
 
 <style scoped>

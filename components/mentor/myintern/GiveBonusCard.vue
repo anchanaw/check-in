@@ -80,9 +80,10 @@ const submit = async () => {
   try {
     loading.value = true
 
-    await apiFetch(`/users/interns/${internId}/points`, {
+    await apiFetch('/points/award', {
       method: 'POST',
       body: {
+        internId: internId,
         points: points.value,
         reason: reason.value.trim()
       }
@@ -90,7 +91,7 @@ const submit = async () => {
 
     message.success('Bonus updated successfully')
 
-    emit('updated') // 🔥 ตรงนี้
+    emit('updated')
 
     points.value = 0
     reason.value = ''

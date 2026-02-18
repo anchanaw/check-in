@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="top-header">
       <a-button type="text" shape="circle" @click="goBack">
-        <ArrowLeftOutlined />
+        <BackButton />
       </a-button>
       <span class="header-title">Create Link</span>
     </div>
@@ -14,15 +14,15 @@
       </BaseCard>
     </div>
 
-    <BottomBar active="profile" />
+    <MentorBottomBar active="profile" />
   </div>
 </template>
 
 <script setup>
-import { ArrowLeftOutlined } from '@ant-design/icons-vue'
 import BaseCard from '~/components/base/BaseCard.vue'
 import CreateLinkForm from '~/components/mentor/invite/CreateLinkForm.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+import BackButton from '~/components/base/BackButton.vue'
 
 const goBack = () => history.back()
 </script>
