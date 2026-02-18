@@ -47,53 +47,58 @@ import BaseCard from '@/components/base/BaseCard.vue'
 
 const { apiFetch } = useApi()
 
-const props = defineProps < {
-    task: {
-        id: string
+const props = defineProps<{
+  task: {
+    id: string
     description: string
     imageUrl?: string
-    }
+  }
   loading: boolean
-} > ()
+}>()
 
-const emit = defineEmits < {
+const emit = defineEmits<{
   (e: 'updated'): void
-}> ()
+}>()
 
 const note = ref('')
 const submitting = ref(false)
 
 const reviewTask = async (status: 'approved' | 'rejected') => {
-    if (submitting.value) return
+  if (submitting.value) return
 
-    try {
-        submitting.value = true
+  if (!props.task?.id) {
+    message.error('Invalid task ID')
+    return
+  }
 
-        await apiFetch(`/tasks/submissions/${props.task.id}/review`, {
-            method: 'PATCH',
-            body: {
-                status,
-                note: note.value.trim()
-            }
-        })
+  try {
+    submitting.value = true
 
-        message.success(
-            status === 'approved'
-                ? 'Task approved successfully'
-                : 'Task rejected successfully'
-        )
+    await apiFetch(`/tasks/submissions/${props.task.id}/review`, {
+      method: 'PATCH',
+      body: {
+        status,
+        note: note.value?.trim() || undefined // ส่งเฉพาะถ้ามีค่า
+      }
+    })
 
-        emit('updated') // ให้ parent refresh list
+    message.success(
+      status === 'approved'
+        ? 'Task approved successfully'
+        : 'Task rejected successfully'
+    )
 
-    } catch (err) {
-        console.error(err)
-        message.error('Failed to update task')
-    } finally {
-        submitting.value = false
-    }
+    note.value = '' // reset note
+    emit('updated') // refresh parent list
+
+  } catch (err: any) {
+    console.error('Review error:', err)
+    message.error(err?.message || 'Failed to update task')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
-
 
 <style scoped>
 /* 🔥 หลบ padding เดิมของ BaseCard (24px) */

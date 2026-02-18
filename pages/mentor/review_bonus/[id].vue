@@ -1,130 +1,115 @@
 <template>
-  <a-layout class="page">
-    <a-page-header class="page-header">
-      <div class="header-grid">
-        <div class="left">
-          <BackButton @click="goBack" />
-        </div>
-        <div class="center">
-          Review Bonus Tasks
-        </div>
-        <div></div>
-      </div>
-    </a-page-header>
-
-    <div class="content-center">
-      <a-space direction="vertical" size="middle" class="space-wrapper">
-        <BonusTaskSummaryCard :task="task" :loading="loading" />
-        <BonusTaskContentWithAction :task="task" :loading="actionLoading" @approve="approve" @reject="reject" />
-      </a-space>
+  <div class="leave-page">
+    <div class="top-header">
+      <BackButton />
+      <span class="header-title">Leave Request</span>
     </div>
 
-    <MentorBottomBar />
-  </a-layout>
+    <div class="wrapper">
+      <BaseCard>
+        <LeaveRequestCard
+          :request="request"
+          @approve="approve"
+          @reject="reject"
+        />
+      </BaseCard>
+    </div>
+
+    <BottomBar />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
 import { useApi } from '~/composables/core'
 
+import BaseCard from '~/components/base/BaseCard.vue'
+import LeaveRequestCard from '~/components/mentor/LeaveRequestCard.vue'
+import BottomBar from '@/components/mentor/MentorBottomBar.vue'
 import BackButton from '@/components/base/BackButton.vue'
-import BonusTaskSummaryCard from '@/components/mentor/bonus/BonusTaskSummaryCard.vue'
-import BonusTaskContentWithAction from '@/components/mentor/bonus/BonusTaskContentWithAction.vue'
-import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
-import { useBonusReview } from '@/composables/mentor/useBonusReview'
 
+const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 
-const { apiFetch } = useApi()
-const loading = ref(true)
-const actionLoading = ref(false)
 const id = route.params.id as string
 
-const { reviewSubmission } = useBonusReview()
+if (!id) {
+  console.error('Invalid leave id')
+  router.back()
+}
 
-const task = ref({
-  internName: '',
-  title: '',
-  submittedAt: '',
-  bonusPoint: 0,
-  description: '',
-  imageUrl: ''
+const submitting = ref(false)
+
+const request = reactive({
+  id: '',
+  name: '',
+  type: '',
+  date: '',
+  duration: '',
+  status: '',
+  description: ''
 })
 
 onMounted(async () => {
-  loading.value = true
-
   try {
-    const submissionRes = await apiFetch<{
-      success: boolean
-      data: any[]
-    }>('/tasks/submissions/pending')
+    const res: any = await apiFetch(`/leaves/${id}`)
+    const data = res.data
 
-    const submission = submissionRes.data.find(
-      (s: any) => s.id === id
-    )
+    request.id = data.id
+    request.name = data.internName
+    request.type = data.type
+    request.date = data.date
+    request.duration = data.duration
+    request.status = data.status
+    request.description = data.description
 
-
-    if (!submission) return
-
-    // ดึง task detail
-    const taskRes = await apiFetch<{
-      success: boolean
-      data: any
-    }>(`/tasks/${submission.taskId}`)
-
-    const taskData = taskRes.data
-
-    // ดึง intern
-    const internRes = await apiFetch<{
-      success: boolean
-      data: any[]
-    }>('/users/interns')
-    const intern = internRes.data.find(
-      (i: any) => i.id === submission.internId
-    )
-
-    task.value = {
-      internName: intern
-        ? `${intern.firstName} ${intern.lastName}`
-        : 'Unknown',
-      title: taskData.title,
-      submittedAt: submission.submittedAt,
-      bonusPoint: taskData.points,
-      description: submission.content,
-      imageUrl: '' // ถ้ามี image field ค่อยใส่
-    }
-
-  } finally {
-    loading.value = false
+  } catch (err) {
+    message.error('Failed to load leave')
   }
 })
 
-const approve = async (note: string) => {
-  actionLoading.value = true
+const approve = async () => {
+  if (submitting.value) return
+  submitting.value = true
+
   try {
-    await reviewSubmission(id, 'approved', note)
+    await apiFetch(`/leaves/${id}/review`, {
+      method: 'PATCH',
+      body: { status: 'approved' }
+    })
+
+    message.success('Approved')
     router.back()
-  } catch (err) {
-    console.error(err)
+
+  } catch {
+    message.error('Approve failed')
   } finally {
-    actionLoading.value = false
+    submitting.value = false
   }
 }
 
-const reject = async (note: string) => {
-  actionLoading.value = true
+const reject = async () => {
+  if (submitting.value) return
+  submitting.value = true
+
   try {
-    await reviewSubmission(id, 'rejected', note)
+    await apiFetch(`/leaves/${id}/review`, {
+      method: 'PATCH',
+      body: { status: 'rejected' }
+    })
+
+    message.success('Rejected')
     router.back()
+
+  } catch {
+    message.error('Reject failed')
   } finally {
-    actionLoading.value = false
+    submitting.value = false
   }
 }
-
-const goBack = () => router.back()
 </script>
 
 <style scoped>

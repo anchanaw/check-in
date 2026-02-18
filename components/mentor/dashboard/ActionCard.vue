@@ -37,7 +37,7 @@ const actions = [
   },
   {
     label: '📄 Review leave requests',
-    route: '/mentor/leave_request'
+    route: '/mentor/leave_review'
   }
 ]
 

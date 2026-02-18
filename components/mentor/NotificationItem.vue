@@ -1,8 +1,5 @@
 <template>
-  <a-card
-    class="noti-card"
-    :class="{ unread }"
-  >
+  <a-card class="noti-card" :class="{ unread }">
     <div class="card-content">
       <div class="icon">
         <component :is="iconComponent" />
@@ -12,21 +9,12 @@
         <div class="card-title">{{ data.title }}</div>
         <div class="card-body">{{ data.body }}</div>
 
-        <a-button
-          size="small"
-          class="detail-btn"
-          type="link"
-          @click="$emit('detail', data)"
-        >
+        <a-button size="small" class="detail-btn" type="link" @click="goDetail">
           Detail
         </a-button>
       </div>
 
-      <a-button
-        type="text"
-        danger
-        @click="$emit('remove', data.id)"
-      >
+      <a-button type="text" danger @click="$emit('remove', data.id)">
         ✕
       </a-button>
     </div>
@@ -35,7 +23,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { BellOutlined, FileTextOutlined } from '@ant-design/icons-vue'
+
+const router = useRouter()
 
 const props = defineProps<{
   data: any
@@ -46,8 +37,17 @@ const iconComponent = computed(() => {
   if (props.data.type === 'task') return FileTextOutlined
   return BellOutlined
 })
-</script>
 
+const goDetail = () => {
+  if (props.data.type === 'task') {
+    router.push(`/mentor/review_bonus/${props.data.refId}`)
+  }
+
+  if (props.data.type === 'leave') {
+    router.push(`/mentor/leave_review/${props.data.refId}`)
+  }
+}
+</script>
 
 <style scoped>
 .noti-card {

@@ -24,12 +24,14 @@
     </div>
 
     <div class="actions" v-if="request.status === 'Pending'">
-      <a-button block class="reject" @click="$emit('reject')">
-        Reject
-      </a-button>
-      <a-button block type="primary" @click="$emit('approve')">
-        Approve
-      </a-button>
+      <a-button block class="reject" @click="$emit('reject', request.id)">
+  Reject
+</a-button>
+
+<a-button block type="primary" @click="$emit('approve', request.id)">
+  Approve
+</a-button>
+
     </div>
   </div>
 </template>
