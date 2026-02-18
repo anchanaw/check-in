@@ -3,8 +3,8 @@
 
     <!-- Logo -->
     <div class="logo">
-  <img src="/public/logo.png" alt="A-VALUE Logo" class="logo-img" />
-</div>
+      <img src="/public/logo.png" alt="A-VALUE Logo" class="logo-img" />
+    </div>
 
     <!-- Card -->
     <BaseCard class="card">
@@ -18,21 +18,11 @@
       </a-typography-text>
 
       <div class="actions">
-        <a-button
-          type="primary"
-          block
-          size="large"
-          @click="goLogin"
-        >
+        <a-button type="primary" block size="large" @click="goLogin">
           Continue with my account
         </a-button>
 
-        <a-button
-          block
-          size="large"
-          class="register-btn"
-          @click="goRegister"
-        >
+        <a-button block size="large" class="register-btn" @click="goRegister">
           I’m new here
         </a-button>
       </div>
@@ -51,13 +41,14 @@ const router = useRouter()
 const token = route.params.token as string
 
 const goLogin = () => {
-  router.push('/login') // login ไม่เกี่ยวกับ invite
+  router.push(`/login?invite=${token}`)
 }
 
 const goRegister = () => {
   router.push(`/register?invite=${token}`)
 }
 </script>
+
 
 <style scoped>
 .page {
@@ -75,7 +66,8 @@ const goRegister = () => {
 }
 
 .logo-img {
-  width: 250px;   /* ปรับได้ตามความสวย */
+  width: 250px;
+  /* ปรับได้ตามความสวย */
   height: auto;
 }
 

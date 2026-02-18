@@ -93,8 +93,7 @@ const createInvite = async () => {
             }
         })
 
-        inviteLink.value = `${window.location.origin}/register?code=${code}`
-
+        inviteLink.value = `${window.location.origin}/invite/${code}`
         message.success('Invite link created')
     } catch (err) {
         message.error('Failed to create invite')
@@ -108,7 +107,7 @@ const copyLink = () => {
     message.success('Copied!')
 }
 const goToTeam = () => {
-  router.push(`/mentor/teams/${teamId}`)
+    router.push(`/mentor/teams/${teamId}`)
 }
 </script>
 
@@ -171,7 +170,6 @@ const goToTeam = () => {
 }
 
 .view-team-btn {
-  margin-top: 12px;
+    margin-top: 12px;
 }
-
 </style>
