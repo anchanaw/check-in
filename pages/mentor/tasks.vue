@@ -27,11 +27,14 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import TaskTable from '@/components/mentor/task/TaskTable.vue'
 import CreateTaskModal from '@/components/mentor/task/CreateTaskModal.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+
+const { apiFetch } = useApi()
 
 const createOpen = ref(false)
 
@@ -43,23 +46,29 @@ const onSaveTask = async (payload) => {
   try {
     console.log('save task:', payload)
 
-    await axios.post(
-      `/tasks/${taskId}/submissions`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+    await apiFetch('/tasks', {
+      method: 'POST',
+      body: {
+        title: payload.title,
+        description: payload.description,
+        points: payload.points,
+        isBonus: payload.isBonus,
+        deadline: payload.deadline,
+        teamId: payload.teamId,
+        internId: payload.internId
       }
-    )
+    })
+
+    message.success('Task created successfully')
 
     createOpen.value = false
 
-    // 🔥 รีโหลดตารางหลังสร้างสำเร็จ
+    // 🔥 รีโหลด table (อย่า reload หน้า)
     window.location.reload()
 
   } catch (error) {
     console.error('Create task error:', error)
+    message.error('Failed to create task')
   }
 }
 </script>

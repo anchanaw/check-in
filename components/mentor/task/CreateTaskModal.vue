@@ -11,25 +11,21 @@
 
       <!-- body -->
       <div class="popup-body">
-        <a-form layout="vertical" @finish="submit">
-          <a-form-item label="Task Title" name="title" required>
+        <a-form layout="vertical" :model="form" @finish="submit"> <a-form-item label="Task Title" name="title" :rules="[
+          { required: true, message: 'Please enter task title' }
+        ]">
             <a-input v-model:value="form.title" />
           </a-form-item>
-
           <a-form-item label="Description" name="description">
             <a-textarea v-model:value="form.description" rows="3" />
           </a-form-item>
 
           <a-form-item label="Bonus" name="bonus">
-            <BonusInput v-model="form.bonus" />
+            <BonusInput v-model="form.points" />
           </a-form-item>
 
           <a-form-item label="Deadline" name="deadline">
             <a-date-picker v-model:value="form.deadline" picker="month" style="width: 100%" input-read-only />
-          </a-form-item>
-
-          <a-form-item label="Status" name="active">
-            <StatusSwitch v-model="form.active" />
           </a-form-item>
 
           <div class="actions">
@@ -50,11 +46,10 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import BonusInput from './BonusInput.vue'
-import StatusSwitch from '@/components/base/StatusSwitch.vue'
 import dayjs from 'dayjs'
+import BonusInput from './BonusInput.vue'
 
-defineProps<{
+const props = defineProps<{
   open: boolean
 }>()
 
@@ -66,43 +61,37 @@ const emit = defineEmits<{
 const form = reactive({
   title: '',
   description: '',
-  bonus: 1,
-  deadline: null as any,
-  active: true
+  points: 1,
+  deadline: null as any
 })
 
 watch(
-  () => open,
+  () => props.open,
   (val) => {
-    if (val()) {
+    if (val) {
       form.title = ''
       form.description = ''
-      form.bonus = 1
+      form.points = 1
       form.deadline = null
-      form.active = true
     }
   }
 )
 
-const close = () => emit('close') 
+const close = () => emit('close')
 
 const submit = () => {
   const payload = {
     title: form.title,
     description: form.description,
-    points: form.bonus,          
-    isBonus: form.active,        
+    points: form.points,
+    isBonus: form.points > 0,  // 🔥 bonus derive จาก points
     deadline: form.deadline
       ? dayjs(form.deadline).toISOString()
       : null
   }
 
-  console.log('Final Payload:', payload)
-
   emit('save', payload)
-  close()
 }
-
 </script>
 
 <style scoped>

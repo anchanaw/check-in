@@ -3,33 +3,37 @@
     :columns="columns"
     :data-source="tasks"
     :loading="loading"
+    row-key="id"
   >
     <template #bodyCell="{ column, record }">
-      <!-- format points -->
+      
+      <!-- Format points -->
       <template v-if="column.dataIndex === 'points'">
         +{{ record.points }}
       </template>
 
-      <!-- switch -->
-      <template v-if="column.key === 'status'">
-        <StatusSwitch
-          v-model="record.isBonus"
-          @update:modelValue="() => onToggleStatus(record)"
-        />
+      <!-- Format deadline -->
+      <template v-if="column.dataIndex === 'deadline'">
+        {{ formatDate(record.deadline) }}
       </template>
+
+
     </template>
   </a-table>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import StatusSwitch from '@/components/base/StatusSwitch.vue'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
+import type { TableColumnsType } from 'ant-design-vue'
+
+const { apiFetch } = useApi()
 
 type Task = {
-  id: number
-  key: number
+  id: string
   title: string
+  description: string
   points: number
   deadline: string
   isBonus: boolean
@@ -38,28 +42,61 @@ type Task = {
 const loading = ref(true)
 const tasks = ref<Task[]>([])
 
-const onToggleStatus = async (record: Task) => {
+/* =========================
+   LOAD TASKS
+========================= */
+const loadTasks = async () => {
   try {
-    await axios.patch(`/tasks/${record.id}`, {
-      isBonus: record.isBonus
-    })
-
-    console.log('Updated!')
+    loading.value = true
+    const res: any = await apiFetch('/tasks')
+    tasks.value = res.data
   } catch (err) {
     console.error(err)
+    message.error('Failed to load tasks')
+  } finally {
+    loading.value = false
   }
 }
 
-const columns = [
-  { title: 'Task title', dataIndex: 'title' },
+/* =========================
+   TOGGLE BONUS
+========================= */
+const onToggleStatus = async (record: Task) => {
+  try {
+    await apiFetch(`/tasks/${record.id}`, {
+      method: 'PATCH',
+      body: {
+        isBonus: record.isBonus
+      }
+    })
 
+    message.success('Task updated')
+
+  } catch (err) {
+    message.error('Update failed')
+
+    // rollback ถ้า error
+    record.isBonus = !record.isBonus
+  }
+}
+
+/* =========================
+   FORMAT DATE
+========================= */
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString()
+}
+const columns: TableColumnsType<any> = [
+  {
+    title: 'Task title',
+    dataIndex: 'title'
+  },
   {
     title: 'Points',
     dataIndex: 'points',
     width: 80,
     align: 'center'
   },
-
   {
     title: 'Deadline',
     dataIndex: 'deadline',
@@ -67,41 +104,13 @@ const columns = [
     align: 'center'
   },
 
-  {
-    title: 'Status',
-    key: 'status',
-    dataIndex: 'isBonus',
-    width: 80,
-    align: 'center'
-  }
 ]
-
-
-onMounted(async () => {
-  await new Promise(r => setTimeout(r, 800))
-
-  tasks.value = [
-    {
-      id: 1,
-      key: 1,
-      title: 'Share your day',
-      points: 2,
-      deadline: '26/1/26',
-      isBonus: true
-    }
-  ]
-
-  loading.value = false
-})
+onMounted(loadTasks)
 </script>
 
 <style scoped>
-/* ===== TABLE ===== */
 .task-table :deep(.ant-table-tbody > tr > td) {
   height: 56px;
   vertical-align: middle;
-  overflow: visible;
 }
-
-
 </style>
