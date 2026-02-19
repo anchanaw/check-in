@@ -2,7 +2,7 @@
   <div class="leave-page">
     <!-- Header -->
     <div class="top-header">
-      <BackButton/>
+      <BackButton />
       <span class="header-title">Leave Requests</span>
     </div>
 
@@ -10,19 +10,10 @@
       <BaseCard>
         <a-skeleton v-if="loading" active />
 
-        <a-empty
-          v-else-if="!leaves.length"
-          description="No pending leave requests"
-        />
+        <a-empty v-else-if="!leaves.length" description="No pending leave requests" />
 
-        <LeaveRequestCard
-          v-else
-          v-for="item in leaves"
-          :key="item.id"
-          :request="item"
-          @approve="approveLeave(item)"
-          @reject="rejectLeave(item)"
-        />
+        <LeaveRequestCard v-for="item in leaves" :key="item.id" :request="item" @approve="approveLeave"
+          @reject="rejectLeave" />
       </BaseCard>
     </div>
 
@@ -46,24 +37,57 @@ const router = useRouter()
 
 const leaves = ref<any[]>([])
 const loading = ref(false)
+const interns = ref<any[]>([])
 
-const goBack = () => router.back()
+const loadInterns = async () => {
+  const res: any = await apiFetch('/users/interns')
+  interns.value = res.data || []
+}
+
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const getDuration = (start: string, end: string) => {
+  const s = new Date(start)
+  const e = new Date(end)
+
+  const diff =
+    Math.floor((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
+  return diff
+}
 
 // ✅ โหลด leave pending ทั้งหมด
 onMounted(async () => {
   loading.value = true
+
   try {
+    await loadInterns()
+
     const res: any = await apiFetch('/leaves/pending')
 
-    leaves.value = (res.data || []).map((l: any) => ({
-      id: l.id,
-      name: l.internName,
-      type: l.type,
-      date: l.date,
-      duration: l.duration,
-      status: l.status,
-      description: l.description
-    }))
+    leaves.value = (res.data || []).map((l: any) => {
+      const intern = interns.value.find(
+        (i: any) => i.id === l.internId
+      )
+
+      return {
+        id: l.id,
+        name: intern
+          ? `${intern.firstName} ${intern.lastName}`
+          : 'Unknown Intern',
+        startDate: formatDate(l.startDate),
+        endDate: formatDate(l.endDate),
+        duration: getDuration(l.startDate, l.endDate),
+        status: l.status?.toLowerCase(),
+        description: l.reason
+      }
+    })
 
   } catch (err) {
     message.error('Failed to load leave requests')
@@ -77,36 +101,36 @@ const goDetail = (id: string) => {
   router.push(`/mentor/leave_review/${id}`)
 }
 
-// ✅ approve
-const approveLeave = async (item: any) => {
+
+const approveLeave = async (id: string) => {
   try {
-    await apiFetch(`/leaves/${item.id}/review`, {
+    await apiFetch(`/leaves/${id}/review`, {
       method: 'PATCH',
       body: { status: 'approved' }
     })
 
     message.success('Leave approved')
-    leaves.value = leaves.value.filter(l => l.id !== item.id)
+    leaves.value = leaves.value.filter(l => l.id !== id)
 
   } catch {
     message.error('Failed to approve leave')
   }
 }
 
-// ✅ reject
-const rejectLeave = async (item: any) => {
+const rejectLeave = async (id: string) => {
   try {
-    await apiFetch(`/leaves/${item.id}/review`, {
+    await apiFetch(`/leaves/${id}/review`, {
       method: 'PATCH',
       body: { status: 'rejected' }
     })
 
     message.success('Leave rejected')
-    leaves.value = leaves.value.filter(l => l.id !== item.id)
+    leaves.value = leaves.value.filter(l => l.id !== id)
 
   } catch {
     message.error('Failed to reject leave')
   }
+
 }
 </script>
 

@@ -1,38 +1,49 @@
 <template>
   <div class="leave-card">
+
+    <!-- HEADER -->
     <div class="header">
-      <div class="name">{{ request.name }}</div>
-      <a-tag color="orange" v-if="request.status === 'Pending'">
+      <div class="name">
+        {{ request.name }}
+      </div>
+
+      <a-tag v-if="request.status === 'pending'" color="orange">
         Pending
       </a-tag>
-      <a-tag color="green" v-else-if="request.status === 'Approved'">
+
+      <a-tag v-else-if="request.status === 'approved'" color="green">
         Approved
       </a-tag>
-      <a-tag color="red" v-else>
+
+      <a-tag v-else color="red">
         Rejected
       </a-tag>
     </div>
 
+    <!-- DETAIL -->
     <div class="detail">
-      <div class="type">{{ request.type }}</div>
       <div class="date">
-        {{ request.date }} ({{ request.duration }})
+        {{ request.startDate }} – {{ request.endDate }}
+        • {{ request.duration }} day<span v-if="request.duration > 1">s</span>
       </div>
-      <div class="description"> 
+
+
+      <div class="description">
         {{ request.description }}
       </div>
     </div>
 
-    <div class="actions" v-if="request.status === 'Pending'">
+    <!-- ACTIONS -->
+    <div class="actions" v-if="request.status === 'pending'">
       <a-button block class="reject" @click="$emit('reject', request.id)">
-  Reject
-</a-button>
+        Reject
+      </a-button>
 
-<a-button block type="primary" @click="$emit('approve', request.id)">
-  Approve
-</a-button>
-
+      <a-button block type="primary" @click="$emit('approve', request.id)">
+        Approve
+      </a-button>
     </div>
+
   </div>
 </template>
 
@@ -65,10 +76,6 @@ defineProps({
 .detail {
   font-size: 14px;
   color: #555;
-}
-
-.type {
-  font-weight: 500;
 }
 
 .actions {
