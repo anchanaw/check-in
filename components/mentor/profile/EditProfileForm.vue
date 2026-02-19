@@ -1,14 +1,6 @@
 <template>
-  <a-form layout="vertical" @finish="submit">
-    <!-- Account -->
+  <a-form layout="vertical" :model="form" @finish="submit">
     <Section title="Account Information">
-      <a-form-item label="Username">
-        <a-input v-model:value="form.username" />
-      </a-form-item>
-
-      <a-form-item label="Email">
-        <a-input v-model:value="form.email" />
-      </a-form-item>
 
       <!-- Change Password -->
       <a-button block class="change-password" html-type="button" @click="goChangePassword">
@@ -27,8 +19,12 @@
         <a-input v-model:value="form.lastName" />
       </a-form-item>
 
-      <a-form-item label="Gender">
-        <a-input v-model:value="form.gender" />
+      <a-form-item label="Gender" name="gender">
+        <a-select v-model:value="form.gender" placeholder="Select gender" allow-clear>
+          <a-select-option value="male">Male</a-select-option>
+          <a-select-option value="female">Female</a-select-option>
+          <a-select-option value="other">Other</a-select-option>
+        </a-select>
       </a-form-item>
 
       <a-form-item label="Date of Birth">
@@ -91,6 +87,7 @@ const submit = () => {
   emit('save', { ...form })
 }
 </script>
+
 <style scoped>
 .change-password {
   background: #A5E2FE;

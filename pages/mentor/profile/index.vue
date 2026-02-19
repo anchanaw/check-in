@@ -2,7 +2,7 @@
   <div class="profile-page">
     <div class="wrapper">
       <BaseCard v-if="user">
-        <ProfileHeader :user="user" :avatar="avatarUrl" editable @updateAvatar="uploadAvatar" />
+        <ProfileHeader :user="user" :avatar="avatarUrl" />
 
         <ProfileInfoSection title="Account Information" :items="accountInfo" />
 
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 
@@ -33,42 +33,18 @@ import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 const { apiFetch } = useApi()
 const router = useRouter()
 
-interface Mentor {
-  id: string
-  email: string
-  role: 'mentor'
-  firstName: string
-  lastName: string
-  gender?: string
-  dateOfBirth?: string
-}
-
 const loading = ref(true)
 const user = ref<any>(null)
 const avatarUrl = ref<string>('')
 const accountInfo = ref<any[]>([])
 const personalInfo = ref<any[]>([])
 
-const uploadAvatar = async (file: File) => {
-  const formData = new FormData()
-  formData.append('avatar', file)
-
-  await apiFetch('/users/avatar', {
-    method: 'PATCH',
-    body: formData
-  })
-}
-
-onMounted(async () => {
+const loadProfile = async () => {
   try {
-    const res = await apiFetch('/auth/me') as { data: Mentor }
-    const data = res.data
+    loading.value = true
 
-    // 🔥 ป้องกัน role ผิด
-    if (data.role !== 'mentor') {
-      router.replace('/')
-      return
-    }
+    const res: any = await apiFetch('/auth/me')
+    const data = res.data
 
     user.value = {
       name: `${data.firstName} ${data.lastName}`,
@@ -90,14 +66,27 @@ onMounted(async () => {
           : '-'
       }
     ]
+    // 🔥 เรียก signed-url endpoint
+    const imgRes: any = await apiFetch('/auth/profile/image-signed-url')
+
+    if (imgRes?.data?.signedUrl) {
+      avatarUrl.value = imgRes.data.signedUrl
+    } else {
+      avatarUrl.value = ''
+    }
+
+    console.log('SET AVATAR URL:', avatarUrl.value)
 
   } catch (err) {
-    console.error('Profile error:', err)
     router.replace('/login')
   } finally {
     loading.value = false
   }
-})
+}
+
+
+onMounted(loadProfile)
+onActivated(loadProfile)
 
 const onEdit = () => {
   router.push('/mentor/profile/edit')
@@ -108,7 +97,6 @@ const onLogout = () => {
   router.push('/login')
 }
 </script>
-
 
 <style scoped>
 .profile-page {
@@ -128,5 +116,11 @@ const onLogout = () => {
 .wrapper :deep(.base-card) {
   width: 100%;
   max-width: 360px;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

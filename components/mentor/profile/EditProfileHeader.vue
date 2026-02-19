@@ -1,55 +1,56 @@
 <template>
   <div class="header">
     <div class="avatar">
-      <UserOutlined class="useroutlined"/>
+      <!-- ถ้ามีรูป ให้แสดงรูป -->
+      <img v-if="avatar" :src="avatar" class="avatar-img" />
+
+      <!-- ถ้าไม่มีรูป แสดงไอคอน -->
+      <UserOutlined v-else class="useroutlined" />
 
       <!-- edit icon -->
-      <EditOutlined
-        class="edit-icon"
-        @click="openFile"
-      />
+      <EditOutlined class="edit-icon" @click="openFile" />
 
       <!-- hidden input -->
-      <input
-        ref="fileInput"
-        type="file"
-        accept="image/*"
-        class="hidden-input"
-        @change="onChange"
-      />
+      <input ref="fileInput" type="file" accept="image/*" class="hidden-input" @change="onChange" />
     </div>
+
 
     <div class="name">{{ user.name }}</div>
     <div class="role">{{ user.role }}</div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { UserOutlined, EditOutlined } from '@ant-design/icons-vue'
 
-defineProps({
-  user: Object
-})
+const { user, avatar } = defineProps<{
+  user: {
+    name: string
+    role: string
+  }
+  avatar?: string | null
+}>()
 
-const fileInput = ref(null)
+const emit = defineEmits<{
+  (e: 'updateAvatar', file: File): void
+}>()
+
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const openFile = () => {
   fileInput.value?.click()
 }
 
-const onChange = (e) => {
-  const file = e.target.files[0]
+const onChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
   if (!file) return
 
-  console.log('selected avatar file:', file)
-
-  /**
-   * TODO:
-   * upload avatar API
-   */
+  emit('updateAvatar', file)
 }
 </script>
+
 
 <style scoped>
 .header {
@@ -67,7 +68,7 @@ const onChange = (e) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .edit-icon {
@@ -96,5 +97,12 @@ const onChange = (e) => {
 .useroutlined {
   font-size: 50px;
   color: #ccc;
+}
+
+.avatar-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 </style>

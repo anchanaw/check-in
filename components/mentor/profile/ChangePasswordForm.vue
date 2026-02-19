@@ -1,5 +1,5 @@
 <template>
-  <a-form layout="vertical" @finish="submit">
+  <a-form layout="vertical" :model="form" @finish="onSubmit">
     <a-form-item
       label="Current Password"
       name="currentPassword"
@@ -38,10 +38,18 @@
   </a-form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive } from 'vue'
+import type { Rule } from 'ant-design-vue/es/form'
 
-const emit = defineEmits(['submit', 'cancel'])
+const emit = defineEmits<{
+  (e: 'submit', payload: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }): void
+  (e: 'cancel'): void
+}>()
 
 const form = reactive({
   currentPassword: '',
@@ -49,20 +57,25 @@ const form = reactive({
   confirmPassword: ''
 })
 
-const validateConfirm = async (_rule, value) => {
+/* ------------------ VALIDATE CONFIRM ------------------ */
+const validateConfirm: Rule['validator'] = async (_, value) => {
+  if (!value) {
+    return Promise.reject('Please confirm password')
+  }
+
   if (value !== form.newPassword) {
     return Promise.reject('Passwords do not match')
   }
+
   return Promise.resolve()
 }
 
-const submit = () => {
-  emit('submit', {
-    currentPassword: form.currentPassword,
-    newPassword: form.newPassword
-  })
+/* ------------------ SUBMIT ------------------ */
+const onSubmit = () => {
+  emit('submit', { ...form })
 }
 </script>
+
 
 <style scoped>
 .mt {

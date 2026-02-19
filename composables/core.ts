@@ -4,7 +4,6 @@ import { navigateTo } from '#app'
 export const useApi = () => {
   const apiFetch = async <T>(url: string, options: any = {}) => {
 
-    // 👇 เรียก store ภายใน function แทน
     const authStore = useAuthStore()
 
     const publicEndpoints = ['/auth/login', '/auth/register']
@@ -12,8 +11,10 @@ export const useApi = () => {
       url.startsWith(endpoint)
     )
 
+    const isFormData = options.body instanceof FormData
+
     const headers: any = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers || {})
     }
 
