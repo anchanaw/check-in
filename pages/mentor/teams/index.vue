@@ -3,18 +3,41 @@
 
     <!-- Header -->
     <div class="top-header">
-      <BackButton class="back-btn" />
-      <div class="title">Team</div>
+      <BackButton />
+      <div class="title">Teams</div>
     </div>
 
-    <!-- Card -->
-    <BaseCard class="card">
+    <BaseCard>
 
-      <TeamItemCard v-for="team in teams" :key="team.id" :team="team" @click="goDetail(team.id)" />
+      <!-- Loading -->
+      <a-skeleton v-if="loading" active />
+
+      <!-- Team List -->
+      <div v-else>
+
+        <TeamItemCard
+          v-for="team in teams"
+          :key="team.id"
+          :team="team"
+          @click="goDetail(team.id)"
+        />
+
+        <!-- 🔥 Pagination -->
+        <div class="pagination">
+          <a-pagination
+            :current="page"
+            :page-size="pageSize"
+            :total="total"
+            show-size-changer
+            @change="handlePageChange"
+            @showSizeChange="handleSizeChange"
+          />
+        </div>
+
+      </div>
 
     </BaseCard>
 
-    <!-- Create Button -->
     <div class="create-wrapper">
       <a-button type="primary" block size="large" @click="goCreateLink">
         Create Link
@@ -27,13 +50,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
+
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import TeamItemCard from '@/components/mentor/myintern/TeamItemCard.vue'
 import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
-import { useApi } from '~/composables/core'
 
 const { apiFetch } = useApi()
 const router = useRouter()
@@ -50,7 +74,11 @@ const loading = ref(false)
 
 const page = ref(1)
 const pageSize = ref(10)
+const total = ref(0)
 
+/* =========================
+   LOAD TEAMS
+========================= */
 const loadTeams = async () => {
   try {
     loading.value = true
@@ -59,9 +87,8 @@ const loadTeams = async () => {
       `/teams?page=${page.value}&pageSize=${pageSize.value}`
     )
 
-    console.log('TEAMS RESPONSE:', res)
-
     teams.value = res.data.teams
+    total.value = res.data.total
 
   } catch (err) {
     console.error('Team fetch error:', err)
@@ -70,20 +97,43 @@ const loadTeams = async () => {
   }
 }
 
-onMounted(() => {
+/* =========================
+   PAGINATION HANDLERS
+========================= */
+const handlePageChange = (newPage: number) => {
+  page.value = newPage
   loadTeams()
-})
+}
 
+const handleSizeChange = (current: number, size: number) => {
+  page.value = 1
+  pageSize.value = size
+  loadTeams()
+}
+
+/* =========================
+   LIFECYCLE
+========================= */
+onMounted(loadTeams)
+onActivated(loadTeams)
+
+/* =========================
+   NAVIGATION
+========================= */
 const goDetail = (id: string) => {
   router.push(`/mentor/teams/${id}`)
 }
-
 const goCreateLink = () => {
   router.push('/mentor/teams/create')
 }
 </script>
 
 <style scoped>
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
 .page {
   min-height: 100vh;
   background: #6CBCFA;

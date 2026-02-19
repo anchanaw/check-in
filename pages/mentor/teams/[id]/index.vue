@@ -32,7 +32,7 @@
           <div class="team-bottom">
             <div v-if="invite" class="invite-section">
               <div class="invite-link">
-                {{ baseUrl }}/register?code={{ invite.code }}
+                {{ baseUrl }}/invite?code={{ invite.code }}
               </div>
             </div>
 
@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 
@@ -73,7 +73,6 @@ import InternLegend from '@/components/mentor/myintern/InternLegend.vue'
 const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
-
 
 interface Intern {
   id: string
@@ -100,48 +99,43 @@ const loadData = async () => {
     loading.value = true
     error.value = null
 
-    // โหลดพร้อมกัน
-    const [
-      teamRes,
-      internRes,
-      inviteRes,
-      rankingRes
-    ] = await Promise.all([
-      apiFetch('/teams?page=1&pageSize=50') as Promise<{
-        data: { teams: any[] }
-      }>,
-      apiFetch('/users/interns') as Promise<{
-        data: any[]
-      }>,
-      apiFetch('/auth/invites') as Promise<{
-        data: any[]
-      }>,
-      apiFetch('/points/ranking') as Promise<{
-        data: any[]
-      }>
-    ])
+    // ===== LOAD TEAMS (ทุกหน้า) =====
+    const firstPageRes: any = await apiFetch('/teams?page=1&pageSize=10')
 
-    /* -------------------------
-       TEAM INFO
-    -------------------------- */
-    const currentTeam = teamRes.data.teams.find(
+    let allTeams = [...firstPageRes.data.teams]
+    const totalPages = firstPageRes.data.totalPages
+
+    if (totalPages > 1) {
+      const otherPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          apiFetch(`/teams?page=${i + 2}&pageSize=10`)
+        )
+      )
+
+      otherPages.forEach((res: any) => {
+        allTeams = [...allTeams, ...res.data.teams]
+      })
+    }
+
+    const currentTeam = allTeams.find(
       (t: any) => String(t.id) === String(teamId)
     )
 
     team.value.name = currentTeam?.name || 'Unknown Team'
 
-    /* -------------------------
-       TEAM INTERNS
-    -------------------------- */
+    // ===== LOAD OTHER DATA =====
+    const [internRes, inviteRes, rankingRes] = await Promise.all([
+      apiFetch('/users/interns') as Promise<{ data: any[] }>,
+      apiFetch('/auth/invites') as Promise<{ data: any[] }>,
+      apiFetch('/points/ranking') as Promise<{ data: any[] }>
+    ])
+
+    // ===== TEAM INTERNS =====
     const teamInterns = internRes.data.filter((intern: any) =>
       intern.teams?.some((t: any) => String(t.id) === String(teamId))
     )
 
-    /* -------------------------
-       RANKING MAP
-    -------------------------- */
     const rankingMap: Record<string, number> = {}
-
     rankingRes.data.forEach((item: any, index: number) => {
       rankingMap[String(item.userId)] = index + 1
     })
@@ -153,13 +147,12 @@ const loadData = async () => {
       order: rankingMap[String(intern.id)] || 0
     }))
 
-    /* -------------------------
-       ACTIVE INVITE
-    -------------------------- */
+    // ===== ACTIVE INVITE (registration only) =====
     invite.value =
       inviteRes.data.find(
         (i: any) =>
-          String(i.teamId) === String(teamId) &&
+          i.type === 'registration' &&
+          i.role === 'intern' &&
           i.usesCount < i.maxUses
       ) || null
 
@@ -171,13 +164,29 @@ const loadData = async () => {
   }
 }
 
+
+/* =========================
+   LIFECYCLE
+========================= */
 onMounted(loadData)
+onActivated(loadData)
+
+/* =========================
+   REFRESH SUPPORT
+========================= */
+watch(
+  () => route.query.refresh,
+  (val) => {
+    if (val === 'true') {
+      loadData()
+    }
+  }
+)
 
 function goTeamSetting() {
   router.push(`/mentor/teams/${teamId}/settings`)
 }
 </script>
-
 
 <style scoped>
 .page {

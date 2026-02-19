@@ -20,10 +20,10 @@
                         This name will be visible to interns.
                     </div>
 
-                    <a-button type="primary" block size="large" class="create-btn" :loading="loading"
-                        :disabled="!teamName.trim()" @click="createTeam">
+                    <a-button type="primary" block @click="createTeam">
                         Create Team
                     </a-button>
+
                 </a-form>
             </BaseCard>
         </div>
@@ -47,29 +47,37 @@ const error = ref('')
 
 const createTeam = async () => {
     if (!teamName.value.trim()) {
-        error.value = 'Team name is required'
+        message.error('Please enter team name')
         return
     }
-
-    error.value = ''
 
     try {
         loading.value = true
 
-        const res = await apiFetch('/teams', {
+        // 🔥 กลับหน้า teams พร้อม refresh
+        const res: any = await apiFetch('/teams', {
             method: 'POST',
-            body: { name: teamName.value.trim() }
-        }) as { data: { id: string } }
+            body: { name: teamName.value }
+        })
 
         message.success('Team created successfully')
 
-        router.push(`/mentor/teams/${res.data.id}/invite`)
+        // 🔥 ไปหน้า invite ของทีมที่เพิ่งสร้าง
+        router.push({
+            path: `/mentor/teams/${res.data.id}/invite`,
+            query: {
+                name: teamName.value
+            }
+        })
+
+
     } catch (err) {
         message.error('Failed to create team')
     } finally {
         loading.value = false
     }
 }
+
 </script>
 
 <style scoped>

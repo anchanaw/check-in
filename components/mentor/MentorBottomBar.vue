@@ -29,8 +29,8 @@ const items = [
     },
     {
         label: 'INTERN',
-        to: '/mentor/team',
-        match: '/mentor/team',
+        to: '/mentor/teams',
+        match: '/mentor/teams',
         group: ['review_bonus', 'team'],
         icon: '/icons/mentor/intern.svg'
     },

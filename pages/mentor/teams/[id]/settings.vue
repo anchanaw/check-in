@@ -10,17 +10,32 @@
 
         <div class="wrapper">
             <BaseCard>
-                <h3>{{ teamName }}</h3>
 
-                <InviteLinkCard v-if="invite" :invite="{
-                    link: `${baseUrl}/register?code=${invite.code}`,
-                    maxUses: invite.maxUses,
-                    used: invite.usesCount,
-                    status: invite.usesCount >= invite.maxUses ? 'Used' : 'Active'
-                }" @copy="copyLink" />
+                <!-- 🔄 Loading -->
+                <div v-if="loading">
+                    <a-skeleton active :paragraph="{ rows: 3 }" />
+                </div>
 
+                <!-- ❗ Error -->
+                <div v-else-if="error" class="error-state">
+                    {{ error }}
+                </div>
+
+                <!-- ✅ Normal Content -->
                 <div v-else>
-                    No active invite link
+                    <h3>{{ teamName }}</h3>
+
+                    <InviteLinkCard v-if="invite" :invite="{
+                        link: `${baseUrl}/register?code=${invite.code}`,
+                        maxUses: invite.maxUses,
+                        used: invite.usesCount,
+                        status: invite.usesCount >= invite.maxUses ? 'Used' : 'Active'
+                    }" />
+
+                    <div v-else>
+                        No active invite link
+                    </div>
+
                 </div>
 
             </BaseCard>
@@ -51,41 +66,64 @@ const teamId = route.params.id as string
 const goBack = () => {
     router.back()
 }
-const loading = ref(true)
-const error = ref<string | null>(null)
 const teamName = ref('')
 const invite = ref<any | null>(null)
-const baseUrl = import.meta.client ? window.location.origin : ''
+const loading = ref(true)
+const error = ref<string | null>(null)
+const baseUrl = window.location.origin
 
 const loadData = async () => {
-  try {
-    // 1️⃣ โหลด interns ทั้งหมด
-    const internRes = await apiFetch('/users/interns') as { data: any[] }
+    try {
+        loading.value = true
+        error.value = null
 
-    const allTeams = internRes.data
-      .flatMap((i: any) => i.teams || [])
+        // ===== LOAD TEAM NAME =====
+        const firstPageRes: any = await apiFetch('/teams?page=1&pageSize=10')
 
-    const foundTeam = allTeams.find(
-      (t: any) => String(t.id) === String(teamId)
-    )
+        let allTeams = [...firstPageRes.data.teams]
+        const totalPages = firstPageRes.data.totalPages
 
-    teamName.value = foundTeam?.name || 'Unknown Team'
+        if (totalPages > 1) {
+            const otherPages = await Promise.all(
+                Array.from({ length: totalPages - 1 }, (_, i) =>
+                    apiFetch(`/teams?page=${i + 2}&pageSize=10`)
+                )
+            )
 
-    // 2️⃣ โหลด invite ทั้งหมด
-    const inviteRes = await apiFetch('/auth/invites') as { data: any[] }
+            otherPages.forEach((res: any) => {
+                allTeams = [...allTeams, ...res.data.teams]
+            })
+        }
 
-    invite.value = inviteRes.data.find(
-      (i: any) =>
-        String(i.teamId) === String(teamId) &&
-        i.usesCount < i.maxUses
-    ) || null
+        const currentTeam = allTeams.find(
+            (t: any) => String(t.id) === String(teamId)
+        )
 
-  } catch (err) {
-    console.error(err)
-  }
+        teamName.value = currentTeam?.name || 'Unknown Team'
+
+        // ===== LOAD INVITES =====
+        const inviteRes: any = await apiFetch('/auth/invites')
+
+        invite.value =
+            inviteRes.data.find(
+                (i: any) =>
+                    i.type === 'registration' &&
+                    i.role === 'intern' &&
+                    i.usesCount < i.maxUses
+            ) || null
+
+    } catch (err) {
+        console.error(err)
+        error.value = 'Failed to load settings'
+    } finally {
+        loading.value = false
+    }
 }
 
-onMounted(loadData) 
+onMounted(loadData)
+
+
+onMounted(loadData)
 
 
 const copyLink = () => {
@@ -127,5 +165,11 @@ const copyLink = () => {
 
 .create-btn {
     margin-top: 16px;
+}
+
+.error-state {
+    text-align: center;
+    padding: 16px;
+    color: red;
 }
 </style>

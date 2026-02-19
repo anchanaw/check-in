@@ -18,10 +18,6 @@
                         <a-input-number v-model:value="maxUses" :min="1" style="width: 100%" size="large" />
                     </a-form-item>
 
-                    <a-form-item label="Expire At (Optional)">
-                        <a-date-picker v-model:value="expiredAt" picker="month" style="width: 100%" size="large" />
-                    </a-form-item>
-
                     <a-button type="primary" block size="large" :loading="loading" @click="createInvite">
                         Generate Link
                     </a-button>
@@ -48,68 +44,87 @@
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 import { message } from 'ant-design-vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
-import { useRouter } from 'vue-router'
 
 const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 
 const teamId = route.params.id as string
-const teamName = ref('')
+
+// 🔥 รับชื่อจาก query แทนการโหลด API
+const teamName = ref(
+  (route.query.name as string) || 'Unknown Team'
+)
+
 const maxUses = ref(1)
-const expiredAt = ref(null)
 const inviteLink = ref('')
 const loading = ref(false)
 
-onMounted(async () => {
-    // fallback กรณีไม่มี GET /teams/:id
-    teamName.value = `Team ID: ${teamId}`
-})
-
+/* =========================
+   GENERATE RANDOM CODE
+========================= */
 const generateCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
+/* =========================
+   CREATE INVITE
+========================= */
 const createInvite = async () => {
-    try {
-        loading.value = true
-        const code = generateCode()
+  try {
+    loading.value = true
 
-        await apiFetch('/auth/invites', {
-            method: 'POST',
-            body: {
-                code,
-                role: 'intern',
-                type: 'registration',
-                maxUses: maxUses.value,
-            }
-        })
+    const code = generateCode()
 
-        inviteLink.value = `${window.location.origin}/invite/${code}`
-        message.success('Invite link created')
-    } catch (err) {
-        message.error('Failed to create invite')
-    } finally {
-        loading.value = false
-    }
+    const res: any = await apiFetch('/auth/invites', {
+      method: 'POST',
+      body: {
+        code,
+        role: 'intern',
+        type: 'registration',   // 🔥 ใช้อันนี้ไปก่อน
+        maxUses: maxUses.value
+      }
+    })
+
+    inviteLink.value = `${window.location.origin}/invite?code=${code}`
+
+    message.success('Invite link created successfully')
+
+  } catch (err: any) {
+    console.error(err)
+    message.error(
+      err?.data?.error?.message || 'Failed to create invite'
+    )
+  } finally {
+    loading.value = false
+  }
 }
 
+/* =========================
+   COPY LINK
+========================= */
 const copyLink = () => {
-    navigator.clipboard.writeText(inviteLink.value)
-    message.success('Copied!')
+  if (!inviteLink.value) return
+  navigator.clipboard.writeText(inviteLink.value)
+  message.success('Copied!')
 }
+
+/* =========================
+   BACK TO TEAM
+========================= */
 const goToTeam = () => {
-    router.push(`/mentor/teams/${teamId}`)
+  console.log('teamId:', teamId)
+  router.push(`/mentor/teams/${teamId}`)
 }
 </script>
+
 
 <style scoped>
 .page {
