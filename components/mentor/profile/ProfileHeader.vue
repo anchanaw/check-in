@@ -55,7 +55,6 @@ const { user, avatar } = defineProps<{
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border: 3px solid red;
 }
 
 

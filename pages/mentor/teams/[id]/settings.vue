@@ -51,7 +51,8 @@ const teamId = route.params.id as string
 const goBack = () => {
     router.back()
 }
-
+const loading = ref(true)
+const error = ref<string | null>(null)
 const teamName = ref('')
 const invite = ref<any | null>(null)
 const baseUrl = import.meta.client ? window.location.origin : ''
@@ -84,7 +85,8 @@ const loadData = async () => {
   }
 }
 
-onMounted(loadData)
+onMounted(loadData) 
+
 
 const copyLink = () => {
     if (!invite.value) return

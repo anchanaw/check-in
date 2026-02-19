@@ -28,8 +28,9 @@
       </a-form-item>
 
       <a-form-item label="Date of Birth">
-        <a-input type="date" v-model:value="form.dob" />
+        <a-input type="date" v-model:value="form.dob" :max="today" />
       </a-form-item>
+
     </Section>
 
     <!-- Actions -->
@@ -44,13 +45,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, watch, ref, computed } from 'vue'
 import type { PropType } from 'vue'
 
 const goChangePassword = () => {
   navigateTo('/mentor/change_password')
 }
 
+const today = computed(() => {
+  const now = new Date()
+  return now.toISOString().split('T')[0]
+})
 const props = defineProps({
   formData: {
     type: Object as PropType<Record<string, any>>,

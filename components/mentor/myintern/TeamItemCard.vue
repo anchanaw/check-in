@@ -3,16 +3,14 @@
 
     <div class="left">
       <div class="name">{{ team.name }}</div>
-      <div class="intern-count">
-        {{ team.intern_count }} Interns
+
+      <div class="mentor">
+        Mentor: {{ team.mentorName }}
       </div>
 
-      <a-tag
-        :color="team.invite_active ? 'green' : 'red'"
-        class="status"
-      >
-        {{ team.invite_active ? 'Active Invite Link' : 'Invite Link Disabled' }}
-      </a-tag>
+      <div class="intern-count">
+        {{ team.internTotal }} Interns
+      </div>
     </div>
 
     <RightOutlined class="arrow" />
@@ -22,12 +20,15 @@
 
 <script setup lang="ts">
 import { RightOutlined } from '@ant-design/icons-vue'
-import type { Team } from '@/types/team'
 
 defineProps<{
-  team: Team
+  team: {
+    id: string
+    name: string
+    mentorName: string
+    internTotal: number
+  }
 }>()
-
 </script>
 
 <style scoped>
@@ -51,13 +52,14 @@ defineProps<{
   font-weight: 600;
 }
 
+.mentor {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
 .intern-count {
   font-size: 13px;
   color: #666;
-  margin-bottom: 6px;
-}
-
-.status {
-  font-size: 12px;
 }
 </style>

@@ -10,23 +10,13 @@
     <!-- Card -->
     <BaseCard class="card">
 
-      <TeamItemCard
-        v-for="team in teams"
-        :key="team.id"
-        :team="team"
-        @click="goDetail(team.id)"
-      />
+      <TeamItemCard v-for="team in teams" :key="team.id" :team="team" @click="goDetail(team.id)" />
 
     </BaseCard>
 
     <!-- Create Button -->
     <div class="create-wrapper">
-      <a-button
-        type="primary"
-        block
-        size="large"
-        @click="goCreateLink"
-      >
+      <a-button type="primary" block size="large" @click="goCreateLink">
         Create Link
       </a-button>
     </div>
@@ -42,7 +32,7 @@ import { useRouter } from 'vue-router'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import TeamItemCard from '@/components/mentor/myintern/TeamItemCard.vue'
-import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue' 
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 import { useApi } from '~/composables/core'
 
 const { apiFetch } = useApi()
@@ -51,59 +41,37 @@ const router = useRouter()
 interface Team {
   id: string
   name: string
-  intern_count: number
-  invite_active: boolean
+  mentorName: string
+  internTotal: number
 }
 
 const teams = ref<Team[]>([])
 const loading = ref(false)
 
-onMounted(async () => {
-  loading.value = true
+const page = ref(1)
+const pageSize = ref(10)
+
+const loadTeams = async () => {
   try {
-    // 1️⃣ โหลด interns
-    const internRes = await apiFetch('/users/interns') as { data: any[] }
-    const interns = internRes.data
+    loading.value = true
 
-    // 2️⃣ โหลด invites
-    const inviteRes = await apiFetch('/auth/invites') as { data: any[] }
-    const invites = inviteRes.data
+    const res: any = await apiFetch(
+      `/teams?page=${page.value}&pageSize=${pageSize.value}`
+    )
 
-    const teamMap: Record<string, Team> = {}
+    console.log('TEAMS RESPONSE:', res)
 
-    interns.forEach((intern: any) => {
-      if (!intern.teams || intern.teams.length === 0) return
-
-      intern.teams.forEach((team: any) => {
-        const teamId = String(team.id)
-        const teamName = team.name
-
-        // 🔥 หา invite ของทีมนี้
-        const activeInvite = invites.find((i: any) =>
-          String(i.teamId) === teamId &&
-          i.usesCount < i.maxUses
-        )
-
-        if (!teamMap[teamId]) {
-          teamMap[teamId] = {
-            id: teamId,
-            name: teamName,
-            intern_count: 0,
-            invite_active: !!activeInvite
-          }
-        }
-
-        teamMap[teamId].intern_count++
-      })
-    })
-
-    teams.value = Object.values(teamMap)
+    teams.value = res.data.teams
 
   } catch (err) {
     console.error('Team fetch error:', err)
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  loadTeams()
 })
 
 const goDetail = (id: string) => {
@@ -115,7 +83,8 @@ const goCreateLink = () => {
 }
 </script>
 
-<style scoped>.page {
+<style scoped>
+.page {
   min-height: 100vh;
   background: #6CBCFA;
   padding: 16px;
@@ -135,8 +104,8 @@ const goCreateLink = () => {
   position: relative;
   height: 60px;
   margin-bottom: 12px;
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .title {

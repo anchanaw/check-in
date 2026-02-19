@@ -91,25 +91,14 @@ const onSave = async (payload: any) => {
     })
 
     if (form.avatar) {
-      const toBase64 = (file: File) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.readAsDataURL(file)
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = error => reject(error)
-        })
+  const formData = new FormData()
+  formData.append("file", form.avatar)
 
-      if (form.avatar) {
-        const base64 = await toBase64(form.avatar)
-
-        await apiFetch('/auth/profile/image', {
-          method: 'POST',
-          body: {
-            image: base64
-          }
-        })
-      }
-    }
+  await apiFetch('/auth/profile/image', {
+    method: 'POST',
+    body: formData
+  })
+}
 
     message.success('Profile updated successfully')
     await apiFetch('/auth/profile/image-signed-url')

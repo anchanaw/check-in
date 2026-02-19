@@ -12,34 +12,48 @@
 
     <BaseCard class="card">
 
-      <!-- Team Header -->
-      <div class="team-header">
-        <div class="team-name">{{ team.name }}</div>
+      <!-- 🔄 Loading -->
+      <div v-if="loading">
+        <a-skeleton active :paragraph="{ rows: 5 }" />
+      </div>
 
-        <div class="team-bottom">
-          <div v-if="invite" class="invite-section">
-            <div class="invite-link">
-              {{ baseUrl }}/register?code={{ invite.code }}
+      <!-- ❗ Error -->
+      <div v-else-if="error" class="error-state">
+        {{ error }}
+      </div>
+
+      <!-- ✅ Normal Content -->
+      <div v-else>
+
+        <!-- Team Header -->
+        <div class="team-header">
+          <div class="team-name">{{ team.name }}</div>
+
+          <div class="team-bottom">
+            <div v-if="invite" class="invite-section">
+              <div class="invite-link">
+                {{ baseUrl }}/register?code={{ invite.code }}
+              </div>
             </div>
+
+            <div v-else class="no-invite">
+              No active invite link
+            </div>
+
+            <button class="team-btn" @click="goTeamSetting">
+              Team Settings <span class="arrow">›</span>
+            </button>
           </div>
-
-          <div v-else class="no-invite">
-            No active invite link
-          </div>
-
-
-          <button class="team-btn" @click="goTeamSetting">
-            Team Settings <span class="arrow">›</span>
-          </button>
         </div>
-      </div>
 
-      <!-- Intern List -->
-      <div class="intern-list">
-        <InternRow v-for="intern in interns" :key="intern.id" :intern="intern" />
-      </div>
+        <!-- Intern List -->
+        <div class="intern-list">
+          <InternRow v-for="intern in interns" :key="intern.id" :intern="intern" />
+        </div>
 
-      <InternLegend />
+        <InternLegend />
+
+      </div>
 
     </BaseCard>
 
@@ -50,6 +64,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
+
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import InternRow from '@/components/mentor/myintern/InternRow.vue'
@@ -59,84 +74,110 @@ const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 
+
 interface Intern {
   id: string
   name: string
-  status: 'checked-in' | 'not-checked' | 'leave-pending' | 'on-leave'
-  checkin_time?: string
+  status: string
   order: number
 }
 
-const team = ref({
-  name: '',
-  invite_link: ''
-})
-
+const team = ref({ name: '' })
 const interns = ref<Intern[]>([])
-const loading = ref(false)
 const invite = ref<any | null>(null)
+
+const loading = ref(true)
+const error = ref<string | null>(null)
+
 const baseUrl = ref(typeof window !== 'undefined' ? window.location.origin : '')
+const teamId = route.params.id as string
 
-onMounted(async () => {
-  const teamId = route.params.id as string
-  loading.value = true
-
+/* =========================
+   LOAD DATA
+========================= */
+const loadData = async () => {
   try {
-    // 1️⃣ ดึง intern ทั้งหมด
-    const internRes = await apiFetch('/users/interns') as { data: any[] }
-    const allInterns = internRes.data
+    loading.value = true
+    error.value = null
 
-    // 2️⃣ filter intern ตาม team
-    const teamInterns = allInterns.filter(intern =>
-      intern.teams?.some((t: any) => t.id === teamId)
+    // โหลดพร้อมกัน
+    const [
+      teamRes,
+      internRes,
+      inviteRes,
+      rankingRes
+    ] = await Promise.all([
+      apiFetch('/teams?page=1&pageSize=50') as Promise<{
+        data: { teams: any[] }
+      }>,
+      apiFetch('/users/interns') as Promise<{
+        data: any[]
+      }>,
+      apiFetch('/auth/invites') as Promise<{
+        data: any[]
+      }>,
+      apiFetch('/points/ranking') as Promise<{
+        data: any[]
+      }>
+    ])
+
+    /* -------------------------
+       TEAM INFO
+    -------------------------- */
+    const currentTeam = teamRes.data.teams.find(
+      (t: any) => String(t.id) === String(teamId)
     )
 
-    // โหลด invites ทั้งหมด
-    const inviteRes = await apiFetch('/auth/invites') as { data: any[] }
+    team.value.name = currentTeam?.name || 'Unknown Team'
 
-    // ❗ ถ้า backend ไม่มี teamId จะเช็คไม่ได้
-    invite.value = inviteRes.data.find(
-      (i: any) =>
-        String(i.teamId) === String(teamId) &&
-        i.usesCount < i.maxUses
-    ) || null
+    /* -------------------------
+       TEAM INTERNS
+    -------------------------- */
+    const teamInterns = internRes.data.filter((intern: any) =>
+      intern.teams?.some((t: any) => String(t.id) === String(teamId))
+    )
 
-    // ตั้งชื่อทีมจาก intern คนแรก
-    const teamInfo = teamInterns[0]?.teams?.find((t: any) => t.id === teamId)
-
-    team.value = {
-      name: teamInfo?.name || 'Unknown Team',
-      invite_link: '-' // ยังไม่มี API invite link
-    }
-
-    // 3️⃣ ดึง ranking
-    const rankingRes = await apiFetch('/points/ranking') as { data: any[] }
-
+    /* -------------------------
+       RANKING MAP
+    -------------------------- */
     const rankingMap: Record<string, number> = {}
+
     rankingRes.data.forEach((item: any, index: number) => {
-      rankingMap[item.userId] = index + 1
+      rankingMap[String(item.userId)] = index + 1
     })
 
-    // 4️⃣ map interns
     interns.value = teamInterns.map((intern: any) => ({
       id: String(intern.id),
       name: `${intern.firstName} ${intern.lastName}`,
-      status: 'not-checked', // ยังไม่ได้คำนวณ attendance
-      order: rankingMap[intern.id] || 0
+      status: 'not-checked',
+      order: rankingMap[String(intern.id)] || 0
     }))
 
+    /* -------------------------
+       ACTIVE INVITE
+    -------------------------- */
+    invite.value =
+      inviteRes.data.find(
+        (i: any) =>
+          String(i.teamId) === String(teamId) &&
+          i.usesCount < i.maxUses
+      ) || null
+
   } catch (err) {
-    console.error('Team detail error:', err)
+    console.error(err)
+    error.value = 'Failed to load team data'
   } finally {
     loading.value = false
   }
-})
-
-function goTeamSetting() {
-  router.push(`/mentor/teams/${route.params.id}/settings`)
 }
 
+onMounted(loadData)
+
+function goTeamSetting() {
+  router.push(`/mentor/teams/${teamId}/settings`)
+}
 </script>
+
 
 <style scoped>
 .page {
@@ -219,4 +260,11 @@ function goTeamSetting() {
 .arrow {
   font-size: 18px;
 }
+
+.error-state {
+  text-align: center;
+  padding: 20px;
+  color: red;
+}
+
 </style>
