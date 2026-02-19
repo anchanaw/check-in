@@ -165,4 +165,8 @@ const goCreateLink = () => {
   font-size: 24px;
   font-weight: 600;
 }
+
+.create-wrapper {
+  margin-top: 16px;
+}
 </style>

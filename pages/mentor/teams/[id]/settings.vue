@@ -26,11 +26,17 @@
                     <h3>{{ teamName }}</h3>
 
                     <InviteLinkCard v-if="invite" :invite="{
-                        link: `${baseUrl}/register?code=${invite.code}`,
+                        id: invite.id,
+                        link: `${baseUrl}/invite?code=${invite.code}`,
                         maxUses: invite.maxUses,
                         used: invite.usesCount,
-                        status: invite.usesCount >= invite.maxUses ? 'Used' : 'Active'
-                    }" />
+                        status:
+                            invite.isActive === false
+                                ? 'Disabled'
+                                : invite.usesCount >= invite.maxUses
+                                    ? 'Used'
+                                    : 'Active'
+                    }" @copy="copyLink" @disable="disableInvite" />
 
                     <div v-else>
                         No active invite link
@@ -70,7 +76,7 @@ const teamName = ref('')
 const invite = ref<any | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const baseUrl = window.location.origin
+const baseUrl = import.meta.client ? window.location.origin : ''
 
 const loadData = async () => {
     try {
@@ -108,8 +114,7 @@ const loadData = async () => {
             inviteRes.data.find(
                 (i: any) =>
                     i.type === 'registration' &&
-                    i.role === 'intern' &&
-                    i.usesCount < i.maxUses
+                    i.role === 'intern'
             ) || null
 
     } catch (err) {
@@ -123,15 +128,34 @@ const loadData = async () => {
 onMounted(loadData)
 
 
-onMounted(loadData)
-
-
 const copyLink = () => {
     if (!invite.value) return
-    const link = `${window.location.origin}/register?code=${invite.value.code}`
+    const link = `${baseUrl}/invite?code=${invite.value.code}`
     navigator.clipboard.writeText(link)
     message.success('Link copied')
 }
+
+const disableInvite = async () => {
+  if (!invite.value) return
+
+  try {
+    await apiFetch(`/auth/invites/${invite.value.id}/status`, {
+      method: 'PATCH',
+      body: { isActive: false }
+    })
+
+    // ✅ เปลี่ยน isActive จริง
+    invite.value.isActive = false
+
+    message.success('Invite disabled successfully')
+
+  } catch (err: any) {
+    message.error(
+      err?.data?.error?.message || 'Failed to disable invite'
+    )
+  }
+}
+
 </script>
 
 <style scoped>
