@@ -2,92 +2,41 @@
   <div class="noti-page">
     <!-- Header -->
     <div class="noti-header">
-      <a-button type="text" shape="circle" @click="goBack" class="back-btn">
-        <ArrowLeftOutlined />
-      </a-button>
+        <BackButton />
 
       <span class="title">Notifications</span>
 
 
       <a-button class="clear-btn" type="text" danger shape="circle" :disabled="!notifications.length" @click="clearAll">
-        <img src="/public/icons/delete.svg" class="icon" alt="delete" />
+        <img src="/icons/delete.svg" class="icon" alt="delete" />
       </a-button>
     </div>
 
     <!-- Content -->
     <div class="noti-list">
-      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
-        @remove="removeNoti" />
+      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" :unread="noti.unread"
+        @remove="removeNotification" />
 
-      <a-empty v-if="!loading && !notifications.length" description="No manager notifications" />
+      <a-empty v-if="!loading && !notifications.length" description="No mentor notifications" />
     </div>
   </div>
 </template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  ArrowLeftOutlined,
-  DeleteOutlined
-} from '@ant-design/icons-vue'
-
+import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
 import NotificationItem from '@/components/manager/NotificationItem.vue'
-// ↑ ถ้าใช้ร่วม intern ได้ OK
-// ถ้า mentor-only → ย้ายเป็น components/mentor/NotificationItem.vue
+import BackButton from '~/components/base/BackButton.vue'
 
-const router = useRouter()
-
-const loading = ref(true)
-const notifications = ref([])
-
-/**
- * MOCK – รอ API
- */
-const fetchNotifications = async () => {
-  loading.value = true
-
-  await new Promise(r => setTimeout(r, 600))
-
-  notifications.value = [
-    {
-      id: 1,
-      title: 'Leave request pending',
-      body: 'Intern A has requested leave',
-      unread: true
-    },
-    {
-      id: 2,
-      title: 'Task submitted',
-      body: 'Intern B submitted a task',
-      unread: false
-    }
-  ]
-
-  loading.value = false
-}
+const {
+  notifications,
+  loading,
+  fetchNotifications,
+  removeNotification,
+  clearAll
+} = useMentorNotifications()
 
 onMounted(fetchNotifications)
 
-/**
- * Actions
- */
-const goBack = () => {
-  router.push('/mentor')
-}
-
-const onDetail = (noti) => {
-  // TODO: ไปหน้ารายละเอียด (leave / task)
-  console.log('detail:', noti)
-}
-
-const removeNoti = (id) => {
-  notifications.value = notifications.value.filter(n => n.id !== id)
-}
-
-const clearAll = () => {
-  notifications.value = []
-}
 </script>
 
 <style scoped>

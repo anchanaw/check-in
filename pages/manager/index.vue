@@ -2,8 +2,10 @@
   <div class="dashboard-page">
     <!-- 🔔 notification -->
     <div class="top-right">
-      <a-badge :dot="hasNotification">
-        <BellOutlined class="bell-icon" @click="onClickBell" />
+      <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
+        <NuxtLink to="/mentor/notifications" class="bell-link">
+          <BellOutlined class="bell-icon" />
+        </NuxtLink>
       </a-badge>
     </div>
 
@@ -19,25 +21,28 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { BellOutlined } from '@ant-design/icons-vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import PendingLeaveCard from '@/components/manager/dashboard/PendingLeaveCard.vue'
-import { useLeaveApi } from '~/composables/manager/useLeaveApi'
 import DashboardStats from '@/components/manager/dashboard/DashboardStats.vue'
 import TeamOverview from '@/components/manager/dashboard/TeamOverview.vue'
 import RankingSection from '@/components/manager/dashboard/RankingCard.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
+import { useApi } from '~/composables/core'
+import { useLeaveApi } from '~/composables/manager/useLeaveApi'
+import { useManagerNotifications } from '@/composables/manager/useManagerNotifications'
 
-const loading = ref(true)
+const { apiFetch } = useApi()
+const { getPendingLeaves } = useLeaveApi()
+const { unreadCount, fetchNotifications } = useManagerNotifications()
 
 definePageMeta({
   middleware: 'role'
 })
 
-/** mock state (ตรงกับ API จริงในอนาคต) */
+const loading = ref(true)
 const stats = ref({
   mentor: 0,
   intern: 0,
@@ -52,64 +57,81 @@ const overview = ref({
 const topTeams = ref<string[]>([])
 const topInterns = ref<string[]>([])
 const pendingLeaves = ref<any[]>([])
-const loadingPending = ref(false)
-const { getPendingLeaves } = useLeaveApi()
 
+/* ================= LOAD DASHBOARD ================= */
 onMounted(async () => {
-  loading.value = true
-  loadingPending.value = true
-
   try {
-    // mock dashboard data
-    await new Promise(r => setTimeout(r, 800))
+    loading.value = true
 
-    stats.value = {
-      mentor: 5,
-      intern: 10,
-      team: 5
-    }
+    /** ---------- 1️⃣ TEAMS ---------- */
+    const teamRes: any = await apiFetch('/teams')
+    const teams = teamRes.data.teams || []
 
-    overview.value = {
-      mostIntern: 'Frontend Development Team',
-      newest: 'Backend Development Team'
-    }
+    // total team
+    stats.value.team = teamRes.data.total || teams.length
 
-    topTeams.value = ['Frontend', 'Backend', 'Backend']
-    topInterns.value = ['Sompong', 'Anon', 'Jane']
+    // total mentor (unique mentorId)
+    const uniqueMentors = new Set(teams.map((t: any) => t.mentorId))
+    stats.value.mentor = uniqueMentors.size
 
-    // ✅ ดึง pending leave จริง
-    const res: any = await getPendingLeaves()
+    // team with most intern
+    const sortedByIntern = [...teams].sort(
+      (a, b) => b.internTotal - a.internTotal
+    )
 
-    pendingLeaves.value = res.data
-      .filter((item: any) => item.status === 'pending') // กันพลาด
-      .slice(0, 3)                                      // ⭐ เอาแค่ 3
+    overview.value.mostIntern = sortedByIntern[0]?.name || '-'
+
+    // newest team
+    const sortedByCreated = [...teams].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() -
+        new Date(a.createdAt).getTime()
+    )
+
+    overview.value.newest = sortedByCreated[0]?.name || '-'
+
+    // top 3 teams
+    topTeams.value = sortedByIntern
+      .slice(0, 3)
+      .map((t: any) => t.name)
+
+    /** ---------- 2️⃣ INTERNS ---------- */
+    const internRes: any = await apiFetch('/users/interns')
+    const interns = internRes.data || []
+
+    stats.value.intern = interns.length
+
+    // TODO: ถ้ามีคะแนนจริงให้ sort ตามคะแนน
+    topInterns.value = interns
+      .slice(0, 3)
+      .map((i: any) => `${i.firstName} ${i.lastName}`)
+
+    /** ---------- 3️⃣ PENDING LEAVES ---------- */
+    const leaveRes: any = await getPendingLeaves()
+
+    pendingLeaves.value = (leaveRes.data || [])
+      .slice(0, 3)
       .map((item: any) => ({
         id: item.id,
-        name: item.user.display_name,
+        name: item.user?.display_name || '-',
         type: item.leave_type,
         date: item.duration_text,
         status: item.status
       }))
+
   } catch (err) {
     console.error(err)
   } finally {
     loading.value = false
-    loadingPending.value = false
   }
 })
 
-
-const hasNotification = ref(true) // mock
+const hasNotification = ref(true)
 
 const onClickBell = () => {
   navigateTo('/manager/notifications')
-
-  /**
-   * TODO:
-   * navigateTo('/notifications')
-   * or open dropdown
-   */
 }
+
 const goToLeaveDetail = (item: any) => {
   navigateTo(`/manager/leave/${item.id}`)
 }
@@ -117,7 +139,6 @@ const goToLeaveDetail = (item: any) => {
 const goToLeaveList = () => {
   navigateTo('/manager/leave_request')
 }
-
 </script>
 
 <style scoped>

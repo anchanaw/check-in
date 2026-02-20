@@ -2,17 +2,15 @@
   <div class="leave-page">
     <!-- Header -->
     <div class="top-header">
-      <BackButton class="back-btn"/>
+      <BackButton class="back-btn" />
       <span class="header-title">Leave Request</span>
     </div>
 
     <div class="wrapper">
       <BaseCard>
-        <LeaveRequestCard
-          :request="request"
-          @approve="approve"
-          @reject="reject"
-        />
+        <a-empty v-if="notFound" description="No leave request found" />
+
+        <LeaveRequestCard v-else :request="request" @approve="approve" @reject="reject" />
       </BaseCard>
     </div>
 
@@ -20,40 +18,79 @@
   </div>
 </template>
 
-<script setup>
-import { reactive } from 'vue'
-import { ArrowLeftOutlined } from '@ant-design/icons-vue'
+<script setup lang="ts">
+import { reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message } from 'ant-design-vue'
+import { useLeaveApi } from '~/composables/manager/useLeaveApi'
 
 import BaseCard from '~/components/base/BaseCard.vue'
 import BackButton from '~/components/base/BackButton.vue'
 import LeaveRequestCard from '~/components/manager/LeaveRequestCard.vue'
 import BottomBar from '@/components/manager/ManagerBottomBar.vue'
 
-/**
- * TODO:
- * - GET /leave-requests/:id
- * - POST /leave-requests/:id/approve
- * - POST /leave-requests/:id/reject
- */
+const route = useRoute()
+const router = useRouter()
+const { getPendingLeaves, reviewLeave } = useLeaveApi()
 
-// 🔹 mock leave request
-const request = reactive({
-  name: 'Sompong',
-  type: 'Sick Leave',
-  date: '26 Jan',
-  duration: '1 day',
-  status: 'Pending',
-  description: 'Fever and cough.'
+const id = route.params.id as string
+
+const request = reactive < any > ({
+  id: '',
+  name: '',
+  type: '',
+  date: '',
+  duration: '',
+  status: '',
+  description: ''
 })
 
-const approve = () => {
-  console.log('approve leave')
-  request.status = 'Approved'
+const notFound = ref(false)
+
+onMounted(async () => {
+  try {
+    const res: any = await getPendingLeaves()
+
+    const leave = res.data.find(
+      (l: any) => String(l.id) === String(id)
+    )
+
+    if (!leave) {
+      notFound.value = true
+      return
+    }
+
+    request.id = leave.id
+    request.name = leave.user?.display_name || '-'
+    request.type = leave.leave_type
+    request.date = leave.duration_text
+    request.duration = leave.duration_text
+    request.status = leave.status
+    request.description = leave.reason
+
+  } catch {
+    message.error('Failed to load leave')
+  }
+})
+
+const approve = async () => {
+  try {
+    await reviewLeave(id, 'approved')
+    request.status = 'approved'
+    message.success('Approved')
+  } catch {
+    message.error('Approve failed')
+  }
 }
 
-const reject = () => {
-  console.log('reject leave')
-  request.status = 'Rejected'
+const reject = async () => {
+  try {
+    await reviewLeave(id, 'rejected')
+    request.status = 'rejected'
+    message.success('Rejected')
+  } catch {
+    message.error('Reject failed')
+  }
 }
 </script>
 
@@ -81,6 +118,7 @@ const reject = () => {
   position: absolute;
   left: 12px;
 }
+
 .wrapper {
   display: flex;
   justify-content: center;

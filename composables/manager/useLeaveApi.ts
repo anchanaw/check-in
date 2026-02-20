@@ -6,11 +6,22 @@ export const useLeaveApi = () => {
   const config = useRuntimeConfig()
 
   const getPendingLeaves = async () => {
-    return await $fetch('/manager/leaves', {
+    return await $fetch('/leaves/pending', {
       baseURL: config.public.apiBase as string,
-      params: {
-        status: 'pending'
-      },
+      headers: {
+        Authorization: `Bearer ${auth.access_token}`
+      }
+    })
+  }
+
+  const reviewLeave = async (
+    id: string,
+    status: 'approved' | 'rejected'
+  ) => {
+    return await $fetch(`/leaves/${id}/review`, {
+      method: 'PATCH',
+      baseURL: config.public.apiBase as string,
+      body: { status },
       headers: {
         Authorization: `Bearer ${auth.access_token}`
       }
@@ -18,6 +29,7 @@ export const useLeaveApi = () => {
   }
 
   return {
-    getPendingLeaves
+    getPendingLeaves,
+    reviewLeave
   }
 }
