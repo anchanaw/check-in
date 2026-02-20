@@ -8,11 +8,12 @@
     </div>
 
     <div class="info">Max Uses: {{ invite.maxUses }}</div>
-    <div class="info">Expires At: {{ invite.expiresAt }}</div>
     <div class="info">Used: {{ invite.used }}</div>
     <div class="info">
       Status:
-      <a-tag color="green">Active</a-tag>
+      <a-tag :color="invite.status === 'active' ? 'green' : 'red'">
+        {{ invite.status === 'active' ? 'Active' : 'Disabled' }}
+      </a-tag>
     </div>
 
     <a-button danger block @click="emit('disable')">

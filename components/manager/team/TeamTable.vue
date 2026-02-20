@@ -1,20 +1,9 @@
 <template>
-  <a-table
-    :columns="columns"
-    :data-source="teams"
-    :loading="loading"
-    :pagination="false"
-    bordered
-    size="small"
-  >
-    <template #bodyCell="{ column, record }">
-      <!-- STATUS -->
-      <template v-if="column.key === 'status'">
-        <a-tag
-          color="green"
-          class="status-tag"
-          @click="goDetail(record)"
-        >
+  <a-table :columns="columns" :data-source="teams" :loading="loading" :pagination="pagination"
+    @change="handleTableChange" row-key="id" bordered size="small">
+    <template #bodyCell="slotProps">
+      <template v-if="slotProps.column.key === 'status'">
+        <a-tag color="green" class="status-tag" @click="goDetail(slotProps.record)">
           Open
         </a-tag>
       </template>
@@ -23,8 +12,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   teams: {
     id: number
     team: string
@@ -33,7 +23,23 @@ defineProps<{
     status: string
   }[]
   loading: boolean
+  total?: number
+  page?: number
+  pageSize?: number
 }>()
+
+const emit = defineEmits(['page-change'])
+
+const pagination = computed(() => ({
+  current: props.page,
+  pageSize: props.pageSize,
+  total: props.total,
+  showSizeChanger: false
+}))
+
+const handleTableChange = (pagination: any) => {
+  emit('page-change', pagination.current)
+}
 
 const goDetail = (record: any) => {
   if (!record?.id) return
@@ -46,6 +52,7 @@ const columns = [
   { title: 'Intern', dataIndex: 'intern', key: 'intern', align: 'center' },
   { title: 'Status', key: 'status', align: 'center' }
 ]
+
 </script>
 
 <style scoped>

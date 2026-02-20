@@ -9,17 +9,10 @@
     <div class="content">
       <TeamInfoCard :team="team" />
 
-      <InviteLinkCard
-        :invite="invite"
-        @disable="onDisableLink"
-        @copy="onCopy"
-      />
+      <InviteLinkCard :invite="invite" @disable="onDisableLink" @copy="onCopy" />
 
       <BaseCard class="table-card">
-        <InternTable
-          :interns="interns"
-          :loading="loading"
-        />
+        <InternTable :interns="interns" :loading="loading" />
       </BaseCard>
     </div>
 
@@ -30,21 +23,22 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
 
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
-
 import TeamInfoCard from '@/components/manager/team/TeamInfoCard.vue'
 import InviteLinkCard from '@/components/manager/team/InviteLinkCard.vue'
 import InternTable from '@/components/manager/team/InternTable.vue'
 
+const { apiFetch } = useApi()
 const route = useRoute()
-const teamId = route.params.id
+const teamId = route.params.id as string
 
 const loading = ref(true)
 
-/* ===== mock state (ตรง API) ===== */
 const team = ref({
   name: '',
   mentor: '',
@@ -61,42 +55,98 @@ const invite = ref({
 
 const interns = ref<any[]>([])
 
-onMounted(async () => {
-  await new Promise(r => setTimeout(r, 700))
+const loadTeamDetail = async () => {
+  loading.value = true
 
-  /**
-   * TODO: GET /manager/team/:id
-   */
-  team.value = {
-    name: 'Frontend Development',
-    mentor: 'Sommai',
-    status: 'active'
+  try {
+    /* ================= TEAM DETAIL ================= */
+    const res: any = await apiFetch('/teams', {
+      params: { page: 1, pageSize: 10 }
+    })
+
+    const teamData = res.data.teams.find(
+      (t: any) => t.id === teamId
+    )
+
+    if (!teamData) {
+      message.error('Team not found')
+      return
+    }
+
+    team.value = {
+      name: teamData.name,
+      mentor: teamData.mentorName || 'Unassigned',
+      status: 'active'
+    }
+
+    interns.value = (teamData.interns || []).map((i: any) => ({
+      id: i.id,
+      name: i.name,
+      score: 0,
+      status: 'active'
+    }))
+
+    /* ================= INVITE ================= */
+    const inviteRes: any = await apiFetch('/auth/invites')
+
+    const inviteList = inviteRes.data || []
+
+    const inviteData = inviteList.find(
+      (i: any) => i.teamId === teamId && i.isActive
+    )
+
+    if (inviteData) {
+      invite.value = {
+        url: `${window.location.origin}/register?invite=${inviteData.code}`,
+        maxUses: inviteData.maxUses ?? 0,
+        used: inviteData.usedCount ?? 0,
+        expiresAt: inviteData.expiresAt,
+        status: inviteData.isActive ? 'active' : 'inactive'
+      }
+    } else {
+      invite.value = {
+        url: '',
+        maxUses: 0,
+        used: 0,
+        expiresAt: '',
+        status: 'inactive'
+      }
+    }
+    console.log('INVITE RES:', inviteRes)
+    console.log('TEAM ID:', teamId)
+    console.log(inviteRes.data[0])
+  } catch (err) {
+    message.error('Failed to load team detail')
+  } finally {
+    loading.value = false
   }
-
-  invite.value = {
-    url: 'https://your.link/xxxx',
-    maxUses: 10,
-    expiresAt: '2026-01-01',
-    used: 3,
-    status: 'active'
-  }
-
-  interns.value = [
-    { name: 'Sompong', score: 250, status: 'active' },
-    { name: 'Anon', score: 180, status: 'active' },
-    { name: 'Amorn', score: 90, status: 'inactive' }
-  ]
-
-  loading.value = false
-})
-
-/* ===== actions ===== */
-const onCopy = () => {
-  navigator.clipboard.writeText(invite.value.url)
 }
 
-const onDisableLink = () => {
-  console.log('PATCH /invite/disable')
+onMounted(() => {
+  loadTeamDetail()
+})
+
+/* ===== ACTIONS ===== */
+
+const onCopy = () => {
+  if (!invite.value.url) return
+  navigator.clipboard.writeText(invite.value.url)
+  message.success('Link copied')
+}
+
+const onDisableLink = async () => {
+  try {
+    await apiFetch(`/auth/invites/${teamId}/status`, {
+      method: 'PATCH',
+      body: { isActive: false }
+    })
+
+    invite.value.status = 'inactive'
+    message.success('Invite link disabled')
+
+  } catch {
+    message.error('Disable failed')
+  }
 }
 </script>
 
@@ -132,7 +182,7 @@ const onDisableLink = () => {
   padding: 12px;
 }
 
-.content > * {
+.content>* {
   width: 100%;
   max-width: 360px;
   margin-bottom: 12px;

@@ -1,67 +1,102 @@
 <template>
-    <div class="team-page">
-  <div class="content">
-    <h2 class="page-title">Team</h2>
+  <div class="team-page">
+    <div class="content">
+      <h2 class="page-title">Team</h2>
 
-    <TeamSummaryCard
-  class="summary-card"
-  :total="filteredTeams.length"
-  :loading="loading"
-  @create="goCreateLink"
-  @search="onSearch"
-/>
+      <TeamSummaryCard class="summary-card" :total="totalTeams" :loading="loading" @create="goCreateLink"
+        @search="onSearch" />
 
-    <BaseCard class="table-card">
-      <TeamTable :teams="teams" :loading="loading" />
-    </BaseCard>
+      <BaseCard class="table-card">
+        <TeamTable :teams="teams" :loading="loading" :total="totalTeams" :page="page" :page-size="pageSize"
+          @page-change="onPageChange" />
+      </BaseCard>
+    </div>
+
+    <!-- bottom bar อยู่นอก content -->
+    <ManagerBottomBar />
   </div>
-
-  <!-- bottom bar อยู่นอก content -->
-  <ManagerBottomBar />
-</div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
+
 import BaseCard from '@/components/base/BaseCard.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 import TeamSummaryCard from '@/components/manager/team/TeamSummaryCard.vue'
 import TeamTable from '@/components/manager/team/TeamTable.vue'
-import { useRouter } from 'vue-router'
+
+const { apiFetch } = useApi()
 const router = useRouter()
 
-const goCreateLink = () => {
-  router.push('/manager/create_link')
+const search = ref('')
+const loading = ref(false)
+const teams = ref<any[]>([])
+const totalTeams = ref(0)
+
+const page = ref(1)
+const pageSize = 10
+
+/* ================= LOAD TEAMS ================= */
+const loadTeams = async () => {
+  loading.value = true
+
+  try {
+    const res: any = await apiFetch('/teams', {
+      params: {
+        page: page.value,
+        pageSize
+      }
+    })
+
+    const teamList = res.data?.teams || []
+
+    teams.value = teamList.map((t: any) => ({
+      id: t.id,
+      team: t.name,
+      mentor: t.mentorName?.trim() || 'Unassigned',
+      intern: t.internTotal || 0,
+      status: 'open'
+    }))
+    console.log(teamList[0])
+    totalTeams.value = res.data.total || 0
+
+  } catch (err) {
+    console.error('Load teams failed:', err)
+  } finally {
+    loading.value = false
+  }
 }
+
+/* ================= SEARCH ================= */
+const filteredTeams = computed(() => {
+  if (!search.value) return teams.value
+
+  return teams.value.filter(team =>
+    team.team.toLowerCase().includes(search.value.toLowerCase()) ||
+    team.mentor.toLowerCase().includes(search.value.toLowerCase())
+  )
+})
 
 const onSearch = (value: string) => {
   search.value = value
 }
-const search = ref('')
-const loading = ref(true)
 
-const totalManagement = ref(0)
-const teams = ref<any[]>([])
+/* ================= PAGE CHANGE ================= */
+const onPageChange = (newPage: number) => {
+  page.value = newPage
+  loadTeams()
+}
 
-const filteredTeams = computed(() => {
-  return teams.value.filter(team =>
-    team.team.toLowerCase().includes(search.value.toLowerCase())
-  )
-})
+/* ================= NAVIGATION ================= */
+const goCreateLink = () => {
+  router.push('/manager/create_link')
+}
 
-onMounted(async () => {
-    await new Promise(r => setTimeout(r, 800))
-
-    // TODO: GET /manager/teams
-    totalManagement.value = 3
-
-    teams.value = [
-        { id: 1,team: 'Frontend', mentor: 'Sommai', intern: 3, status: 'open' },
-        { id: 2,team: 'Backend', mentor: 'Amorn', intern: 2, status: 'open' },
-        { id: 3,team: 'Tester', mentor: 'Kiki', intern: 2, status: 'open' }
-    ]
-
-    loading.value = false
+/* ================= INIT ================= */
+onMounted(() => {
+  loadTeams()
 })
 </script>
 
@@ -79,7 +114,7 @@ onMounted(async () => {
   align-items: center;
 }
 
-.content > * {
+.content>* {
   width: 100%;
   max-width: 360px;
 }
@@ -98,5 +133,4 @@ onMounted(async () => {
 .table-card {
   margin-top: 12px;
 }
-
 </style>
