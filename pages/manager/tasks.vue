@@ -11,11 +11,7 @@
         <TaskTable />
 
         <div class="footer">
-          <a-button
-            type="primary"
-            class="create-btn"
-            @click="openCreate"
-          >
+          <a-button type="primary" class="create-btn" @click="openCreate">
             Create Task
           </a-button>
         </div>
@@ -23,22 +19,22 @@
     </div>
 
     <!-- Create Task Modal -->
-    <CreateTaskModal
-      :open="createOpen"
-      @close="createOpen = false"
-      @save="onSaveTask"
-    />
+    <CreateTaskModal :open="createOpen" @close="createOpen = false" @save="onSaveTask" />
 
-    <BottomBar active="tasks" />
+    <ManagerBottomBar active="/mentor" />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
 import BaseCard from '@/components/base/BaseCard.vue'
-import TaskTable from '@/components/manager/task/TaskTable.vue'
-import CreateTaskModal from '@/components/manager/task/CreateTaskModal.vue'
-import BottomBar from '@/components/manager/ManagerBottomBar.vue'
+import TaskTable from '@/components/mentor/task/TaskTable.vue'
+import CreateTaskModal from '@/components/mentor/task/CreateTaskModal.vue'
+import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
+
+const { apiFetch } = useApi()
 
 const createOpen = ref(false)
 
@@ -46,13 +42,34 @@ const openCreate = () => {
   createOpen.value = true
 }
 
-const onSaveTask = (payload) => {
-  console.log('save task:', payload)
-  createOpen.value = false
-  /**
-   * TODO:
-   * POST /tasks
-   */
+const onSaveTask = async (payload) => {
+  try {
+    console.log('save task:', payload)
+
+    await apiFetch('/tasks', {
+      method: 'POST',
+      body: {
+        title: payload.title,
+        description: payload.description,
+        points: payload.points,
+        isBonus: payload.isBonus,
+        deadline: payload.deadline,
+        teamId: payload.teamId,
+        internId: payload.internId
+      }
+    })
+
+    message.success('Task created successfully')
+
+    createOpen.value = false
+
+    // 🔥 รีโหลด table (อย่า reload หน้า)
+    window.location.reload()
+
+  } catch (error) {
+    console.error('Create task error:', error)
+    message.error('Failed to create task')
+  }
 }
 </script>
 
@@ -74,7 +91,6 @@ const onSaveTask = (payload) => {
 .header-title {
   font-weight: 600;
   font-size: 24px;
-  margin-top: 10px;
   margin-bottom: 33px;
 }
 
@@ -108,5 +124,4 @@ const onSaveTask = (payload) => {
   height: 36px;
   font-size: 14px;
 }
-
 </style>

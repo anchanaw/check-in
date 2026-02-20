@@ -11,39 +11,31 @@
 
       <!-- body -->
       <div class="popup-body">
-        <a-form layout="vertical" @finish="submit">
-          <a-form-item label="Task Title">
+        <a-form layout="vertical" :model="form" @finish="submit"> <a-form-item label="Task Title" name="title" :rules="[
+          { required: true, message: 'Please enter task title' }
+        ]">
             <a-input v-model:value="form.title" />
           </a-form-item>
-
-          <a-form-item label="Description">
+          <a-form-item label="Description" name="description">
             <a-textarea v-model:value="form.description" rows="3" />
           </a-form-item>
 
-          <a-form-item label="Bonus">
-            <BonusInput v-model="form.bonus" />
+          <a-form-item label="Bonus" name="bonus">
+            <BonusInput v-model="form.points" />
           </a-form-item>
 
-          <a-form-item label="Deadline">
-            <a-date-picker
-              v-model:value="form.deadline"
-              picker="month"
-              style="width: 100%"
-              input-read-only
-            />
+          <a-form-item label="Deadline" name="deadline">
+            <a-date-picker v-model:value="form.deadline" style="width: 100%" :disabled-date="disabledDate"
+              input-read-only />
           </a-form-item>
 
-          <!-- ⭐ FIX: ครอบ switch -->
-          <a-form-item label="Status">
-            <StatusSwitch v-model="form.active" />
-          </a-form-item>
-
-          <!-- actions -->
           <div class="actions">
             <a-button class="btn-cancel" @click="close">
               Cancel
             </a-button>
-            <a-button class="btn-save" html-type="submit">
+
+            <!-- 🔥 ต้องมี html-type="submit" และ type="primary" -->
+            <a-button type="primary" class="btn-save" html-type="submit">
               Save Task
             </a-button>
           </div>
@@ -55,10 +47,13 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
+import dayjs from 'dayjs'
 import BonusInput from './BonusInput.vue'
-import StatusSwitch from '@/components/base/StatusSwitch.vue'
 
-defineProps<{
+const disabledDate = (current: dayjs.Dayjs) => {
+  return current && current < dayjs().startOf('day')
+}
+const props = defineProps<{
   open: boolean
 }>()
 
@@ -70,20 +65,18 @@ const emit = defineEmits<{
 const form = reactive({
   title: '',
   description: '',
-  bonus: 1,
-  deadline: null as any,
-  active: true
+  points: 1,
+  deadline: null as any
 })
 
 watch(
-  () => open,
+  () => props.open,
   (val) => {
-    if (val()) {
+    if (val) {
       form.title = ''
       form.description = ''
-      form.bonus = 1
+      form.points = 1
       form.deadline = null
-      form.active = true
     }
   }
 )
@@ -91,13 +84,18 @@ watch(
 const close = () => emit('close')
 
 const submit = () => {
-  /**
-   * TODO:
-   * POST /tasks
-   */
-  emit('save', { ...form })
-}
+  const payload = {
+    title: form.title,
+    description: form.description,
+    points: form.points,
+    isBonus: form.points > 0,  // 🔥 bonus derive จาก points
+    deadline: form.deadline
+      ? dayjs(form.deadline).toISOString()
+      : null
+  }
 
+  emit('save', payload)
+}
 </script>
 
 <style scoped>
@@ -105,7 +103,7 @@ const submit = () => {
 .popup-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -212,7 +210,7 @@ const submit = () => {
 :deep(.status-switch .ant-switch-handle::before) {
   background: #fff;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 /* เลื่อนตอนเปิด */
