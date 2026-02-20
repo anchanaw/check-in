@@ -25,7 +25,8 @@
           </a-form-item>
 
           <a-form-item label="Deadline" name="deadline">
-            <a-date-picker v-model:value="form.deadline" picker="month" style="width: 100%" input-read-only />
+            <a-date-picker v-model:value="form.deadline" style="width: 100%" :disabled-date="disabledDate"
+              input-read-only />
           </a-form-item>
 
           <div class="actions">
@@ -49,6 +50,9 @@ import { reactive, watch } from 'vue'
 import dayjs from 'dayjs'
 import BonusInput from './BonusInput.vue'
 
+const disabledDate = (current: dayjs.Dayjs) => {
+  return current && current < dayjs().startOf('day')
+}
 const props = defineProps<{
   open: boolean
 }>()

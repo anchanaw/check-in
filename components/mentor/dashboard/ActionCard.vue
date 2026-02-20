@@ -29,7 +29,7 @@ const actions = [
   },
   {
     label: '👤 View intern list',
-    route: '/mentor/team'
+    route: '/mentor/teams'
   },
   {
     label: '⭐ Review bonus tasks',

@@ -1,115 +1,136 @@
 <template>
-  <div class="leave-page">
-    <div class="top-header">
-      <BackButton />
-      <span class="header-title">Leave Request</span>
+  <a-layout class="page">
+    <a-page-header class="page-header">
+      <div class="header-grid">
+        <div class="left">
+          <BackButton @click="goBack" />
+        </div>
+        <div class="center">
+          Review Bonus Tasks
+        </div>
+        <div></div>
+      </div>
+    </a-page-header>
+
+    <div class="content-center">
+      <a-space direction="vertical" size="middle" class="space-wrapper">
+        <BonusTaskSummaryCard :task="task" :loading="loading" />
+
+        <BonusTaskContentWithAction :task="task" :loading="actionLoading" @approve="approve" @reject="reject" />
+      </a-space>
     </div>
 
-    <div class="wrapper">
-      <BaseCard>
-        <LeaveRequestCard
-          :request="request"
-          @approve="approve"
-          @reject="reject"
-        />
-      </BaseCard>
-    </div>
-
-    <BottomBar />
-  </div>
+    <MentorBottomBar />
+  </a-layout>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useApi } from '~/composables/core'
+import { useBonusReview } from '@/composables/mentor/useBonusReview'
 
-import BaseCard from '~/components/base/BaseCard.vue'
-import LeaveRequestCard from '~/components/mentor/LeaveRequestCard.vue'
-import BottomBar from '@/components/mentor/MentorBottomBar.vue'
 import BackButton from '@/components/base/BackButton.vue'
+import BonusTaskSummaryCard from '@/components/mentor/bonus/BonusTaskSummaryCard.vue'
+import BonusTaskContentWithAction from '@/components/mentor/bonus/BonusTaskContentWithAction.vue'
+import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
-const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
+const { apiFetch } = useApi()
+const { reviewSubmission } = useBonusReview()
+
+const loading = ref(true)
+const actionLoading = ref(false)
 
 const id = route.params.id as string
-
-if (!id) {
-  console.error('Invalid leave id')
-  router.back()
-}
-
-const submitting = ref(false)
-
-const request = reactive({
+const reviewed = ref(false)
+const task = ref({
   id: '',
-  name: '',
-  type: '',
-  date: '',
-  duration: '',
-  status: '',
-  description: ''
+  internName: '',
+  title: '',
+  submittedAt: '',
+  bonusPoint: 0,
+  description: '',
+  imageUrl: ''
 })
 
 onMounted(async () => {
   try {
-    const res: any = await apiFetch(`/leaves/${id}`)
-    const data = res.data
+    loading.value = true
 
-    request.id = data.id
-    request.name = data.internName
-    request.type = data.type
-    request.date = data.date
-    request.duration = data.duration
-    request.status = data.status
-    request.description = data.description
+    // ดึง submission pending
+    const submissionRes: any = await apiFetch('/tasks/submissions/pending')
+    const submission = submissionRes.data?.find(
+      (s: any) => s.id === id
+    )
+
+    if (!submission) {
+      message.error('Submission not found')
+      router.back()
+      return
+    }
+
+    // ดึง task detail
+    const taskRes: any = await apiFetch(`/tasks/${submission.taskId}`)
+    const taskData = taskRes.data
+
+    // ดึง intern
+    const internRes: any = await apiFetch('/users/interns')
+    const intern = internRes.data?.find(
+      (i: any) => i.id === submission.internId
+    )
+
+    task.value = {
+      id: submission.id,
+      internName: intern
+        ? `${intern.firstName} ${intern.lastName}`
+        : 'Unknown Intern',
+      title: taskData?.title || '',
+      submittedAt: submission.submittedAt,
+      bonusPoint: taskData?.points || 0,
+      description: submission.content || '',
+      imageUrl: ''
+    }
 
   } catch (err) {
-    message.error('Failed to load leave')
+    message.error('Failed to load submission')
+    router.back()
+  } finally {
+    loading.value = false
   }
 })
 
-const approve = async () => {
-  if (submitting.value) return
-  submitting.value = true
-
+const approve = async (note: string) => {
   try {
-    await apiFetch(`/leaves/${id}/review`, {
-      method: 'PATCH',
-      body: { status: 'approved' }
-    })
-
-    message.success('Approved')
+    actionLoading.value = true
+    await reviewSubmission(id, 'approved', note)
+    reviewed.value = true 
+    message.success('Approved successfully')
     router.back()
-
-  } catch {
+  } catch (err) {
     message.error('Approve failed')
   } finally {
-    submitting.value = false
+    actionLoading.value = false
   }
 }
 
-const reject = async () => {
-  if (submitting.value) return
-  submitting.value = true
-
+const reject = async (note: string) => {
   try {
-    await apiFetch(`/leaves/${id}/review`, {
-      method: 'PATCH',
-      body: { status: 'rejected' }
-    })
-
-    message.success('Rejected')
+    actionLoading.value = true
+    await reviewSubmission(id, 'rejected', note)
+    reviewed.value = true 
+    message.success('Rejected successfully')
     router.back()
-
-  } catch {
+  } catch (err) {
     message.error('Reject failed')
   } finally {
-    submitting.value = false
+    actionLoading.value = false
   }
 }
+
+const goBack = () => router.back()
 </script>
 
 <style scoped>
@@ -121,16 +142,9 @@ const reject = async () => {
   padding-bottom: 80px;
 }
 
-/* ================= HEADER ================= */
 .page-header {
   background: #74c3ff;
   padding: 0 !important;
-}
-
-.page-header :deep(.ant-page-header-content),
-.page-header :deep(.ant-page-header-heading) {
-  padding: 0;
-  margin: 0;
 }
 
 .header-grid {
@@ -152,7 +166,6 @@ const reject = async () => {
   font-weight: 600;
 }
 
-/* ================= CONTENT ================= */
 .content-center {
   flex: 1;
   display: flex;
@@ -164,7 +177,6 @@ const reject = async () => {
 .space-wrapper {
   width: 100%;
   max-width: 390px;
-  /* ความกว้างมือถือ */
 }
 
 :deep(.ant-space-item) {
