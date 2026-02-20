@@ -1,14 +1,6 @@
 <template>
-  <a-form layout="vertical" @finish="submit">
-    <!-- Account -->
+  <a-form :model="form" @finish="handleSubmit"> <!-- Account -->
     <Section title="Account Information">
-      <a-form-item label="Username">
-        <a-input v-model:value="form.username" />
-      </a-form-item>
-
-      <a-form-item label="Email">
-        <a-input v-model:value="form.email" />
-      </a-form-item>
 
       <!-- Change Password -->
       <a-button block class="change-password" html-type="button" @click="goChangePassword">
@@ -27,8 +19,12 @@
         <a-input v-model:value="form.lastName" />
       </a-form-item>
 
-      <a-form-item label="Gender">
-        <a-input v-model:value="form.gender" />
+      <a-form-item label="Gender" name="gender">
+        <a-select v-model:value="form.gender" placeholder="Select gender" allow-clear>
+          <a-select-option value="male">Male</a-select-option>
+          <a-select-option value="female">Female</a-select-option>
+          <a-select-option value="other">Other</a-select-option>
+        </a-select>
       </a-form-item>
 
       <a-form-item label="Date of Birth">
@@ -37,7 +33,7 @@
     </Section>
 
     <!-- Actions -->
-    <a-button type="primary" block html-type="submit" class="save-btn">
+    <a-button type="primary"block html-type="submit" class="save-btn">
       Save Changes
     </a-button>
 
@@ -48,12 +44,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, watch, ref, computed } from 'vue'
 import type { PropType } from 'vue'
 
 const goChangePassword = () => {
   navigateTo('/manager/change_password')
 }
+
+const today = computed(() => {
+  const now = new Date()
+  return now.toISOString().split('T')[0]
+})
 
 const props = defineProps({
   formData: {
@@ -87,8 +88,8 @@ watch(
   { immediate: true }
 )
 
-const submit = () => {
-  emit('save', { ...form })
+const handleSubmit = () => {
+  emit('save', form)
 }
 </script>
 <style scoped>

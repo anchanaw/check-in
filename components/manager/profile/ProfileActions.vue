@@ -22,7 +22,7 @@ defineEmits(['logout'])
 const router = useRouter()
 
 const goEditProfile = () => {
-  router.push('/manager/edit_profile')
+  router.push('/manager/profile/edit')
 }
 
 const goCompanySetting = () => {
