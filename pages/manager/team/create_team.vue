@@ -95,9 +95,6 @@ const validateMentor = async () => {
 /* =============================
    Create Team
 ============================= */
-/* =============================
-   Create Team
-============================= */
 const createTeam = async () => {
     try {
         loading.value = true
@@ -129,6 +126,10 @@ const createTeam = async () => {
     } finally {
         loading.value = false
     }
+    console.log('CREATE TEAM PAYLOAD:', {
+  name: teamName.value,
+  mentorId: mentorId.value
+})
 }
 </script>
 

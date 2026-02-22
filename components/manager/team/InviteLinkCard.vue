@@ -2,31 +2,57 @@
   <BaseCard>
     <div class="section-title">Invite Link</div>
 
-    <div class="link-row">
+    <!-- LINK -->
+    <div v-if="invite.url" class="link-row">
       <a-input :value="invite.url" readonly />
-      <a-button size="small" @click="emit('copy')">copy</a-button>
+      <a-button @click="$emit('copy')">Copy</a-button>
     </div>
 
+    <div v-else class="no-link">
+      No active invite link
+    </div>
+
+    <!-- INFO -->
     <div class="info">Max Uses: {{ invite.maxUses }}</div>
     <div class="info">Used: {{ invite.used }}</div>
+
     <div class="info">
       Status:
-      <a-tag :color="invite.status === 'active' ? 'green' : 'red'">
-        {{ invite.status === 'active' ? 'Active' : 'Disabled' }}
+      <a-tag :color="statusColor">
+        {{ invite.status }}
       </a-tag>
     </div>
 
-    <a-button danger block @click="emit('disable')">
+    <!-- ACTION -->
+    <a-button
+      v-if="invite.status === 'Active'"
+      danger
+      block
+      @click="$emit('disable')"
+    >
       Disable Link
     </a-button>
   </BaseCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-defineProps<{ invite: any }>()
-const emit = defineEmits(['copy', 'disable'])
+const props = defineProps<{
+  invite: {
+    url: string
+    maxUses: number
+    used: number
+    status: 'Active' | 'Disabled'
+  }
+}>()
+
+defineEmits(['copy', 'disable'])
+
+const statusColor = computed(() =>
+  props.invite.status === 'Active' ? 'green' : 'red'
+)
 </script>
 
 <style scoped>

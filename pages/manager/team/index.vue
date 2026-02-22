@@ -52,14 +52,32 @@ const loadTeams = async () => {
 
     const teamList = res.data?.teams || []
 
-    teams.value = teamList.map((t: any) => ({
-      id: t.id,
-      team: t.name,
-      mentor: t.mentorName?.trim() || 'Unassigned',
-      intern: t.internTotal || 0,
-      status: 'open'
-    }))
-    console.log(teamList[0])
+    // 🔥 ดึง mentor name เพิ่ม
+    const enrichedTeams = await Promise.all(
+      teamList.map(async (t: any) => {
+        let mentorName = 'Unassigned'
+
+        if (t.mentorId) {
+          try {
+            const mentorRes: any = await apiFetch(`/users/${t.mentorId}`)
+            const mentorData = mentorRes.data
+            mentorName = `${mentorData.firstName} ${mentorData.lastName}`
+          } catch {
+            mentorName = 'Unassigned'
+          }
+        }
+
+        return {
+          id: t.id,
+          team: t.name,
+          mentor: mentorName,
+          intern: t.internTotal || 0,
+          status: 'open'
+        }
+      })
+    )
+
+    teams.value = enrichedTeams
     totalTeams.value = res.data.total || 0
 
   } catch (err) {
@@ -68,7 +86,6 @@ const loadTeams = async () => {
     loading.value = false
   }
 }
-
 /* ================= SEARCH ================= */
 const filteredTeams = computed(() => {
   if (!search.value) return teams.value

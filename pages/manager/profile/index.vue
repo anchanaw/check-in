@@ -41,7 +41,18 @@ const user = ref<any>(null)
 const avatarUrl = ref<string>('')
 const accountInfo = ref<any[]>([])
 const personalInfo = ref<any[]>([])
-
+const formatRole = (role: string) => {
+  switch (role) {
+    case 'manager':
+      return 'Manager'
+    case 'mentor':
+      return 'Mentor'
+    case 'intern':
+      return 'Intern'
+    default:
+      return '-'
+  }
+}
 const loadProfile = async () => {
   try {
     loading.value = true
@@ -51,7 +62,7 @@ const loadProfile = async () => {
 
     user.value = {
       name: `${data.firstName} ${data.lastName}`,
-      role: 'MANAGER'
+      role: formatRole(data.role)
     }
 
     accountInfo.value = [

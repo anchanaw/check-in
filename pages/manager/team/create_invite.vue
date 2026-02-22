@@ -122,7 +122,8 @@ const createInvite = async () => {
             body: {
                 code,
                 role: 'intern',
-                type: 'registration',
+                type: 'join_team',
+                teamId: teamId.value,
                 maxUses: maxUses.value,
                 expiredAt: expiredAt.value
                     ? expiredAt.value.toISOString()

@@ -45,76 +45,117 @@ const team = ref({
   status: 'active'
 })
 
-const invite = ref({
+interface Invite {
+  id: string | null
+  url: string
+  maxUses: number
+  used: number
+  expiresAt: string
+  status: 'Active' | 'Disabled'
+}
+
+const invite = ref<Invite>({
+  id: null,
   url: '',
   maxUses: 0,
-  expiresAt: '',
   used: 0,
-  status: 'active'
+  expiresAt: '',
+  status: 'Disabled'
 })
 
-const interns = ref<any[]>([])
 
+const interns = ref<any[]>([])
+console.log('ROUTE PARAM:', route.params)
 const loadTeamDetail = async () => {
   loading.value = true
 
   try {
     /* ================= TEAM DETAIL ================= */
-    const res: any = await apiFetch('/teams', {
-      params: { page: 1, pageSize: 10 }
-    })
+    let foundTeam: any = null
+    let currentPage = 1
+    let totalPages = 1
 
-    const teamData = res.data.teams.find(
-      (t: any) => t.id === teamId
-    )
+    do {
+      const res: any = await apiFetch('/teams', {
+        params: { page: currentPage, pageSize: 50 }
+      })
 
-    if (!teamData) {
+      const teamList = res.data?.teams || []
+      totalPages = res.data?.totalPages || 1
+
+      foundTeam = teamList.find(
+        (t: any) => String(t.id) === String(teamId)
+      )
+
+      currentPage++
+
+    } while (!foundTeam && currentPage <= totalPages)
+
+    if (!foundTeam) {
       message.error('Team not found')
       return
     }
 
+    /* ===== FETCH MENTOR NAME ===== */
+    let mentorName = 'Unassigned'
+
+    if (foundTeam.mentorId) {
+      try {
+        const mentorRes: any = await apiFetch(
+          `/users/${foundTeam.mentorId}`
+        )
+
+        const mentorData = mentorRes.data
+
+        mentorName = `${mentorData.firstName} ${mentorData.lastName}`
+      } catch (err) {
+        console.error('Failed to load mentor:', err)
+        mentorName = 'Unassigned'
+      }
+    }
+
+    /* ===== SET TEAM ===== */
     team.value = {
-      name: teamData.name,
-      mentor: teamData.mentorName || 'Unassigned',
+      name: foundTeam.name,
+      mentor: mentorName,
       status: 'active'
     }
 
-    interns.value = (teamData.interns || []).map((i: any) => ({
+    /* ===== SET INTERNS ===== */
+    interns.value = (foundTeam.interns || []).map((i: any) => ({
       id: i.id,
       name: i.name,
       score: 0,
       status: 'active'
     }))
-
     /* ================= INVITE ================= */
     const inviteRes: any = await apiFetch('/auth/invites')
-
     const inviteList = inviteRes.data || []
 
     const inviteData = inviteList.find(
-      (i: any) => i.teamId === teamId && i.isActive
+      (i: any) => String(i.teamId) === String(teamId)
     )
-
+    console.log('INVITE LIST:', inviteList)
+    console.log('CURRENT TEAM ID:', teamId)
     if (inviteData) {
       invite.value = {
-        url: `${window.location.origin}/register?invite=${inviteData.code}`,
+        id: inviteData.id, // 🔥 เก็บ id ไว้ใช้ disable
+        url: `${window.location.origin}/invite?code=${inviteData.code}`,
         maxUses: inviteData.maxUses ?? 0,
         used: inviteData.usedCount ?? 0,
         expiresAt: inviteData.expiresAt,
-        status: inviteData.isActive ? 'active' : 'inactive'
+        status: inviteData.isActive ? 'Active' : 'Disabled'
       }
     } else {
       invite.value = {
+        id: null,
         url: '',
         maxUses: 0,
         used: 0,
         expiresAt: '',
-        status: 'inactive'
+        status: 'Disabled'
       }
     }
-    console.log('INVITE RES:', inviteRes)
-    console.log('TEAM ID:', teamId)
-    console.log(inviteRes.data[0])
   } catch (err) {
     message.error('Failed to load team detail')
   } finally {
@@ -136,18 +177,22 @@ const onCopy = () => {
 
 const onDisableLink = async () => {
   try {
-    await apiFetch(`/auth/invites/${teamId}/status`, {
+    if (!invite.value.id) return
+
+    await apiFetch(`/auth/invites/${invite.value.id}/status`, {
       method: 'PATCH',
       body: { isActive: false }
     })
 
-    invite.value.status = 'inactive'
+    invite.value.status = 'Disabled'
     message.success('Invite link disabled')
 
-  } catch {
+  } catch (err) {
     message.error('Disable failed')
   }
 }
+
+
 </script>
 
 <style scoped>
