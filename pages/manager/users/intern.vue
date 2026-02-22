@@ -9,24 +9,13 @@
     <div class="content">
       <BaseCard class="card">
         <!-- filter + search -->
-        <InternFilterBar
-          v-model:keyword="keyword"
-          v-model:status="status"
-          :loading="loading"
-        />
+        <InternFilterBar v-model:keyword="keyword" v-model:status="status" :loading="loading" />
 
         <!-- table -->
-        <InternTable
-          :interns="interns"
-          :loading="loading"
-          @select="openDetail"
-        />
+        <InternTable :interns="interns" :loading="loading" @select="openDetail" />
 
         <!-- detail modal -->
-        <InternDetailModal
-          v-model:open="detailOpen"
-          :intern="selectedIntern"
-        />
+        <InternDetailModal v-model:open="detailOpen" :intern="selectedIntern" @toggle-status="toggleStatus" />
       </BaseCard>
     </div>
 
@@ -40,12 +29,16 @@ import { ref, onMounted } from 'vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
 
 import InternFilterBar from '@/components/manager/users/InternFilterBar.vue'
 import InternTable, { type Intern } from '@/components/manager/users/InternTable.vue'
 import InternDetailModal from '@/components/manager/users/InternDetailModal.vue'
 
 /* ===== state ===== */
+const { apiFetch } = useApi()
+
 const loading = ref(true)
 const keyword = ref('')
 const status = ref<'all' | 'active' | 'inactive'>('all')
@@ -68,28 +61,85 @@ const selectedIntern = ref<Intern & {
   name: '',
   status: 'inactive'
 })
+const loadInterns = async () => {
+  try {
+    loading.value = true
 
+    const res: any = await apiFetch('/users/interns')
+
+    const internList = res.data || []
+
+    interns.value = internList.map((u: any) => ({
+      id: u.id,
+      name: `${u.firstName} ${u.lastName}`,
+      status: u.isActive ? 'active' : 'inactive'
+    }))
+
+  } catch (err) {
+    console.error('Load interns failed:', err)
+  } finally {
+    loading.value = false
+  }
+}
 /* ===== init (GET) ===== */
-onMounted(async () => {
-  await new Promise(r => setTimeout(r, 600))
-
-  /**
-   * TODO: GET /manager/users/interns
-   * params: { keyword, status }
-   */
-  interns.value = [
-    { id: 1, name: 'Sompong', status: 'active' },
-    { id: 2, name: 'Anon', status: 'active' },
-    { id: 3, name: 'Amorn', status: 'inactive' }
-  ]
-
-  loading.value = false
+onMounted(() => {
+  loadInterns()
 })
 
 /* ===== actions ===== */
-const openDetail = (intern: Intern) => {
-  selectedIntern.value = intern
-  detailOpen.value = true
+const openDetail = async (intern: Intern) => {
+  try {
+    loading.value = true
+
+    const res: any = await apiFetch(`/users/${intern.id}`)
+
+    const data = res.data
+
+    selectedIntern.value = {
+      id: data.id,
+      name: `${data.firstName} ${data.lastName}`,
+      status: data.isActive ? 'active' : 'inactive',
+
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      university: data.university,
+      studentId: data.studentId,
+      team: data.teamName || '-',
+      lastCheckedIn: data.lastCheckIn
+        ? new Date(data.lastCheckIn).toLocaleString()
+        : '-'
+    }
+
+    detailOpen.value = true
+
+  } catch (err) {
+    console.error('Load intern detail failed:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+const toggleStatus = async () => {
+  try {
+    const newStatus = selectedIntern.value.status === 'active'
+
+    await apiFetch(`/users/${selectedIntern.value.id}`, {
+      method: 'PATCH',
+      body: { isActive: !newStatus }
+    })
+
+    selectedIntern.value.status = newStatus
+      ? 'inactive'
+      : 'active'
+
+    message.success('Status updated')
+
+    loadInterns()
+
+  } catch (err) {
+    message.error('Failed to update status')
+  }
 }
 </script>
 

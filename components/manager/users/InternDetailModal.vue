@@ -1,61 +1,62 @@
 <template>
-  <a-modal
-    :open="open"
-    :footer="null"
-    centered
-    @cancel="emit('update:open', false)"
-  >
-      <!-- name -->
-      <div class="name">
-        {{ intern.name }}
+  <a-modal :open="open" :footer="null" centered @cancel="emit('update:open', false)">
+    <!-- name -->
+    <div class="name">
+      {{ intern.name }}
+    </div>
+
+    <!-- info -->
+    <div class="info">
+      <div class="row">
+        <span class="label">First name :</span>
+        <span>{{ intern.firstName || '-' }}</span>
       </div>
 
-      <!-- info -->
-      <div class="info">
-        <div class="row">
-          <span class="label">First name :</span>
-          <span>{{ intern.firstName || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">Last name :</span>
-          <span>{{ intern.lastName || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">Team :</span>
-          <span>{{ intern.team || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">Email :</span>
-          <span>{{ intern.email || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">University :</span>
-          <span>{{ intern.university || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">Student Id :</span>
-          <span>{{ intern.studentId || '-' }}</span>
-        </div>
-
-        <div class="row">
-          <span class="label">Last Checked-in :</span>
-          <span>{{ intern.lastCheckedIn || '-' }}</span>
-        </div>
+      <div class="row">
+        <span class="label">Last name :</span>
+        <span>{{ intern.lastName || '-' }}</span>
       </div>
 
-      <!-- status -->
-      <div class="status">
-        <a-tag
-          :color="intern.status === 'active' ? 'green' : 'red'"
-        >
-          {{ intern.status }}
-        </a-tag>
+      <div class="row">
+        <span class="label">Team :</span>
+        <span>{{ intern.team || '-' }}</span>
       </div>
+
+      <div class="row">
+        <span class="label">Email :</span>
+        <span>{{ intern.email || '-' }}</span>
+      </div>
+
+      <div class="row">
+        <span class="label">University :</span>
+        <span>{{ intern.university || '-' }}</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Student Id :</span>
+        <span>{{ intern.studentId || '-' }}</span>
+      </div>
+
+      <div class="row">
+        <span class="label">Last Checked-in :</span>
+        <span>{{ intern.lastCheckedIn || '-' }}</span>
+      </div>
+    </div>
+
+    <!-- status -->
+    <div class="status">
+      <a-tag :color="intern.status === 'active' ? 'green' : 'red'">
+        {{ intern.status }}
+      </a-tag>
+    </div>
+    <a-button :type="intern.status === 'active' ? 'default' : 'primary'" :danger="intern.status === 'active'" block
+      @click="emit('toggle-status')" class="status-btn">
+      {{
+        intern.status === 'active'
+          ? 'Mark as Inactive'
+          : 'Activate Intern'
+      }}
+    </a-button>
   </a-modal>
 </template>
 
@@ -79,7 +80,7 @@ defineProps<{
   }
 }>()
 
-const emit = defineEmits(['update:open'])
+const emit = defineEmits(['update:open', 'toggle-status'])
 </script>
 
 <style scoped>
@@ -114,5 +115,9 @@ const emit = defineEmits(['update:open'])
 .status {
   display: flex;
   justify-content: center;
+}
+
+.status-btn {
+  margin-top: 12px;
 }
 </style>

@@ -40,7 +40,9 @@ import { ref, onMounted } from 'vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 import UserRoleCard from '@/components/manager/users/UserRoleCard.vue'
+import { useApi } from '~/composables/core'
 
+const { apiFetch } = useApi()
 const loading = ref(true)
 
 /* ===== mock state (ตรง API) ===== */
@@ -49,19 +51,25 @@ const counts = ref({
   intern: 0
 })
 
+
 onMounted(async () => {
-  await new Promise(r => setTimeout(r, 600))
+  try {
+    loading.value = true
 
-  /**
-   * TODO: GET /manager/users/summary
-   * response: { mentorCount, internCount }
-   */
-  counts.value = {
-    mentor: 5,
-    intern: 10
+    const res: any = await apiFetch('/users/interns')
+
+    const internList = res.data || []
+
+    counts.value = {
+      mentor: 0, // ยังไม่มี API ของ mentor
+      intern: internList.length
+    }
+
+  } catch (err) {
+    console.error('Load interns failed:', err)
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 })
 
 /* ===== navigation ===== */
