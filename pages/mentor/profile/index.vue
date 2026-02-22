@@ -23,6 +23,7 @@
 import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
+import { useAuthStore } from '~/stores/auth.store'
 
 import BaseCard from '~/components/base/BaseCard.vue'
 import ProfileHeader from '~/components/mentor/profile/ProfileHeader.vue'
@@ -32,6 +33,7 @@ import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 
 const { apiFetch } = useApi()
 const router = useRouter()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const user = ref<any>(null)
@@ -66,24 +68,18 @@ const loadProfile = async () => {
           : '-'
       }
     ]
-    // 🔥 เรียก signed-url endpoint
+
     const imgRes: any = await apiFetch('/auth/profile/image-signed-url')
 
-    if (imgRes?.data?.signedUrl) {
-      avatarUrl.value = imgRes.data.signedUrl
-    } else {
-      avatarUrl.value = ''
-    }
-
-    console.log('SET AVATAR URL:', avatarUrl.value)
+    avatarUrl.value = imgRes?.data?.signedUrl || ''
 
   } catch (err) {
+    auth.clearAuth()
     router.replace('/login')
   } finally {
     loading.value = false
   }
 }
-
 
 onMounted(loadProfile)
 onActivated(loadProfile)
@@ -93,7 +89,7 @@ const onEdit = () => {
 }
 
 const onLogout = () => {
-  localStorage.removeItem('access_token')
+  auth.clearAuth()   // 🔥 ใช้ store เท่านั้น
   router.push('/login')
 }
 </script>

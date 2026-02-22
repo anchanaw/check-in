@@ -43,8 +43,7 @@ const logout = () => {
   Modal.confirm({
     title: 'Are you sure you want to logout?',
     onOk() {
-      authStore.$reset()
-      localStorage.removeItem('access_token')
+      authStore.clearAuth()   // 🔥 ใช้ method ที่ออกแบบไว้
       emit('logout')
       router.replace('/login')
     }

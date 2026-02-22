@@ -1,11 +1,6 @@
 // stores/auth.store.ts
 import { defineStore } from 'pinia'
-import { jwtDecode } from 'jwt-decode'
 import type { UserRole } from '~/types/auth'
-
-interface JwtPayload {
-  role: UserRole
-}
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,29 +10,60 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   actions: {
-    setAuth(token: string, role: string, remember: boolean) {
-      this.isLoggedIn = true
-      this.access_token = token
-      this.role = role as any
+    /* =============================
+       Restore token on app start
+    ============================= */
+    initAuth() {
+      if (!import.meta.client) return
 
-      if (remember) {
-        localStorage.setItem('access_token', token)
-        localStorage.setItem('role', role)
-      } else {
-        sessionStorage.setItem('access_token', token)
-        sessionStorage.setItem('role', role)
+      const token =
+        window.localStorage.getItem('access_token') ||
+        window.sessionStorage.getItem('access_token')
+
+      const role =
+        window.localStorage.getItem('role') ||
+        window.sessionStorage.getItem('role')
+
+      if (token && role) {
+        this.isLoggedIn = true
+        this.access_token = token
+        this.role = role as UserRole
       }
     },
 
+    /* =============================
+       Save token after login
+    ============================= */
+    setAuth(token: string, role: string, remember: boolean) {
+      this.isLoggedIn = true
+      this.access_token = token
+      this.role = role as UserRole
+
+      if (!import.meta.client) return
+
+      if (remember) {
+        window.localStorage.setItem('access_token', token)
+        window.localStorage.setItem('role', role)
+      } else {
+        window.sessionStorage.setItem('access_token', token)
+        window.sessionStorage.setItem('role', role)
+      }
+    },
+
+    /* =============================
+       Clear token on logout
+    ============================= */
     clearAuth() {
       this.isLoggedIn = false
       this.access_token = null
       this.role = null
 
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('role')
-      sessionStorage.removeItem('access_token')
-      sessionStorage.removeItem('role')
+      if (!import.meta.client) return
+
+      window.localStorage.removeItem('access_token')
+      window.localStorage.removeItem('role')
+      window.sessionStorage.removeItem('access_token')
+      window.sessionStorage.removeItem('role')
     }
   }
 })

@@ -23,7 +23,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
+import { useAuthStore } from '~/stores/auth.store'
 import { ref, onMounted, onActivated } from 'vue'
+
 import BaseCard from '~/components/base/BaseCard.vue'
 import ProfileHeader from '~/components/manager/profile/ProfileHeader.vue'
 import ProfileInfoSection from '~/components/manager/profile/ProfileInfoSection.vue'
@@ -32,18 +34,19 @@ import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 
 const { apiFetch } = useApi()
 const router = useRouter()
+const auth = useAuthStore()
 
 const loading = ref(true)
-const user = ref < any > (null)
+const user = ref<any>(null)
 const avatarUrl = ref<string>('')
-const accountInfo = ref<Array<any>>([])
-const personalInfo = ref<Array<any>>([])
+const accountInfo = ref<any[]>([])
+const personalInfo = ref<any[]>([])
 
 const loadProfile = async () => {
   try {
     loading.value = true
 
-    const res = await apiFetch < { data: any } > ('/auth/me')
+    const res = await apiFetch<{ data: any }>('/auth/me')
     const data = res.data
 
     user.value = {
@@ -66,19 +69,15 @@ const loadProfile = async () => {
           : '-'
       }
     ]
-    // 🔥 เรียก signed-url endpoint
-    const imgRes = await apiFetch < { data: { signedUrl: string } } > (
+
+    const imgRes = await apiFetch<{ data: { signedUrl: string } }>(
       '/auth/profile/image-signed-url'
     )
-    if (imgRes?.data?.signedUrl) {
-      avatarUrl.value = imgRes.data.signedUrl
-    } else {
-      avatarUrl.value = ''
-    }
 
-    console.log('SET AVATAR URL:', avatarUrl.value)
+    avatarUrl.value = imgRes?.data?.signedUrl || ''
 
   } catch (err) {
+    auth.clearAuth()
     router.replace('/login')
   } finally {
     loading.value = false
@@ -93,7 +92,7 @@ const onEdit = () => {
 }
 
 const onLogout = () => {
-  localStorage.removeItem('access_token')
+  auth.clearAuth()   // 🔥 ใช้ store เท่านั้น
   router.push('/login')
 }
 </script>

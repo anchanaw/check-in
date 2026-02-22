@@ -7,13 +7,7 @@
     </div>
 
     <div class="content">
-      <LinkFormCard
-        :teams="teams"
-        :mentors="mentors"
-        :interns="interns"
-        :loading="loading"
-        @submit="onSubmit"
-      />
+      <LinkFormCard :teams="teams" :mentors="mentors" :interns="interns" :loading="loading" @submit="onSubmit" />
     </div>
 
     <ManagerBottomBar />
@@ -26,7 +20,7 @@ import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 import LinkFormCard from '@/components/manager/createlink/LinkFormCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 
-/* ===== types (ตรง backend) ===== */
+/* ===== types ===== */
 interface Team {
   id: number
   name: string
@@ -43,49 +37,42 @@ interface Intern {
 }
 
 /* ===== state ===== */
-const loading = ref(true)
-
+const loading = ref(false)
 const teams = ref<Team[]>([])
 const mentors = ref<Mentor[]>([])
 const interns = ref<Intern[]>([])
 
-/* ===== init (GET) ===== */
+/* ===== helper ===== */
+const generateCode = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
+/* ===== GET init data ===== */
 onMounted(async () => {
-  loading.value = true
+  try {
+    loading.value = true
 
-  await new Promise(r => setTimeout(r, 600))
+    const token = localStorage.getItem('token')
 
-  /**
-   * TODO: GET /manager/create-link/init
-   * response: {
-   *   teams: { id, name }[]
-   *   mentors: { id, name }[]
-   *   interns: { id, name }[]
-   * }
-   */
-  teams.value = [
-    { id: 1, name: 'Frontend' },
-    { id: 2, name: 'Backend' },
-    { id: 3, name: 'Tester' }
-  ]
+    const res: any = await $fetch('/manager/create-link/init', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
 
-  mentors.value = [
-    { id: 10, name: 'Sommai' },
-    { id: 11, name: 'Amorn' },
-    { id: 12, name: 'Kiki' }
-  ]
+    teams.value = res.teams
+    mentors.value = res.mentors
+    interns.value = res.interns
 
-  interns.value = [
-    { id: 101, name: 'Sompong' },
-    { id: 102, name: 'Anon' },
-    { id: 103, name: 'Amorn' }
-  ]
-
-  loading.value = false
+  } catch (err) {
+    console.error('Init load error:', err)
+  } finally {
+    loading.value = false
+  }
 })
 
-/* ===== submit (POST) ===== */
-const onSubmit = (payload: {
+/* ===== SUBMIT ===== */
+const onSubmit = async (payload: {
   team_id: number
   mentor_id: number
   intern_ids: number[]
@@ -93,20 +80,41 @@ const onSubmit = (payload: {
   max_uses?: number | null
   expired_at?: string | null
 }) => {
-  console.log('create link payload:', payload)
+  try {
+    loading.value = true
 
-  /**
-   * TODO: POST /manager/create-link
-   * payload (ตรง backend):
-   * {
-   *   team_id: number
-   *   mentor_id: number
-   *   intern_ids: number[]
-   *   link_name?: string
-   *   max_uses?: number
-   *   expired_at?: string (ISO)
-   * }
-   */
+    const token = localStorage.getItem('token')
+
+    // ✅ ใช้ team_id ที่เลือกมาเลย
+    const inviteRes = await $fetch('/auth/invites', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: {
+        code: generateCode(),
+        role: 'intern',
+        type: 'registration',
+        maxUses: payload.max_uses || 1,
+        teamId: payload.team_id
+      }
+    })
+
+    console.log('Invite created:', inviteRes)
+
+    alert('สร้างลิงก์สำเร็จ 🎉')
+
+  } catch (err: any) {
+    console.error('Create link error:', err)
+
+    if (err?.data?.message) {
+      alert(err.data.message)
+    } else {
+      alert('เกิดข้อผิดพลาด')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

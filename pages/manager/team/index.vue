@@ -91,7 +91,7 @@ const onPageChange = (newPage: number) => {
 
 /* ================= NAVIGATION ================= */
 const goCreateLink = () => {
-  router.push('/manager/create_link')
+  router.push('/manager/team/create_team')
 }
 
 /* ================= INIT ================= */

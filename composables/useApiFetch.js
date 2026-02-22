@@ -2,48 +2,35 @@ import { defu } from 'defu'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
-import { useAuthStore } from '~/stores/authentication'
+import { useAuthStore } from '~/stores/auth.store'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-export function useApiFetch (url, options = {}) {
+export function useApiFetch(url, options = {}) {
     const config = useRuntimeConfig()
     const auth = useAuthStore()
 
     const defaults = {
-        baseURL: config.public.apiBaseUrl + '/api',
+        baseURL: '/api',  // 🔥 แก้ตรงนี้
         key: url,
         server: false,
         onRequest({ options }) {
-            if (auth.accessToken) {
+            if (auth.access_token) {
                 options.headers = {
                     ...options.headers,
-                    'Authorization': 'Bearer ' + auth.accessToken,
-                    'Timezone': dayjs.tz.guess(),
+                    Authorization: 'Bearer ' + auth.access_token,
                 }
             }
         },
 
         async onResponseError({ response }) {
             if (response.status === 401) {
-                systemErrorStore().setOpenState(true)
-                console.log('token failed');
-                // useLoadingStore().endLoad()
-                usePathStore().setVin('')
-            }
-            // if (response.status === 400) {
-            //     // systemErrorStore().setOpenState(true)
-            //     // useLoadingStore().endLoad()
-            //     // console.log('connection timed out!');
-            // }
-            else if (response.status === 500) {
-                serverErrorStore().setOpenState(true)
-                // useLoadingStore().endLoad()
-                console.log('system error!');
-            }
-            else {
-                console.log('error!', response);
+                console.log('token failed')
+            } else if (response.status === 500) {
+                console.log('system error!')
+            } else {
+                console.log('error!', response)
             }
         },
     }
@@ -53,5 +40,4 @@ export function useApiFetch (url, options = {}) {
     return $fetch(url, {
         ...params,
     })
-    // return useFetch(url, params)
 }
