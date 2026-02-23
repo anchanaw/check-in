@@ -1,12 +1,19 @@
 export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.server) return
 
-    if (import.meta.dev) return
-
   const auth = useAuthStore()
-  const publicRoutes = ['/login', '/register']
 
-  if (!auth.isLoggedIn && !publicRoutes.includes(to.path)) {
+  const publicRoutes = ['/login', '/register', '/invite']
+
+  const isPublic = publicRoutes.some(route =>
+    to.path.startsWith(route)
+  )
+
+  console.log('ROUTING TO:', to.fullPath)
+  console.log('isPublic:', isPublic)
+  console.log('isLoggedIn:', auth.isLoggedIn)
+
+  if (!auth.isLoggedIn && !isPublic) {
     return navigateTo('/login')
   }
 
@@ -17,11 +24,9 @@ export default defineNuxtRouteMiddleware((to) => {
       mentor: '/mentor'
     } as const
 
-    const roleRoots = Object.values(homeByRole)
     const ownHome = homeByRole[auth.role]
-    const isRoleRoot = roleRoots.some((root) => to.path.startsWith(root))
 
-    if (isRoleRoot && !to.path.startsWith(ownHome)) {
+    if (!to.path.startsWith(ownHome)) {
       return navigateTo(ownHome)
     }
   }

@@ -55,7 +55,7 @@ import BaseCard from '@/components/base/BaseCard.vue'
 defineProps<{
   open: boolean
   mentor?: {
-    id?: number
+    id?: string
     name?: string
     status?: 'active' | 'inactive'
     firstName?: string

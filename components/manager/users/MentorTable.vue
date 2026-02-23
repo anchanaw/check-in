@@ -25,7 +25,7 @@
 <script setup lang="ts">
 /* ===== types ===== */
 export interface Mentor {
-  id: number
+  id: string
   name: string
   status: 'active' | 'inactive'
   // field อื่น ๆ จะมาจาก API ภายหลัง

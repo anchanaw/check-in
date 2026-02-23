@@ -1,199 +1,114 @@
 <template>
-  <div class="mentor-register-page">
-  <header class="register-header">
-    <div class="top-bar">
-      <BackButton class="back-btn"/>
-      <div class="title">Create Mentor Account</div>
+  <div class="invite-page">
+    <div class="top-header">
+      <BackButton />
+      <span class="title">Invite Mentor</span>
     </div>
-  </header>
 
-  <BaseCard maxWidth="320px">
-    <a-form layout="vertical" @finish="onSubmit">
+    <div class="content">
+      <BaseCard>
 
-      <a-form-item label="First Name" name="firstName" :rules="req">
-        <a-input placeholder="First name" />
-      </a-form-item>
-
-      <a-form-item label="Last Name" name="lastName" :rules="req">
-        <a-input placeholder="Last name" />
-      </a-form-item>
-
-      <a-form-item label="Display Name" name="displayName" :rules="req">
-        <a-input placeholder="Display name" />
-      </a-form-item>
-
-      <a-form-item label="Email" name="email" :rules="[
-        { required: true, message: 'Email is required' },
-        { type: 'email', message: 'Invalid email' }
-      ]">
-        <a-input placeholder="Email" />
-      </a-form-item>
-
-      <a-form-item label="Password" name="password" :rules="req">
-        <a-input-password placeholder="Password" />
-      </a-form-item>
-
-      <a-form-item label="Confirm Password" name="confirmPassword" :rules="[
-        { required: true, message: 'Confirm password' },
-        { validator: validateConfirm }
-      ]">
-        <a-input-password placeholder="Confirm password" />
-      </a-form-item>
-
-      <a-form-item label="Gender" name="gender">
-        <a-select placeholder="Select">
-          <a-select-option value="male">Male</a-select-option>
-          <a-select-option value="female">Female</a-select-option>
-          <a-select-option value="other">Other</a-select-option>
-        </a-select>
-      </a-form-item>
-
-      <a-form-item label="Date of Birth" name="dob">
-        <a-date-picker class="full-width" placeholder="Select date" />
-      </a-form-item>
-
-      <a-form-item>
-        <a-button html-type="submit" block :loading="loading" class="submit-btn">
-          Sign Up
+        <a-button type="primary" block :loading="loading" @click="onSubmit">
+          Generate Invite Link
         </a-button>
-      </a-form-item>
 
-    </a-form>
-  </BaseCard>
-  <SuccessModal
-  :open="successOpen"
-  @close="onSuccessClose"
-/>
+        <div v-if="inviteLink" class="result">
+          <a-divider />
 
+          <div class="row">
+            <span class="label">Registration Link</span>
+          </div>
+
+          <a-typography-text copyable class="link-box">
+            {{ inviteLink }}
+          </a-typography-text>
+
+          <div class="preview">
+            <a-tag color="blue">Preview URL</a-tag>
+            <div class="preview-url">
+              {{ inviteLink }}
+            </div>
+          </div>
+
+        </div>
+
+      </BaseCard>
+    </div>
+
+    <ManagerBottomBar />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { navigateTo } from '#app'
-import { useAuthApi } from '~/composables/useAuthApi'
-import BackButton from '~/components/base/BackButton.vue'
-import SuccessModal from '~/components/manager/users/SuccessModal.vue'
+import { message } from 'ant-design-vue'
+import { useRuntimeConfig } from '#app'
+import { useApiFetch } from '~/composables/useApiFetch'
+import BaseCard from '@/components/base/BaseCard.vue'
+import BackButton from '@/components/base/BackButton.vue'
+import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 
-definePageMeta({
-  layout: 'mobile',
-  noPadding: true
-})
-
-const { register } = useAuthApi()
-const successOpen = ref(false)
-
-/* ===== validation ===== */
-const req = [{ required: true, message: 'Required' }]
-
-const validateConfirm =
-  ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
-    validator(_: any, value: any) {
-      if (!value || value === getFieldValue('password')) {
-        return Promise.resolve()
-      }
-      return Promise.reject('Passwords do not match')
-    }
-  })
-
-/* ===== submit ===== */
 const loading = ref(false)
+const inviteLink = ref('')
 
-const onSubmit = async (values: any) => {
-  loading.value = true
+const config = useRuntimeConfig()
 
+const onSubmit = async () => {
   try {
-    const payload = {
-      email: values.email,
-      username: values.email,
-      password: values.password,
-      first_name: values.firstName,
-      last_name: values.lastName,
-      display_name: values.displayName,
-      gender: values.gender,
-      birth_date: values.dob
-        ? values.dob.format('YYYY-MM-DD')
-        : null
-    }
+    loading.value = true
 
-    await register(payload)
+    const res: any = await useApiFetch('/auth/invites', {
+      method: 'POST',
+      body: {
+        code: `MENTOR-${Date.now()}`,
+        role: 'mentor',
+        type: 'registration',
+        maxUses: 1
+      }
+    })
 
-    // ✅ เปิด success modal อย่างเดียว
-    successOpen.value = true
+    const code = res?.data?.code
+    // 🔥 สร้างลิงก์สมัครจริง
+    inviteLink.value = `${window.location.origin}/register?code=${code}`
+    message.success('Invite link created successfully')
+
   } catch (err) {
-    alert('Registration failed')
+    console.error(err)
+    message.error('Failed to create invite')
   } finally {
     loading.value = false
   }
 }
-const onSuccessClose = () => {
-  navigateTo('/manager/users/mentor')
-}
 </script>
 
 <style scoped>
-.register-header {
-  background: #6CBCFA;
-  width: 100%;
+.result {
+  margin-top: 16px;
 }
 
-/* top bar */
-.top-bar {
-  width: 100%;
-  position: relative;
-  height: 56px;              /* ความสูง app bar มาตรฐาน */
-  display: flex;
-  align-items: center;
-  justify-content: center;   /* จัด title กลาง */
-
-  padding: 0 48px;           /* เผื่อพื้นที่ซ้าย-ขวา */
-  box-sizing: border-box;
+.row {
+  margin-bottom: 8px;
 }
 
-/* ปุ่ม back ซ้ายบน */
-.top-bar :deep(.back-btn) {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* title กลางจริง */
-.title {
-  font-size: 20px;
+.label {
   font-weight: 600;
-  text-align: center;
-  white-space: nowrap;
 }
 
-.mentor-register-page {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.link-box {
+  display: block;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 6px;
+  word-break: break-all;
 }
 
-/* BaseCard */
-:deep(.ant-card) {
-  margin-top: 16px;      /* ⭐ ช่องว่างระหว่างฟ้ากับการ์ด */
-  border-radius: 12px;
+.preview {
+  margin-top: 12px;
 }
 
-:deep(.ant-input),
-:deep(.ant-input-password),
-:deep(.ant-select-selector),
-:deep(.ant-picker) {
-  height: 40px;
-  border-radius: 8px;
+.preview-url {
+  font-size: 13px;
+  color: #888;
+  word-break: break-all;
 }
-
-.submit-btn {
-  margin-top: 4px;
-  height: 40px;
-  border-radius: 8px;
-  background: #2b2b2b;
-  font-weight: 500;
-  color: white;
-}
-
 </style>

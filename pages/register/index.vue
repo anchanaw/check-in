@@ -4,46 +4,52 @@
             <div class="title">Create Your Account</div>
         </div>
 
-        <p class="subtitle" v-if="mode === 'invite'">
-            Invited by Mentor : {{ mentorDisplayName }}<br />
-            From {{ teamToken }}
-        </p>
-
-        <p class="subtitle" v-else-if="mode === 'token'">
-            Invitation Token Active
+        <p class="subtitle">
+            You're registering via invitation
         </p>
     </header>
 
     <BaseCard maxWidth="320px">
-        <a-form layout="vertical" @finish="onSubmit">
-            <a-form-item label="First Name" name="firstName" :rules="req">
-                <a-input placeholder="Value" />
+        <a-form layout="vertical" :model="formState" :rules="rules" @finish="onSubmit">
+
+            <a-form-item label="First Name" name="firstName">
+                <a-input v-model:value="formState.firstName" />
             </a-form-item>
 
-            <a-form-item label="Last Name" name="lastName" :rules="req">
-                <a-input placeholder="Value" />
+            <a-form-item label="Last Name" name="lastName">
+                <a-input v-model:value="formState.lastName" />
             </a-form-item>
 
-            <a-form-item label="Display Name" name="displayName" :rules="req">
-                <a-input placeholder="Value" />
+            <a-form-item label="Email" name="email">
+                <a-input v-model:value="formState.email" />
             </a-form-item>
 
-            <a-form-item label="Email" name="email" :rules="[
-                { required: true, message: 'Email is required' },
-                { type: 'email', message: 'Invalid email' }
-            ]">
-                <a-input placeholder="Value" />
+            <a-form-item label="Password" name="password">
+                <a-input-password v-model:value="formState.password" />
             </a-form-item>
 
-            <a-form-item label="Password" name="password" :rules="req">
-                <a-input-password placeholder="Value" />
+            <a-form-item label="Confirm Password" name="confirmPassword">
+                <a-input-password v-model:value="formState.confirmPassword" />
             </a-form-item>
 
-            <a-form-item label="Confirm Password" name="confirmPassword" :rules="[
-                { required: true, message: 'Confirm password' },
-                { validator: validateConfirm }
-            ]">
-                <a-input-password placeholder="Value" />
+            <!-- optional -->
+            <a-form-item label="Gender" name="gender">
+                <a-select v-model:value="formState.gender">
+                    <a-select-option value="male">Male</a-select-option>
+                    <a-select-option value="female">Female</a-select-option>
+                </a-select>
+            </a-form-item>
+
+            <a-form-item label="Date of Birth" name="dateOfBirth">
+                <a-date-picker v-model:value="formState.dateOfBirth" style="width:100%" />
+            </a-form-item>
+
+            <a-form-item label="Student ID" name="studentId">
+                <a-input v-model:value="formState.studentId" />
+            </a-form-item>
+
+            <a-form-item label="University" name="university">
+                <a-input v-model:value="formState.university" />
             </a-form-item>
 
             <a-form-item>
@@ -52,70 +58,115 @@
                 </a-button>
             </a-form-item>
 
-            <div class="login-link">
-                Already have an account?
-                <NuxtLink to="/login">Sign In</NuxtLink>
-            </div>
         </a-form>
     </BaseCard>
 </template>
+
 <script setup lang="ts">
 import { useRoute, navigateTo } from '#app'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useApi } from '~/composables/core'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 
 definePageMeta({ layout: 'mobile' })
 
 const route = useRoute()
 const { apiFetch } = useApi()
 
-// 🔥 รับ invite จาก query เท่านั้น
-const inviteCode = route.query.invite as string | undefined
-const mentorDisplayName = ref('')
-const teamToken = ref('')
-const mode = ref<'invite' | 'token' | null>(null)
-
+const inviteCode = route.query.code as string | undefined
 if (!inviteCode) {
-  navigateTo('/login')
+    navigateTo('/invite')
 }
 
 const loading = ref(false)
+const role = ref<'intern' | 'mentor' | null>(null)
 
-// validation
-const req = [{ required: true, message: 'Required' }]
-
-const validateConfirm = ({ getFieldValue }: { getFieldValue: (name: string) => any }) => ({
-  validator(_: any, value: any) {
-    if (!value || value === getFieldValue('password')) {
-      return Promise.resolve()
-    }
-    return Promise.reject('Passwords do not match')
-  }
+// form model
+const formState = ref({
+    firstName: '',
+    lastName: '',
+    displayName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    gender: '',
+    dateOfBirth: null as Date | null,
+    studentId: '',
+    university: ''
 })
 
-const onSubmit = async (values: any) => {
-  loading.value = true
+const rules = computed(() => ({
+    firstName: [
+        { required: true, message: 'First name is required' }
+    ],
+    lastName: [
+        { required: true, message: 'Last name is required' }
+    ],
+    email: [
+        { required: true, message: 'Email is required' },
+        { type: 'email', message: 'Invalid email' }
+    ],
+    password: [
+        { required: true, message: 'Password is required' },
+        { min: 6, message: 'Minimum 6 characters' }
+    ],
+    confirmPassword: [
+        { required: true, message: 'Confirm password' },
+        {
+            validator: async (_: any, value: string) => {
+                if (!value) return Promise.reject('Confirm password')
+                if (value !== formState.value.password)
+                    return Promise.reject('Passwords do not match')
+                return Promise.resolve()
+            }
+        }
+    ],
+    gender: [
+        { required: true, message: 'Gender is required' }
+    ],
+    dateOfBirth: [
+        { required: true, message: 'Date of birth is required' }
+    ],
+    studentId:
+        role.value === 'intern'
+            ? [{ required: true, message: 'Student ID required' }]
+            : [],
+    university:
+        role.value === 'intern'
+            ? [{ required: true, message: 'University required' }]
+            : []
+}))
+const disabledDate = (current: Dayjs) => {
+    return current && current > dayjs().endOf('day')
+}
+const onSubmit = async () => {
+    loading.value = true
 
-  try {
-    await apiFetch('/auth/register', {
-      method: 'POST',
-      body: {
-        inviteCode,                 // 🔥 สำคัญมาก
-        email: values.email,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName
-      }
-    })
+    try {
+        await apiFetch('/auth/register', {
+            method: 'POST',
+            body: {
+                inviteCode,
+                email: formState.value.email,
+                password: formState.value.password,
+                firstName: formState.value.firstName,
+                lastName: formState.value.lastName,
+                gender: formState.value.gender || null,
+                dateOfBirth: formState.value.dateOfBirth
+                    ? formState.value.dateOfBirth.toISOString()
+                    : null,
+                studentId: formState.value.studentId || null,
+                university: formState.value.university || null
+            }
+        })
 
-    // สมัครเสร็จ → ไป login
-    navigateTo('/login')
-
-  } catch (err: any) {
-    alert(err?.data?.message || 'Register failed')
-  } finally {
-    loading.value = false
-  }
+        navigateTo(`/login?code=${inviteCode}`)
+    } catch (err: any) {
+        alert(err?.data?.message || 'Register failed')
+    } finally {
+        loading.value = false
+    }
 }
 </script>
 

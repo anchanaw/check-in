@@ -11,23 +11,11 @@
           Choose a role to view user list
         </div>
 
-        <UserRoleCard
-          icon="mentor"
-          title="Mentor"
-          desc="Manage mentor and their team"
-          :count="counts.mentor"
-          :loading="loading"
-          @click="goMentor"
-        />
+        <UserRoleCard icon="mentor" title="Mentor" desc="Manage mentor and their team" :count="counts.mentor"
+          :loading="loading" @click="goMentor" />
 
-        <UserRoleCard
-          icon="intern"
-          title="Intern"
-          desc="View and manage intern accounts"
-          :count="counts.intern"
-          :loading="loading"
-          @click="goIntern"
-        />
+        <UserRoleCard icon="intern" title="Intern" desc="View and manage intern accounts" :count="counts.intern"
+          :loading="loading" @click="goIntern" />
       </BaseCard>
     </div>
 
@@ -56,17 +44,21 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    const res: any = await apiFetch('/users/interns')
+    const [internRes, mentorRes]: any = await Promise.all([
+      apiFetch('/users/interns'),
+      apiFetch('/users/mentors')
+    ])
 
-    const internList = res.data || []
+    const internList = internRes?.data || []
+    const mentorList = mentorRes?.data || []
 
     counts.value = {
-      mentor: 0, // ยังไม่มี API ของ mentor
+      mentor: mentorList.length,
       intern: internList.length
     }
 
   } catch (err) {
-    console.error('Load interns failed:', err)
+    console.error('Load users failed:', err)
   } finally {
     loading.value = false
   }

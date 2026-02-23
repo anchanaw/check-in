@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { navigateTo } from '#app'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
@@ -36,6 +36,7 @@ import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 import MentorFilterBar from '@/components/manager/users/MentorFilterBar.vue'
 import MentorTable from '@/components/manager/users/MentorTable.vue'
 import MentorDetailModal from '@/components/manager/users/MentorDetailModal.vue'
+import { useApiFetch } from '~/composables/useApiFetch'
 
 /* ===== state ===== */
 const loading = ref(true)
@@ -44,54 +45,86 @@ const status = ref<'all' | 'active' | 'inactive'>('all')
 
 const mentors = ref<any[]>([])
 
-/* ===== init (GET) ===== */
-onMounted(async () => {
-  await new Promise(r => setTimeout(r, 600))
+/* ===== load mentors ===== */
+const loadMentors = async () => {
+  try {
+    loading.value = true
 
-  /**
-   * TODO: GET /manager/users/mentors
-   * params: { keyword, status }
-   */
-  mentors.value = [
-    { id: 1, name: 'Sommai', status: 'active' },
-    { id: 2, name: 'Amorn', status: 'active' },
-    { id: 3, name: 'Kiki', status: 'inactive' }
-  ]
+    const res: any = await useApiFetch('/users/mentors', {
+      method: 'GET'
+    })
 
-  loading.value = false
+    const list = res?.data || []
+
+    let mapped = list.map((m: any) => ({
+      id: m.id,
+      name: `${m.firstName} ${m.lastName}`,
+      firstName: m.firstName,
+      lastName: m.lastName,
+      email: m.email,
+      team: m.teams?.length
+        ? m.teams.map((t: any) => t.name).join(', ')
+        : '-',
+      lastLogin: '-', // API ไม่มี field นี้
+      status: 'active' // API ไม่มี status → default ไว้ก่อน
+    }))
+
+    /* ===== filter frontend (ถ้า backend ยังไม่รองรับ query) ===== */
+    if (keyword.value) {
+      mapped = mapped.filter((m: any) =>
+        m.name.toLowerCase().includes(keyword.value.toLowerCase())
+      )
+    }
+
+    if (status.value !== 'all') {
+      mapped = mapped.filter((m: any) => m.status === status.value)
+    }
+
+    mentors.value = mapped
+
+  } catch (err) {
+    console.error('Load mentors failed:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+/* ===== initial load ===== */
+onMounted(loadMentors)
+
+/* ===== reload when filter changes ===== */
+watch([keyword, status], () => {
+  loadMentors()
 })
 
 /* ===== actions ===== */
 const onAdd = () => {
   navigateTo('/manager/users/addmentor')
-  // navigateTo('/manager/users/mentor/create')
 }
 
 const detailOpen = ref(false)
 
 type Mentor = {
-  id: number
+  id: string
   name: string
   status: 'active' | 'inactive'
-}
-
-const selectedMentor = ref<Mentor & {
   firstName?: string
   lastName?: string
   team?: string
   email?: string
   lastLogin?: string
-}>({
-  id: 0,
+}
+
+const selectedMentor = ref<Mentor>({
+  id: '',
   name: '',
   status: 'inactive'
 })
 
-const openDetail = (mentor: any) => {
+const openDetail = (mentor: Mentor) => {
   selectedMentor.value = mentor
   detailOpen.value = true
 }
-
 </script>
 
 <style scoped>
