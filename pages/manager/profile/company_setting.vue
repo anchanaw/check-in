@@ -11,7 +11,8 @@
             <a-form layout="vertical" :model="form" @finish="submit">
                 <CompanyInfoCard v-model:name="form.name" />
 
-                <CompanyLocationCard v-model:latitude="form.latitude" v-model:longitude="form.longitude"   v-model:radius="form.radius" />
+                <CompanyLocationCard v-model:latitude="form.latitude" v-model:longitude="form.longitude"
+                    v-model:radius="form.radius" />
 
                 <CheckinTimeCard v-model:start="form.start_time" v-model:end="form.end_time" />
 
@@ -27,14 +28,27 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
+import { message } from 'ant-design-vue'
+
 import BackButton from '@/components/base/BackButton.vue'
 import CompanyInfoCard from '@/components/manager/settings/CompanyInfoCard.vue'
 import CompanyLocationCard from '@/components/manager/settings/CompanyLocationCard.vue'
 import CheckinTimeCard from '@/components/manager/settings/CheckinTimeCard.vue'
+import { useApiFetch } from '~/composables/useApiFetch'
 
 const loading = ref(false)
+const officeId = ref<string | null>(null)
 
-const form = reactive({
+const form = reactive<{
+    name: string
+    latitude: string
+    longitude: string
+    radius: number
+    start_time: Dayjs | null
+    end_time: Dayjs | null
+}>({
     name: '',
     latitude: '',
     longitude: '',
@@ -43,17 +57,99 @@ const form = reactive({
     end_time: null
 })
 
-// 🟢 รอ GET API
-onMounted(async () => {
-    // const res = await api.getCompanySetting()
-    // Object.assign(form, res.data)
+const loadOffice = async () => {
+  try {
+    const res = await useApiFetch('/offices', {
+      method: 'GET'
+    })
+
+    const list = Array.isArray(res) ? res : res?.data
+
+    if (!list || !Array.isArray(list) || list.length === 0) return
+
+    const office = list[0]
+
+    officeId.value = office.id ?? null
+
+    form.name = office.name ?? ''
+    form.latitude = office.latitude != null ? String(office.latitude) : ''
+    form.longitude = office.longitude != null ? String(office.longitude) : ''
+    form.radius = office.radiusMeters ?? 0
+
+    form.start_time = dayjs()
+      .hour(office.checkInStartHour ?? 0)
+      .minute(office.checkInStartMinute ?? 0)
+
+    form.end_time = dayjs()
+      .hour(office.checkInEndHour ?? 0)
+      .minute(office.checkInEndMinute ?? 0)
+
+  } catch (err) {
+    console.error(err)
+  }
+}
+/* ==============================
+   GET OFFICE (onMounted)
+================================ */
+onMounted(() => {
+    loadOffice()
 })
 
+/* ==============================
+   SUBMIT
+================================ */
 const submit = async () => {
+    if (!form.start_time || !form.end_time) {
+        message.error('Please select check-in time')
+        return
+    }
+
     loading.value = true
+    if (form.end_time.isBefore(form.start_time)) {
+        message.error('End time must be after start time')
+        return
+    }
     try {
-        console.log('submit data', form)
-        // await api.updateCompanySetting(form)
+        const payload = {
+            name: form.name,
+            latitude: Number(form.latitude),
+            longitude: Number(form.longitude),
+            radiusMeters: Number(form.radius),
+
+            checkInStartHour: form.start_time.hour(),
+            checkInStartMinute: form.start_time.minute(),
+
+            checkInEndHour: form.end_time.hour(),
+            checkInEndMinute: form.end_time.minute(),
+
+            lateThresholdHour: form.end_time.hour(),
+            lateThresholdMinute: form.end_time.minute(),
+
+            mentorIds: []
+        }
+
+        if (officeId.value) {
+            await useApiFetch(`/offices/${officeId.value}`, {
+                method: 'PATCH',
+                body: payload
+            })
+
+            message.success('Company setting updated successfully')
+            await loadOffice() // 🔥 รีโหลดค่าล่าสุด
+        } else {
+            const res = await useApiFetch('/offices', {
+                method: 'POST',
+                body: payload
+            })
+
+            officeId.value = res?.id ?? null
+            message.success('Company setting created successfully')
+            await loadOffice() // 🔥 รีโหลดหลังสร้าง
+        }
+
+    } catch (err) {
+        console.error(err)
+        message.error('Something went wrong')
     } finally {
         loading.value = false
     }

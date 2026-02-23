@@ -1,7 +1,14 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth.store'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+
+router.beforeEach((to, from, next) => {
+  console.log('ROUTING TO:', to.fullPath)
+  next()
+})
 const auth = useAuthStore()
 
 onMounted(() => {

@@ -22,16 +22,20 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 import { computed } from 'vue'
+import type { Dayjs } from 'dayjs'
 
-const props = defineProps({
-  start: null,
-  end: null
-})
+const props = defineProps<{
+  start: Dayjs | null
+  end: Dayjs | null
+}>()
 
-const emit = defineEmits(['update:start', 'update:end'])
+const emit = defineEmits<{
+  (e: 'update:start', value: Dayjs | null): void
+  (e: 'update:end', value: Dayjs | null): void
+}>()
 
 const localStart = computed({
   get: () => props.start,

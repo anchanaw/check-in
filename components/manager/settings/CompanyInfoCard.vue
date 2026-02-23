@@ -10,19 +10,21 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 import { computed } from 'vue'
 
-const props = defineProps({
-  name: String
-})
+const props = defineProps<{
+  name: string
+}>()
 
-const emit = defineEmits(['update:name'])
+const emit = defineEmits<{
+  (e: 'update:name', value: string): void
+}>()
 
 const localName = computed({
   get: () => props.name,
-  set: (val) => emit('update:name', val)
+  set: (val: string) => emit('update:name', val)
 })
 </script>
 

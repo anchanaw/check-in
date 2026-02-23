@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 import { useAuthStore } from '~/stores/auth.store'
 import { ref, onMounted, onActivated } from 'vue'
@@ -32,6 +32,8 @@ import ProfileInfoSection from '~/components/manager/profile/ProfileInfoSection.
 import ProfileActions from '~/components/manager/profile/ProfileActions.vue'
 import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 
+const route = useRoute()
+console.log('current route:', route.fullPath)
 const { apiFetch } = useApi()
 const router = useRouter()
 const auth = useAuthStore()
@@ -41,6 +43,11 @@ const user = ref<any>(null)
 const avatarUrl = ref<string>('')
 const accountInfo = ref<any[]>([])
 const personalInfo = ref<any[]>([])
+
+if (route.fullPath.includes('undefined')) {
+  router.replace('/manager/profile')
+}
+
 const formatRole = (role: string) => {
   switch (role) {
     case 'manager':

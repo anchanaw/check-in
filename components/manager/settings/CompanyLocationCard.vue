@@ -34,38 +34,37 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '@/components/base/BaseCard.vue'
 import { EnvironmentOutlined } from '@ant-design/icons-vue'
 import { computed } from 'vue'
 
-const props = defineProps({
-  latitude: String,
-  longitude: String,
-  radius: Number
-})
+const props = defineProps<{
+  latitude: string
+  longitude: string
+  radius: number
+}>()
 
-const emit = defineEmits([
-  'update:latitude',
-  'update:longitude',
-  'update:radius'
-])
+const emit = defineEmits<{
+  (e: 'update:latitude', value: string): void
+  (e: 'update:longitude', value: string): void
+  (e: 'update:radius', value: number): void
+}>()
 
 const localLat = computed({
   get: () => props.latitude,
-  set: (val) => emit('update:latitude', val)
+  set: (val: string) => emit('update:latitude', val)
 })
 
 const localLng = computed({
   get: () => props.longitude,
-  set: (val) => emit('update:longitude', val)
+  set: (val: string) => emit('update:longitude', val)
 })
 
 const localRadius = computed({
   get: () => props.radius,
-  set: (val) => emit('update:radius', val)
+  set: (val: number | null) => emit('update:radius', val ?? 0)
 })
-
 </script>
 
 <style scoped>

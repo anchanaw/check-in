@@ -26,7 +26,7 @@ const goEditProfile = () => {
 }
 
 const goCompanySetting = () => {
-  router.push('/manager/company_setting')
+  router.push('/manager/profile/company_setting')
 }
 </script>
 
