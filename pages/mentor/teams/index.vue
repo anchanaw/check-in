@@ -13,26 +13,26 @@
       <a-skeleton v-if="loading" active />
 
       <!-- Team List -->
+      <!-- Team List -->
       <div v-else>
 
-        <TeamItemCard
-          v-for="team in teams"
-          :key="team.id"
-          :team="team"
-          @click="goDetail(team.id)"
-        />
-
-        <!-- 🔥 Pagination -->
-        <div class="pagination">
-          <a-pagination
-            :current="page"
-            :page-size="pageSize"
-            :total="total"
-            show-size-changer
-            @change="handlePageChange"
-            @showSizeChange="handleSizeChange"
-          />
+        <!-- 🔥 ถ้าไม่มีทีม -->
+        <div v-if="teams.length === 0" class="empty-state">
+          ยังไม่มีทีม
         </div>
+
+        <!-- 🔥 ถ้ามีทีม -->
+        <template v-else>
+
+          <TeamItemCard v-for="team in teams" :key="team.id" :team="team" @click="goDetail(team.id)" />
+
+          <!-- Pagination -->
+          <div class="pagination">
+            <a-pagination :current="page" :page-size="pageSize" :total="total" show-size-changer
+              @change="handlePageChange" @showSizeChange="handleSizeChange" />
+          </div>
+
+        </template>
 
       </div>
 
@@ -79,12 +79,40 @@ const total = ref(0)
 /* =========================
    LOAD TEAMS
 ========================= */
+interface Team {
+  id: string
+  name: string
+  mentorId: string
+  mentorName: string
+  internTotal: number
+}
+
+interface TeamsResponse {
+  success: boolean
+  data: {
+    teams: Team[]
+    total: number
+  }
+}
+
+interface MeResponse {
+  success: boolean
+  data: {
+    id: string
+  }
+}
+
 const loadTeams = async () => {
   try {
     loading.value = true
 
-    const res: any = await apiFetch(
-      `/teams?page=${page.value}&pageSize=${pageSize.value}`
+    // 🔥 ดึง id ของ user ที่ login
+    const me = await apiFetch<MeResponse>('/auth/me')
+    const myId = me.data!.id
+console.log('myId:', myId)
+    // 🔥 เรียก API พร้อม mentorId
+    const res = await apiFetch<TeamsResponse>(
+      `/teams?page=${page.value}&pageSize=${pageSize.value}&mentorId=${myId}`
     )
 
     teams.value = res.data.teams
@@ -134,6 +162,7 @@ const goCreateLink = () => {
   display: flex;
   justify-content: center;
 }
+
 .page {
   min-height: 100vh;
   background: #6CBCFA;
@@ -168,5 +197,12 @@ const goCreateLink = () => {
 
 .create-wrapper {
   margin-top: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+  font-size: 16px;
 }
 </style>

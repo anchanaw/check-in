@@ -16,6 +16,11 @@
 
                 <CheckinTimeCard v-model:start="form.start_time" v-model:end="form.end_time" />
 
+                <a-form-item label="Assign Mentors">
+                    <a-select v-model:value="form.mentorIds" mode="multiple" :options="mentorOptions"
+                        placeholder="Select mentors" />
+                </a-form-item>
+
                 <div class="save-wrapper">
                     <a-button type="primary" block :loading="loading" html-type="submit">
                         Save Setting
@@ -40,6 +45,7 @@ import { useApiFetch } from '~/composables/useApiFetch'
 
 const loading = ref(false)
 const officeId = ref<string | null>(null)
+const mentorOptions = ref<{ label: string; value: string }[]>([])
 
 const form = reactive<{
     name: string
@@ -48,51 +54,69 @@ const form = reactive<{
     radius: number
     start_time: Dayjs | null
     end_time: Dayjs | null
+    mentorIds: string[]
 }>({
     name: '',
     latitude: '',
     longitude: '',
     radius: 0,
     start_time: null,
-    end_time: null
+    end_time: null,
+    mentorIds: []
 })
 
+const loadMentors = async () => {
+    try {
+        const res = await useApiFetch('/users/mentors')
+        const list = res?.data ?? []
+
+        mentorOptions.value = list.map((m: any) => ({
+            label: `${m.firstName} ${m.lastName}`,
+            value: m.id
+        }))
+    } catch (err) {
+        console.error(err)
+    }
+}
 const loadOffice = async () => {
-  try {
-    const res = await useApiFetch('/offices', {
-      method: 'GET'
-    })
+    try {
+        const res = await useApiFetch('/offices', {
+            method: 'GET'
+        })
 
-    const list = Array.isArray(res) ? res : res?.data
+        const list = Array.isArray(res) ? res : res?.data
 
-    if (!list || !Array.isArray(list) || list.length === 0) return
+        if (!list || !Array.isArray(list) || list.length === 0) return
 
-    const office = list[0]
+        const office = list[0]
 
-    officeId.value = office.id ?? null
+        officeId.value = office.id ?? null
 
-    form.name = office.name ?? ''
-    form.latitude = office.latitude != null ? String(office.latitude) : ''
-    form.longitude = office.longitude != null ? String(office.longitude) : ''
-    form.radius = office.radiusMeters ?? 0
+        form.name = office.name ?? ''
+        form.latitude = office.latitude != null ? String(office.latitude) : ''
+        form.longitude = office.longitude != null ? String(office.longitude) : ''
+        form.radius = office.radiusMeters ?? 0
 
-    form.start_time = dayjs()
-      .hour(office.checkInStartHour ?? 0)
-      .minute(office.checkInStartMinute ?? 0)
+        form.start_time = dayjs()
+            .hour(office.checkInStartHour ?? 0)
+            .minute(office.checkInStartMinute ?? 0)
 
-    form.end_time = dayjs()
-      .hour(office.checkInEndHour ?? 0)
-      .minute(office.checkInEndMinute ?? 0)
+        form.end_time = dayjs()
+            .hour(office.checkInEndHour ?? 0)
+            .minute(office.checkInEndMinute ?? 0)
 
-  } catch (err) {
-    console.error(err)
-  }
+        form.mentorIds = office.mentorIds ?? []
+
+    } catch (err) {
+        console.error(err)
+    }
 }
 /* ==============================
    GET OFFICE (onMounted)
 ================================ */
 onMounted(() => {
     loadOffice()
+    loadMentors()
 })
 
 /* ==============================
@@ -125,7 +149,7 @@ const submit = async () => {
             lateThresholdHour: form.end_time.hour(),
             lateThresholdMinute: form.end_time.minute(),
 
-            mentorIds: []
+            mentorIds: form.mentorIds
         }
 
         if (officeId.value) {

@@ -49,6 +49,7 @@ const formState = reactive({
 
 const onSubmit = async () => {
   try {
+
     const res: any = await apiFetch('/auth/login', {
       method: 'POST',
       body: {
@@ -62,16 +63,18 @@ const onSubmit = async () => {
     const role = res.data.user.role.toLowerCase()
 
     // set auth ก่อน
+    authStore.clearAuth()
     authStore.setAuth(token, role, formState.remember)
-
     // redirect
     if (role === 'manager') return navigateTo('/manager')
     if (role === 'mentor') return navigateTo('/mentor')
     if (role === 'intern') return navigateTo('/intern')
 
+
   } catch (err: any) {
     alert(err?.data?.message || 'Login failed')
   }
+
 }
 
 </script>

@@ -12,11 +12,25 @@ export function useMentorDashboard() {
     leaveRequests: 0
   })
 
-  // helper รองรับทั้ง array และ object { data: [] }
-  const getLength = (res: any) => {
-    if (Array.isArray(res?.data)) return res.data.length
-    if (Array.isArray(res?.data?.data)) return res.data.data.length
-    return 0
+  interface Team {
+    id: string
+    name: string
+    mentorId: string
+    interns: any[]
+  }
+
+  interface TeamsResponse {
+    success: boolean
+    data: {
+      teams: Team[]
+    }
+  }
+
+  interface MeResponse {
+    success: boolean
+    data: {
+      id: string
+    }
   }
 
   let isMounted = true
@@ -26,25 +40,48 @@ export function useMentorDashboard() {
       loading.value = true
       error.value = null
 
-      const [internsRes, tasksRes, leaveRes] = await Promise.all([
-        apiFetch('/users/interns'),
-        apiFetch('/tasks/submissions/pending'),
-        apiFetch('/leaves/pending')
+      // 🔥 ดึง profile ตัวเองก่อน
+      const me = await apiFetch<MeResponse>('/users/me')
+      const myId = me.data.id
+
+      // 🔥 ดึงข้อมูลทั้งหมดพร้อมกัน
+      const [teamsRes, tasksRes, leaveRes] = await Promise.all([
+        apiFetch<TeamsResponse>('/teams'),
+        apiFetch<any>('/tasks/submissions/pending'),
+        apiFetch<any>('/leaves/pending')
       ])
 
       if (!isMounted) return
 
+      const allTeams = teamsRes.data.teams
+
+      // 🔥 filter ทีมที่ mentorId ตรงกับตัวเอง
+      const myTeams = allTeams.filter(
+        team => team.mentorId === myId
+      )
+
+      // 🔥 รวม intern ของทีมตัวเอง
+      const internCount = myTeams.reduce(
+        (total, team) => total + (team.interns?.length || 0),
+        0
+      )
+
       overview.value = {
-        internCount: getLength(internsRes),
-        taskToReview: getLength(tasksRes),
-        leaveRequests: getLength(leaveRes)
+        internCount,
+        taskToReview: Array.isArray(tasksRes?.data)
+          ? tasksRes.data.length
+          : 0,
+        leaveRequests: Array.isArray(leaveRes?.data)
+          ? leaveRes.data.length
+          : 0
       }
 
     } catch (err: any) {
       if (!isMounted) return
 
       console.error('Mentor dashboard error:', err)
-      error.value = err?.response?.data?.message || 'Failed to load dashboard data'
+      error.value =
+        err?.response?.data?.message || 'Failed to load dashboard data'
     } finally {
       if (isMounted) {
         loading.value = false

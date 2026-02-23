@@ -30,11 +30,10 @@ export const useApi = () => {
     } catch (err: any) {
       const status = err?.response?.status || err?.status
 
-      if (status === 401) {
+      if (status === 401 && authStore.access_token) {
         authStore.clearAuth()
         await navigateTo('/login')
       }
-
       throw err
     }
   }

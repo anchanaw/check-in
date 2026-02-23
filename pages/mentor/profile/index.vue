@@ -43,9 +43,12 @@ const personalInfo = ref<any[]>([])
 
 const loadProfile = async () => {
   try {
+    // 🔥 กันกรณี token ยังไม่ sync
+    if (!auth.access_token) return
+
     loading.value = true
 
-    const res: any = await apiFetch('/auth/me')
+    const res = await apiFetch<any>('/auth/me')
     const data = res.data
 
     user.value = {
@@ -69,13 +72,18 @@ const loadProfile = async () => {
       }
     ]
 
-    const imgRes: any = await apiFetch('/auth/profile/image-signed-url')
-
-    avatarUrl.value = imgRes?.data?.signedUrl || ''
+    // 🔥 โหลดรูป (ไม่ให้พังทั้งหน้า)
+    try {
+      const imgRes = await apiFetch<any>('/auth/profile/image-signed-url')
+      avatarUrl.value = imgRes?.data?.signedUrl || ''
+    } catch {
+      avatarUrl.value = ''
+    }
 
   } catch (err) {
-    auth.clearAuth()
-    router.replace('/login')
+    console.error('Profile load error:', err)
+    // ❌ ไม่ clearAuth ตรงนี้
+    // useApi จะจัดการ 401 เอง
   } finally {
     loading.value = false
   }
@@ -89,7 +97,7 @@ const onEdit = () => {
 }
 
 const onLogout = () => {
-  auth.clearAuth()   // 🔥 ใช้ store เท่านั้น
+  auth.clearAuth()
   router.push('/login')
 }
 </script>

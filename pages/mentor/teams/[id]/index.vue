@@ -99,7 +99,12 @@ const loadData = async () => {
     loading.value = true
     error.value = null
 
-    // ===== LOAD TEAMS (ทุกหน้า) =====
+    // 🔥 1. ดึง user ปัจจุบัน
+    const me = await apiFetch<any>('/auth/me')
+    const myId = me.data.id
+
+    // 🔥 2. โหลด teams
+    // 🔥 โหลด teams อย่างเดียว
     const firstPageRes: any = await apiFetch('/teams?page=1&pageSize=10')
 
     let allTeams = [...firstPageRes.data.teams]
@@ -117,11 +122,17 @@ const loadData = async () => {
       })
     }
 
+    // 🔥 หาเฉพาะทีม id นี้เลย
     const currentTeam = allTeams.find(
       (t: any) => String(t.id) === String(teamId)
     )
 
-    team.value.name = currentTeam?.name || 'Unknown Team'
+    if (!currentTeam) {
+      error.value = 'Team not found'
+      return
+    }
+
+    team.value.name = currentTeam.name
 
     // ===== LOAD OTHER DATA =====
     const [internRes, inviteRes, rankingRes] = await Promise.all([
@@ -147,7 +158,7 @@ const loadData = async () => {
       order: rankingMap[String(intern.id)] || 0
     }))
 
-    // ===== ACTIVE INVITE (registration only) =====
+    // ===== ACTIVE INVITE =====
     invite.value =
       inviteRes.data.find(
         (i: any) =>
@@ -163,8 +174,6 @@ const loadData = async () => {
     loading.value = false
   }
 }
-
-
 /* =========================
    LIFECYCLE
 ========================= */
@@ -275,5 +284,4 @@ function goTeamSetting() {
   padding: 20px;
   color: red;
 }
-
 </style>
