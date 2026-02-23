@@ -1,4 +1,5 @@
 <template>
+  <a-empty v-if="!loading && teams.length === 0" description="No teams found" />
   <a-table :columns="columns" :data-source="teams" :loading="loading" :pagination="pagination"
     @change="handleTableChange" row-key="id" bordered size="small">
     <template #bodyCell="slotProps">

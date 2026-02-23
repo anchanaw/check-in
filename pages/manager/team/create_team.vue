@@ -23,10 +23,8 @@
                 <div class="field">
                     <label>Assign Mentor</label>
 
-                    <a-input v-if="!useDropdown" v-model:value="mentorId" placeholder="Enter Mentor ID" size="large" />
-
-                    <a-select v-else v-model:value="mentorId" :options="mentorOptions" placeholder="Select Mentor"
-                        size="large" />
+                    <a-select v-model:value="mentorId" :options="mentorOptions" placeholder="Select Mentor" size="large"
+                        show-search option-filter-prop="label" />
 
                     <a-tag v-if="mentorName" color="blue" class="mentor-preview">
                         👤 {{ mentorName }}
@@ -45,18 +43,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { message } from 'ant-design-vue'
 import BackButton from '~/components/base/BackButton.vue'
-import { useAuthStore } from '~/stores/auth.store'
 import { useApiFetch } from '~/composables/useApiFetch'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const auth = useAuthStore()
-const api = useApiFetch
-
-const useDropdown = false
+const apiFetch = useApiFetch
 
 const loading = ref(false)
 const teamName = ref('')
@@ -64,72 +58,85 @@ const mentorId = ref<string | null>(null)
 const mentorName = ref<string | null>(null)
 const mentors = ref<any[]>([])
 
+/* =============================
+   Mentor Options
+============================= */
 const mentorOptions = computed(() =>
-    mentors.value.map(m => ({
-        value: m.id,
-        label: m.name
-    }))
-)
-
-const canSubmit = computed(() =>
-    teamName.value && mentorId.value && !loading.value
+  mentors.value.map(m => ({
+    value: m.id,
+    label: m.name
+  }))
 )
 
 /* =============================
-   Validate Mentor
+   Enable Submit
 ============================= */
-const validateMentor = async () => {
-    if (!mentorId.value) {
-        throw new Error('Please enter Mentor ID')
-    }
+const canSubmit = computed(() =>
+  !!teamName.value && !!mentorId.value && !loading.value
+)
 
-    const res: any = await api(`/users/${mentorId.value}`)
+/* =============================
+   Watch Selected Mentor
+============================= */
+watch(mentorId, (newVal) => {
+  const selected = mentors.value.find(m => m.id === newVal)
+  mentorName.value = selected?.name || null
+})
 
-    if (!res.success || res.data.role !== 'mentor') {
-        throw new Error('User นี้ไม่ใช่ Mentor')
-    }
+/* =============================
+   Load Mentors
+============================= */
+onMounted(async () => {
+  try {
+    const res: any = await apiFetch('/users/mentors')
+    const list = res.data || []
 
-    mentorName.value = res.data.firstName
-}
+    mentors.value = list.map((m: any) => ({
+      id: m.id,
+      name: `${m.firstName} ${m.lastName}`
+    }))
+  } catch (err) {
+    message.error('Failed to load mentors')
+  }
+})
 
 /* =============================
    Create Team
 ============================= */
 const createTeam = async () => {
-    try {
-        loading.value = true
+  try {
+    loading.value = true
 
-        if (!useDropdown) {
-            await validateMentor()
-        }
+    const res: any = await apiFetch('/teams', {
+      method: 'POST',
+      body: {
+        name: teamName.value.trim(),
+        mentorId: mentorId.value
+      }
+    })
 
-        const res: any = await api('/teams', {
-            method: 'POST',
-            body: {
-                name: teamName.value,
-                mentorId: mentorId.value
-            }
-        })
+    message.success('Team created successfully 🎉')
 
-        message.success('Team created successfully 🎉')
+    const createdTeamId = res.data.id
 
-        const createdTeamId = res.data.id   // 🔥 ดึง id จาก backend
+    router.push({
+      path: '/manager/team/create_invite',
+      query: {
+        teamId: createdTeamId,
+        teamName: teamName.value
+      }
+    })
 
-        // 🔥 redirect ไป create-invite พร้อมส่ง teamId
-        router.push({
-            path: '/manager/team/create_invite',
-            query: { teamId: createdTeamId, teamName: teamName.value }
-        })
+  } catch (err: any) {
+    message.error(err?.data?.message || err?.message || 'Something went wrong')
+  } finally {
+    loading.value = false
+  }
 
-    } catch (err: any) {
-        message.error(err?.data?.message || err?.message || 'Something went wrong')
-    } finally {
-        loading.value = false
-    }
-    console.log('CREATE TEAM PAYLOAD:', {
-  name: teamName.value,
-  mentorId: mentorId.value
-})
+  console.log('CREATE TEAM PAYLOAD:', {
+    name: teamName.value,
+    mentorId: mentorId.value
+  })
 }
 </script>
 

@@ -6,7 +6,7 @@ export const useLeaveApi = () => {
   const config = useRuntimeConfig()
 
   const getPendingLeaves = async () => {
-    return await $fetch('/leaves/pending', {
+    return await $fetch('/leaves?status=pending', {
       baseURL: config.public.apiBase as string,
       headers: {
         Authorization: `Bearer ${auth.access_token}`

@@ -46,7 +46,8 @@ const loadTeams = async () => {
     const res: any = await apiFetch('/teams', {
       params: {
         page: page.value,
-        pageSize
+        pageSize,
+        search: search.value || undefined
       }
     })
 
@@ -86,18 +87,11 @@ const loadTeams = async () => {
     loading.value = false
   }
 }
-/* ================= SEARCH ================= */
-const filteredTeams = computed(() => {
-  if (!search.value) return teams.value
-
-  return teams.value.filter(team =>
-    team.team.toLowerCase().includes(search.value.toLowerCase()) ||
-    team.mentor.toLowerCase().includes(search.value.toLowerCase())
-  )
-})
 
 const onSearch = (value: string) => {
   search.value = value
+  page.value = 1
+  loadTeams()
 }
 
 /* ================= PAGE CHANGE ================= */

@@ -142,7 +142,7 @@ const loadTeamDetail = async () => {
         id: inviteData.id, // 🔥 เก็บ id ไว้ใช้ disable
         url: `${window.location.origin}/invite?code=${inviteData.code}`,
         maxUses: inviteData.maxUses ?? 0,
-        used: inviteData.usedCount ?? 0,
+        used: inviteData.usesCount ?? 0,
         expiresAt: inviteData.expiresAt,
         status: inviteData.isActive ? 'Active' : 'Disabled'
       }
@@ -191,7 +191,6 @@ const onDisableLink = async () => {
     message.error('Disable failed')
   }
 }
-
 
 </script>
 

@@ -41,7 +41,7 @@ export function useMentorDashboard() {
       error.value = null
 
       // 🔥 ดึง profile ตัวเองก่อน
-      const me = await apiFetch<MeResponse>('/users/me')
+      const me = await apiFetch<MeResponse>('/auth/me')
       const myId = me.data.id
 
       // 🔥 ดึงข้อมูลทั้งหมดพร้อมกัน

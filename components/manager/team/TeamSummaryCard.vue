@@ -17,14 +17,17 @@
     </div>
 
     <a-input
-      placeholder="Search Team/Mentor"
-      allow-clear
-      class="search"
-    >
-      <template #suffix>
-        <SearchOutlined />
-      </template>
-    </a-input>
+  v-model:value="keyword"
+  placeholder="Search Team/Mentor"
+  allow-clear
+  class="search"
+  @pressEnter="onSearch"
+  @change="onSearch"
+>
+  <template #suffix>
+    <SearchOutlined />
+  </template>
+</a-input>
   </BaseCard>
 
 </template>
@@ -32,16 +35,20 @@
 <script setup lang="ts">
 import { SearchOutlined } from '@ant-design/icons-vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import { ref } from 'vue'
 
+const emit = defineEmits(['create', 'search'])
+
+const keyword = ref('')
+
+const onSearch = () => {
+  emit('search', keyword.value.trim())
+}
 defineProps<{
   total: number
   loading: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'create'): void
-  (e: 'search', value: string): void
-}>()
 </script>
 
 

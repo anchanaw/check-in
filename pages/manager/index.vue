@@ -3,7 +3,7 @@
     <!-- 🔔 notification -->
     <div class="top-right">
       <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
-        <NuxtLink to="/mentor/notifications" class="bell-link">
+        <NuxtLink to="/manager/notifications" class="bell-link">
           <BellOutlined class="bell-icon" />
         </NuxtLink>
       </a-badge>
@@ -15,7 +15,7 @@
       <DashboardStats :stats="stats" :loading="loading" />
       <PendingLeaveCard :leaves="pendingLeaves" @view="goToLeaveDetail" @view-all="goToLeaveList" />
       <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
-      <RankingSection :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
+      <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
     </BaseCard>
     <ManagerBottomBar />
   </div>
@@ -33,6 +33,7 @@ import ManagerBottomBar from '@/components/manager/ManagerBottomBar.vue'
 import { useApi } from '~/composables/core'
 import { useLeaveApi } from '~/composables/manager/useLeaveApi'
 import { useManagerNotifications } from '@/composables/manager/useManagerNotifications'
+import RankingCard from '@/components/manager/dashboard/RankingCard.vue'
 
 const { apiFetch } = useApi()
 const { getPendingLeaves } = useLeaveApi()
@@ -63,59 +64,61 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    /** ---------- 1️⃣ TEAMS ---------- */
+    /** ---------- TEAMS ---------- */
     const teamRes: any = await apiFetch('/teams')
     const teams = teamRes.data.teams || []
 
-    // total team
     stats.value.team = teamRes.data.total || teams.length
 
-    // total mentor (unique mentorId)
-    const uniqueMentors = new Set(teams.map((t: any) => t.mentorId))
-    stats.value.mentor = uniqueMentors.size
-
-    // team with most intern
     const sortedByIntern = [...teams].sort(
-      (a, b) => b.internTotal - a.internTotal
+      (a, b) => (b.internTotal ?? 0) - (a.internTotal ?? 0)
     )
 
-    overview.value.mostIntern = sortedByIntern[0]?.name || '-'
+    overview.value.mostIntern = sortedByIntern[0]?.name ?? '-'
 
-    // newest team
-    const sortedByCreated = [...teams].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() -
-        new Date(a.createdAt).getTime()
+    /** ---------- NEWEST TEAM ---------- */
+    const newestRes: any = await apiFetch(
+      '/teams?page=1&pageSize=1&sort=createdAt&order=desc'
     )
 
-    overview.value.newest = sortedByCreated[0]?.name || '-'
+    overview.value.newest =
+      newestRes.data.teams?.[0]?.name ?? '-'
 
-    // top 3 teams
-    topTeams.value = sortedByIntern
-      .slice(0, 3)
-      .map((t: any) => t.name)
+    /** ---------- TOP 3 TEAMS ---------- */
+    const topTeamRes: any = await apiFetch(
+      '/teams?page=1&pageSize=3&sort=internTotal&order=desc'
+    )
 
-    /** ---------- 2️⃣ INTERNS ---------- */
+    topTeams.value =
+      topTeamRes.data?.teams?.map((t: any) => t.name) ?? []
+
+    /** ---------- MENTORS ---------- */
+    const mentorRes: any = await apiFetch('/users/mentors')
+    stats.value.mentor = mentorRes.data?.length || 0
+
+    /** ---------- INTERNS ---------- */
     const internRes: any = await apiFetch('/users/interns')
     const interns = internRes.data || []
 
     stats.value.intern = interns.length
 
-    // TODO: ถ้ามีคะแนนจริงให้ sort ตามคะแนน
     topInterns.value = interns
       .slice(0, 3)
       .map((i: any) => `${i.firstName} ${i.lastName}`)
 
-    /** ---------- 3️⃣ PENDING LEAVES ---------- */
-    const leaveRes: any = await getPendingLeaves()
+    /** ---------- PENDING LEAVES ---------- */
+    const leaveRes: any = await apiFetch('/leaves/pending')
+    const leaves = leaveRes.data || []
 
-    pendingLeaves.value = (leaveRes.data || [])
+    pendingLeaves.value = leaves
       .slice(0, 3)
       .map((item: any) => ({
         id: item.id,
-        name: item.user?.display_name || '-',
-        type: item.leave_type,
-        date: item.duration_text,
+        name: item.user?.firstName
+          ? `${item.user.firstName} ${item.user.lastName}`
+          : item.userId,
+        type: 'Leave',
+        date: `${new Date(item.startDate).toLocaleDateString()} - ${new Date(item.endDate).toLocaleDateString()}`,
         status: item.status
       }))
 

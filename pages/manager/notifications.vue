@@ -21,9 +21,10 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useMentorNotifications } from '@/composables/mentor/useMentorNotifications'
+import { onMounted } from 'vue'
+import { useManagerNotifications } from '@/composables/manager/useManagerNotifications'
 import NotificationItem from '@/components/manager/NotificationItem.vue'
 import BackButton from '~/components/base/BackButton.vue'
 
@@ -33,7 +34,7 @@ const {
   fetchNotifications,
   removeNotification,
   clearAll
-} = useMentorNotifications()
+} = useManagerNotifications()
 
 onMounted(fetchNotifications)
 
