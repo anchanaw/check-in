@@ -1,17 +1,11 @@
 <template>
-  <a-form layout="vertical" @finish="submit">
+  <a-form layout="vertical" :model="form" @finish="submit">
     <!-- Account -->
     <Section title="Account Information">
-      <a-form-item label="Username">
-        <a-input v-model:value="form.username" />
-      </a-form-item>
-
-      <a-form-item label="Email">
-        <a-input v-model:value="form.email" />
-      </a-form-item>
 
       <!-- Change Password -->
       <a-button block class="change-password" html-type="button" @click="goChangePassword">
+        <img src="/icons/unlock.svg" class="btn-icon" />
         Change Password
       </a-button>
     </Section>
@@ -26,12 +20,16 @@
         <a-input v-model:value="form.lastName" />
       </a-form-item>
 
-      <a-form-item label="Gender">
-        <a-input v-model:value="form.gender" />
+      <a-form-item label="Gender" name="gender">
+        <a-select v-model:value="form.gender" placeholder="Select gender" allow-clear>
+          <a-select-option value="male">Male</a-select-option>
+          <a-select-option value="female">Female</a-select-option>
+          <a-select-option value="other">Other</a-select-option>
+        </a-select>
       </a-form-item>
 
       <a-form-item label="Date of Birth">
-        <a-input type="date" v-model:value="form.dob" />
+        <a-input type="date" v-model:value="form.dob" :max="today" />
       </a-form-item>
     </Section>
 
@@ -67,8 +65,13 @@ import type { PropType } from 'vue'
 const router = useRouter()
 
 const goChangePassword = () => {
-  navigateTo('/intern/change_password')
+  navigateTo('/intern/profile/change_password')
 }
+
+const today = computed(() => {
+  const now = new Date()
+  return now.toISOString().split('T')[0]
+})
 
 const props = defineProps({
   formData: {
@@ -99,9 +102,7 @@ const form = reactive<Record<string, any>>({
 watch(
   () => props.formData,
   (val) => {
-    if (val) {
-      Object.assign(form, val)
-    }
+    if (val) Object.assign(form, val)
   },
   { immediate: true }
 )

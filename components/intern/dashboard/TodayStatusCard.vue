@@ -32,6 +32,7 @@ import dayjs from 'dayjs'
 import { useApi } from '~/composables/core'
 
 const { apiFetch } = useApi()
+
 const checkInTime = ref('-')
 const rankToday = ref('-')
 const rankScore = ref('-')
@@ -39,24 +40,26 @@ const totalHours = ref('-')
 
 onMounted(async () => {
   try {
-    /* 🔹 1. เช็คอินวันนี้ */
+    /* 🔹 1. ดึง user ปัจจุบัน */
+    const meRes = await apiFetch('/auth/me')
+    const myUserId = meRes.data.id
+
+    /* 🔹 2. ดึง check-in วันนี้ */
     const checkRes = await apiFetch('/check-ins/me')
 
-    // สมมติ backend ส่ง:
-    // { checkedInToday: true, createdAt: "...", hours: 8 }
-
     if (checkRes.data.checkedInToday) {
-      checkInTime.value = dayjs(checkRes.data.createdAt).format('hh:mm A')
+      checkInTime.value = dayjs(checkRes.data.createdAt).format('HH:mm')
       totalHours.value = checkRes.data.hours ?? '-'
+    } else {
+      checkInTime.value = '-'
+      totalHours.value = '-'
     }
 
-    /* 🔹 2. Ranking */
+    /* 🔹 3. ดึง ranking */
     const rankRes = await apiFetch('/points/ranking')
 
-    const myUserId = 1 // 👉 เปลี่ยนเป็น authStore.user.id
-
     const myIndex = rankRes.data.findIndex(
-      (u) => u.userId === myUserId
+      (u) => String(u.userId) === String(myUserId)
     )
 
     if (myIndex !== -1) {

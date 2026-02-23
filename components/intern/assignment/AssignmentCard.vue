@@ -4,12 +4,18 @@
       <div class="left">
         <StarFilled class="star" />
         <div>
-          <div class="title">{{ data.title }}</div>
+          <div class="title">
+            {{ data.title }}
+            <span v-if="data.isBonus" class="bonus">BONUS</span>
+          </div>
           <div class="status">
             Status :
             <span :class="statusClass">
               {{ statusText }}
             </span>
+          </div>
+          <div v-if="formattedDeadline" class="deadline">
+            Due: {{ formattedDeadline }}
           </div>
         </div>
       </div>
@@ -27,17 +33,31 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import BaseCard from '~/components/base/BaseCard.vue'
 import { computed } from 'vue'
 import { StarFilled } from '@ant-design/icons-vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 
+const formattedDeadline = computed(() => {
+  if (!props.data.deadline) return null
+  return dayjs(props.data.deadline).format('DD/MM/YYYY')
+})
 const router = useRouter()
 
-const props = defineProps({
-  data: Object
-})
+interface AssignmentData {
+  id: string
+  title: string
+  status: 'done' | 'not_done'
+  point?: number
+  isBonus?: boolean
+  deadline?: string   // 🔥 เพิ่มตรงนี้
+}
+
+const props = defineProps<{
+  data: AssignmentData
+}>()
 
 const statusText = computed(() =>
   props.data.status === 'done' ? 'Done' : 'Not Done'
@@ -48,7 +68,7 @@ const statusClass = computed(() =>
 )
 
 const goToDetail = () => {
-  router.push(`/assignments/${props.data.id}`)
+  router.push(`/intern/tasks/${props.data.id}`)
 }
 </script>
 
@@ -97,9 +117,12 @@ const goToDetail = () => {
 
 .do-btn {
   width: 83px;
-  height: 32px;          /* ⭐ ต้องกำหนดตรง */
-  padding: 0;            /* ⭐ ตัด padding เดิมของ Ant */
-  line-height: 32px;     /* ⭐ ให้ตัวอักษรอยู่กลาง */
+  height: 32px;
+  /* ⭐ ต้องกำหนดตรง */
+  padding: 0;
+  /* ⭐ ตัด padding เดิมของ Ant */
+  line-height: 32px;
+  /* ⭐ ให้ตัวอักษรอยู่กลาง */
   font-size: 14px;
 
   background-color: #22c55e;
@@ -107,5 +130,4 @@ const goToDetail = () => {
   color: #fff;
   border-radius: 25px;
 }
-
 </style>

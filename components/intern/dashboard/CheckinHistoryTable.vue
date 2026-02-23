@@ -12,6 +12,7 @@ import dayjs from 'dayjs'
 import { useApi } from '~/composables/core'
 
 const { apiFetch } = useApi()
+
 const columns = [
   { title: 'Date', dataIndex: 'date' },
   { title: 'Time', dataIndex: 'time' },
@@ -27,47 +28,33 @@ onMounted(async () => {
 
     const res = await apiFetch('/check-ins/attendance')
 
-    /**
-     * 🔥 สมมติ backend ส่งแบบนี้:
-     * [
-     *   {
-     *     type: "CHECK_IN",
-     *     createdAt: "2026-02-16T02:05:00.000Z",
-     *     status: "ON_TIME"
-     *   },
-     *   {
-     *     type: "LEAVE",
-     *     startDate: "2026-02-17T00:00:00.000Z",
-     *     endDate: "2026-02-17T23:59:59.000Z"
-     *   }
-     * ]
-     */
+    data.value = (res.data || [])
+      .map((item, index) => {
+        if (item.type === 'CHECK_IN') {
+          const dateObj = dayjs(item.createdAt)
 
-    data.value = res.data.map((item, index) => {
-      if (item.type === 'CHECK_IN') {
-        const dateObj = dayjs(item.createdAt)
-
-        return {
-          key: index,
-          date: dateObj.format('DD/MM/YYYY'),
-          time: dateObj.format('hh:mm A'),
-          status: formatCheckinStatus(item.status)
+          return {
+            key: index,
+            date: dateObj.format('DD/MM/YYYY'),
+            time: dateObj.format('HH:mm'),
+            status: formatCheckinStatus(item.status)
+          }
         }
-      }
 
-      if (item.type === 'LEAVE') {
-        const dateObj = dayjs(item.startDate)
+        if (item.type === 'LEAVE') {
+          const dateObj = dayjs(item.startDate)
 
-        return {
-          key: index,
-          date: dateObj.format('DD/MM/YYYY'),
-          time: '-',
-          status: 'Leave'
+          return {
+            key: index,
+            date: dateObj.format('DD/MM/YYYY'),
+            time: '-',
+            status: 'Leave'
+          }
         }
-      }
 
-      return null
-    }).filter(Boolean)
+        return null
+      })
+      .filter(Boolean)
 
   } catch (err) {
     console.error('Attendance error:', err)

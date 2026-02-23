@@ -1,13 +1,15 @@
-export const useCheckinApi = () => {
+import { useApi } from '~/composables/core'
+
+export function useCheckinApi() {
   const { apiFetch } = useApi()
 
-  const checkIn = async (data: {
+  const checkIn = async (payload: {
     latitude: number
     longitude: number
   }) => {
     return await apiFetch('/check-ins', {
       method: 'POST',
-      body: data
+      body: payload
     })
   }
 

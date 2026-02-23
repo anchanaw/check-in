@@ -1,5 +1,4 @@
 export default defineNuxtRouteMiddleware((to) => {
-
   if (import.meta.server) return
 
   const auth = useAuthStore()
@@ -14,18 +13,21 @@ export default defineNuxtRouteMiddleware((to) => {
     manager: '/manager',
     mentor: '/mentor'
   } as const
-  if (!auth.access_token && to.path === '/login') return
-  // 🔐 ถ้า login แล้ว ห้ามเข้า public page
-  if (auth.access_token && isPublic) {
-    return navigateTo(homeByRole[auth.role!])
-  }
 
-  // 🔐 ถ้ายังไม่ login
+  // ยังไม่ login → เข้า public ได้
+  if (!auth.access_token && isPublic) return
+
+  // ยังไม่ login → ห้ามเข้า private
   if (!auth.access_token && !isPublic) {
     return navigateTo('/login')
   }
 
-  // 🔐 ถ้า login แล้ว แต่เข้าโซนผิด
+  // login แล้ว → ห้ามกลับหน้า login
+  if (auth.access_token && to.path === '/login') {
+    return navigateTo(homeByRole[auth.role!])
+  }
+
+  // login แล้ว เข้าโซนผิด
   if (auth.access_token && auth.role) {
     const ownHome = homeByRole[auth.role]
     if (!to.path.startsWith(ownHome)) {

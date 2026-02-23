@@ -23,17 +23,30 @@ const columns = [
   { title: 'Score', dataIndex: 'score', width: 100 }
 ]
 
+interface RankingItem {
+  userId: string
+  firstName: string
+  lastName: string
+  totalPoints: number
+}
+
+interface RankingResponse {
+  success: boolean
+  data: RankingItem[]
+}
+
 const data = ref<Array<{ key: any; rank: string; name: string; score: string }>>([])
 const loading = ref(false)
 
 onMounted(async () => {
   loading.value = true
   try {
-    const res = await apiFetch('/points/ranking') as { data: { data: any[] } }
-    const rankingList = res.data.data
 
+    const res = await apiFetch<RankingResponse>('/points/ranking')
+    const rankingList = res.data
+    
     data.value = rankingList.map((item: any, index: number) => ({
-      key: item.internId,
+      key: item.userId || item.internId,
       rank: `#${index + 1}`,
       name: `${item.firstName} ${item.lastName}`,
       score: `${item.totalPoints} pts`

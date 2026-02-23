@@ -18,22 +18,57 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ArrowLeftOutlined } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
+
 import BaseCard from '~/components/base/BaseCard.vue'
 import RequestLeaveForm from '~/components/intern/RequestLeaveForm.vue'
 
+const router = useRouter()
+const { apiFetch } = useApi()
+
 const goBack = () => {
-  history.back()
+  router.back()
 }
 
-const onSubmit = (payload) => {
-  console.log('request leave payload:', payload)
-  /**
-   * TODO:
-   * POST /leave-requests
-   * body: payload
-   */
+const onSubmit = async (payload: any) => {
+  try {
+    // 🔥 แปลงวันที่ให้เป็น ISO string
+    const body = {
+      startDate: new Date(payload.startDate).toISOString(),
+      endDate: new Date(payload.endDate).toISOString(),
+      reason: payload.reason
+    }
+
+    if (!payload.startDate || !payload.endDate) {
+      message.error('Please select leave dates')
+      return
+    }
+
+    if (new Date(payload.endDate) < new Date(payload.startDate)) {
+      message.error('End date must be after start date')
+      return
+    }
+    
+    await apiFetch('/leaves', {
+      method: 'POST',
+      body
+    })
+
+    message.success('Leave request submitted successfully')
+
+    router.push('/intern')
+
+  } catch (err: any) {
+    console.error('Leave request error:', err)
+    message.error(
+      err?.response?.data?.error?.message ||
+      'Failed to submit leave request'
+    )
+  }
 }
 </script>
 

@@ -2,20 +2,24 @@
   <div class="profile-page">
     <div class="wrapper">
       <BaseCard v-if="user">
+        <!-- Avatar + Name -->
         <ProfileHeader :user="user" :avatar="avatarUrl" />
 
+        <!-- Info sections -->
         <ProfileInfoSection title="Account Information" :items="accountInfo" />
-
         <ProfileInfoSection title="Personal Information" :items="personalInfo" />
+        <ProfileInfoSection title="Education" :items="educationInfo" />
 
-        <ProfileActions mode="mentor" @edit="onEdit" @logout="onLogout" />
-
+        <!-- Actions -->
+        <ProfileActions
+          @edit="onEdit"
+          @leave="onLeave"
+          @logout="onLogout"
+        />
       </BaseCard>
-      <a-skeleton v-else active />
-
     </div>
 
-    <MentorBottomBar active="profile" />
+    <BottomBar active="profile" />
   </div>
 </template>
 
@@ -24,22 +28,40 @@ import { ref, onMounted, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 import { useAuthStore } from '~/stores/auth.store'
+import dayjs from 'dayjs'
 
 import BaseCard from '~/components/base/BaseCard.vue'
-import ProfileHeader from '~/components/mentor/profile/ProfileHeader.vue'
-import ProfileInfoSection from '~/components/mentor/profile/ProfileInfoSection.vue'
-import ProfileActions from '~/components/mentor/profile/ProfileActions.vue'
-import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
+import ProfileHeader from '~/components/intern/profile/ProfileHeader.vue'
+import ProfileInfoSection from '~/components/intern/profile/ProfileInfoSection.vue'
+import ProfileActions from '~/components/intern/profile/ProfileActions.vue'
+import BottomBar from '@/components/intern/BottomBar.vue'
 
 const { apiFetch } = useApi()
 const router = useRouter()
 const auth = useAuthStore()
 
+interface MeResponse {
+  success: boolean
+  data: {
+    id: string
+    email: string
+    role: string
+    firstName: string
+    lastName: string
+    gender?: string
+    dateOfBirth?: string
+    studentId?: string
+    university?: string
+  }
+}
+
 const loading = ref(true)
+const avatarUrl = ref('')
 const user = ref<any>(null)
-const avatarUrl = ref<string>('')
+
 const accountInfo = ref<any[]>([])
 const personalInfo = ref<any[]>([])
+const educationInfo = ref<any[]>([])
 
 const formatRole = (role: string) => {
   switch (role) {
@@ -53,15 +75,13 @@ const formatRole = (role: string) => {
       return '-'
   }
 }
-
 const loadProfile = async () => {
   try {
-    // 🔥 กันกรณี token ยังไม่ sync
     if (!auth.access_token) return
 
     loading.value = true
 
-    const res = await apiFetch<any>('/auth/me')
+    const res = await apiFetch<MeResponse>('/auth/me')
     const data = res.data
 
     user.value = {
@@ -80,12 +100,17 @@ const loadProfile = async () => {
       {
         label: 'Date of Birth',
         value: data.dateOfBirth
-          ? new Date(data.dateOfBirth).toLocaleDateString()
+          ? dayjs(data.dateOfBirth).format('DD/MM/YYYY')
           : '-'
       }
     ]
 
-    // 🔥 โหลดรูป (ไม่ให้พังทั้งหน้า)
+    educationInfo.value = [
+      { label: 'University', value: data.university || '-' },
+      { label: 'Student ID', value: data.studentId || '-' }
+    ]
+
+    // โหลด avatar (กันพัง)
     try {
       const imgRes = await apiFetch<any>('/auth/profile/image-signed-url')
       avatarUrl.value = imgRes?.data?.signedUrl || ''
@@ -94,9 +119,7 @@ const loadProfile = async () => {
     }
 
   } catch (err) {
-    console.error('Profile load error:', err)
-    // ❌ ไม่ clearAuth ตรงนี้
-    // useApi จะจัดการ 401 เอง
+    console.error('Intern profile load error:', err)
   } finally {
     loading.value = false
   }
@@ -106,7 +129,11 @@ onMounted(loadProfile)
 onActivated(loadProfile)
 
 const onEdit = () => {
-  router.push('/mentor/profile/edit')
+  router.push('/intern/profile/edit')
+}
+
+const onLeave = () => {
+  router.push('/intern/leave')
 }
 
 const onLogout = () => {
@@ -126,18 +153,11 @@ const onLogout = () => {
 .wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 96px;
-  /* เผื่อ avatar ลอย */
+  margin-top: 80px;
 }
 
 .wrapper :deep(.base-card) {
   width: 100%;
   max-width: 360px;
-}
-
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 </style>

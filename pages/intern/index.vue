@@ -1,20 +1,20 @@
 <template>
-  <CheckInHeader :userName="user.display_name" :date="dateTime.date" />
+  <CheckInHeader :userName="`${user.firstName} ${user.lastName}`" :date="dateTime.date" />
   <div class="content">
-<LocationCard :latitude="latitude" :longitude="longitude" />
+    <LocationCard :latitude="latitude" :longitude="longitude" />
     <CheckInStatusCard />
   </div>
 
   <div class="action">
-    <a-button class="checkin-btn" type="primary" size="large" @click="onCheckIn">
+    <a-button class="checkin-btn" type="primary" size="large" :loading="checking" @click="onCheckIn">
       ⭐ Check-in
     </a-button>
   </div>
-  
+
   <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
 
   <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
-  <BottomBar/>
+  <BottomBar />
 </template>
 
 <script setup lang="ts">
@@ -27,21 +27,26 @@ import CheckinSuccessModal from '~/components/intern/CheckinSuccessModal.vue'
 import CheckinFailModal from '~/components/intern/CheckinFailModal.vue'
 import { useCheckinApi } from '~/composables/useCheckinApi'
 import BottomBar from '~/components/intern/BottomBar.vue'
+import { useApi } from '~/composables/core'
+import { message } from 'ant-design-vue'
 
+
+const { apiFetch } = useApi()
 const { checkIn } = useCheckinApi()
 
-definePageMeta({ layout: 'app' ,middleware:'auth'})
-
+definePageMeta({
+  layout: 'mobile'
+})
 const latitude = ref<number | null>(null)
 const longitude = ref<number | null>(null)
 const locationError = ref('')
 const checkinSuccess = ref(false)
 const checkinFail = ref(false)
 
-// mock user
-const user = {
-  display_name: 'Sompong'
-}
+const user = ref({
+  firstName: '',
+  lastName: ''
+})
 
 // เวลา real-time
 const now = ref(new Date())
@@ -90,15 +95,21 @@ const getLocation = () => {
   })
 }
 
+onMounted(async () => {
+  try {
+    const res: any = await apiFetch('/auth/me')
 
-onMounted(() => {
+    user.value.firstName = res.data.firstName || ''
+    user.value.lastName = res.data.lastName || ''
+
+  } catch (err) {
+    console.error('Failed to load user:', err)
+  }
+
+  // timer เดิม
   timer = setInterval(() => {
     now.value = new Date()
   }, 60000)
-})
-
-onUnmounted(() => {
-  clearInterval(timer)
 })
 
 const dateTime = computed(() => {
@@ -108,27 +119,29 @@ const dateTime = computed(() => {
     time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }
 })
+const checking = ref(false)
 const onCheckIn = async () => {
   try {
+    checking.value = true
+
     const location = await getLocation()
 
-    latitude.value = location.lat
-    longitude.value = location.lng
-
-    console.log('LAT:', latitude.value)
-    console.log('LNG:', longitude.value)
-
     await checkIn({
-      latitude: latitude.value!,
-      longitude: longitude.value!
+      latitude: location.lat,
+      longitude: location.lng
     })
 
     checkinSuccess.value = true
-
   } catch (error: any) {
-    console.error(error)
-    locationError.value = error?.data?.message || String(error)
+    if (error?.data?.code === 'TEAM_REQUIRED') {
+      checkinFail.value = false
+      message.error('You are not assigned to a team yet.')
+      return
+    }
+
     checkinFail.value = true
+  } finally {
+    checking.value = false
   }
 }
 

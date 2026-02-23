@@ -20,34 +20,57 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useApi } from '~/composables/core'
 import AssignmentCard from '~/components/intern/assignment/AssignmentCard.vue'
 import BottomBar from '@/components/intern/BottomBar.vue'
 
-/**
- * TODO:
- * - GET /assignments
- */
-const assignments = ref([])
+const { apiFetch } = useApi()
 
-onMounted(() => {
-  assignments.value = [
-    {
-      id: 1,
-      title: 'Share your day',
-      status: 'not_done'
-    },
-    {
-      id: 2,
-      title: 'Help Team',
-      status: 'done',
-      point: 3
-    }
-  ]
+interface TaskItem {
+  id: string
+  title: string
+  description: string
+  points: number
+  isBonus: boolean
+  deadline: string
+}
+
+const assignments = ref<any[]>([])
+const loading = ref(false)
+
+onMounted(async () => {
+  try {
+    loading.value = true
+
+    const res = await apiFetch<{ data: TaskItem[] }>('/tasks')
+
+    const taskList = res.data || []
+
+    assignments.value = taskList.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: getStatus(task.deadline),
+      point: task.points,
+      isBonus: task.isBonus,
+      deadline: task.deadline
+    }))
+
+  } catch (err) {
+    console.error('Failed to load assignments:', err)
+  } finally {
+    loading.value = false
+  }
 })
 
-const onAddLabel = (item) => {
+function getStatus(deadline: string) {
+  const now = new Date()
+  const end = new Date(deadline)
+  return now > end ? 'done' : 'not_done'
+}
+
+const onAddLabel = (item: any) => {
   console.log('add label:', item)
 }
 </script>

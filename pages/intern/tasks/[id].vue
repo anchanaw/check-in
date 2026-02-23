@@ -27,32 +27,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeftOutlined, StarOutlined } from '@ant-design/icons-vue'
-import axios from '@/utils/axios'   // 🔥 ใช้ instance
+import { useApi } from '~/composables/core'
 
 import BaseCard from '~/components/base/BaseCard.vue'
 import AssignmentBonus from '~/components/intern/assignment/AssignmentBonus.vue'
 import AssignmentForm from '~/components/intern/assignment/AssignmentForm.vue'
 import BottomBar from '@/components/intern/BottomBar.vue'
+import { message } from 'ant-design-vue'
+
+const { apiFetch } = useApi()
 
 const route = useRoute()
 const router = useRouter()
 
-const taskId = route.params.id
+const taskId = route.params.id as string
 
 const task = ref({
   id: taskId,
   title: '',
-  points: 0
+  points: 0,
+  description: ''
 })
 
 /* ✅ ดึงข้อมูล task */
 onMounted(async () => {
   try {
-    const res = await axios.get(`/tasks/${taskId}`)
+    const res = await apiFetch<{ data: any }>(`/tasks/${taskId}`)
     task.value = res.data
   } catch (err) {
     console.error('Fetch task error:', err)
@@ -64,19 +68,15 @@ const goBack = () => {
 }
 
 /* ✅ Submit งาน */
-const onSubmit = async (formData) => {
+const onSubmit = async (formData: FormData) => {
   try {
-    await axios.post(
-      `/tasks/${taskId}/submissions`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-    )
+    await apiFetch(`/tasks/${taskId}/submissions`, {
+      method: 'POST',
+      body: formData
+    })
 
-    router.push('/intern/tasks')
+    router.push('/intern/assignment')
+    message.success('Task submitted successfully')
 
   } catch (err) {
     console.error('Submit error:', err)

@@ -24,11 +24,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const goEditProfile = () => {
-    router.push('/intern/edit_profile')
+    router.push('/intern/profile/edit')
 }
 
 const goRequestLeave = () => {
-  router.push('/intern/request_leave')
+  router.push('/intern/profile/request_leave')
 }
 
 const handleLogout = () => {

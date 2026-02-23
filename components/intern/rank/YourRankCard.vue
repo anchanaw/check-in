@@ -2,20 +2,29 @@
   <div>
     <div class="title mb">Your Rank</div>
 
-    <a-table
-      :columns="columns"
-      :data-source="data"
-      size="small"
-      bordered
-      pagination="false"
-      show-header="false"
-    />
+    <a-table :columns="columns" :data-source="data" size="small" bordered pagination="false" show-header="false" />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from '@/utils/axios'
+import { useApi } from '~/composables/core'
+
+const { apiFetch } = useApi()
+
+interface MeResponse {
+  success: boolean
+  data: {
+    id: string
+  }
+}
+
+interface RankingItem {
+  userId: string
+  firstName: string
+  lastName: string
+  totalPoints: number
+}
 
 const columns = [
   { dataIndex: 'rank', width: 70 },
@@ -23,42 +32,42 @@ const columns = [
   { dataIndex: 'score', width: 90 }
 ]
 
-const data = ref([])
+const data = ref<any[]>([])
 
 onMounted(async () => {
   try {
-    const res = await axios.get('/points/ranking')
+    const meRes = await apiFetch<{ data: { id: string } }>('/auth/me')
+    const myUserId = meRes.data.id
 
-    const rankingList = res.data
-
-    // 🔥 สมมติ backend ส่งแบบนี้:
-    // [{ userId, name, totalPoints }]
-
-    const myUserId = 1 // 👈 เปลี่ยนเป็น authStore.user.id
+    const rankRes = await apiFetch<{ data: any[] }>('/points/ranking')
+    const rankingList = rankRes.data
 
     const myIndex = rankingList.findIndex(
-      (u) => u.userId === myUserId
+      (u) => String(u.internId) === String(myUserId)
     )
 
-    if (myIndex !== -1) {
-      const me = rankingList[myIndex]
+    if (myIndex >= 0) {
+      const me = rankingList[myIndex]!
 
       data.value = [
         {
-          key: me.userId,
+          key: me.internId,
           rank: `#${myIndex + 1}`,
-          name: me.name,
+          name: `${me.firstName} ${me.lastName}`,
           score: `${me.totalPoints} pts`
         }
       ]
+    } else {
+      data.value = []
     }
-
+    console.log('myUserId:', myUserId)
+    console.log('rankingList:', rankingList)
   } catch (err) {
     console.error(err)
   }
+
 })
 </script>
-
 
 <style scoped>
 .title {

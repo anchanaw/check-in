@@ -88,7 +88,8 @@ const createInvite = async () => {
       body: {
         code,
         role: 'intern',
-        type: 'registration',   // 🔥 ใช้อันนี้ไปก่อน
+        type: 'join_team',
+        teamId: teamId,   // 🔥 ใช้อันนี้ไปก่อน
         maxUses: maxUses.value
       }
     })

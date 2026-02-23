@@ -160,7 +160,7 @@ const onSubmit = async () => {
                 university: formState.value.university || null
             }
         })
-
+        console.log('Sending inviteCode:', inviteCode)
         navigateTo(`/login?code=${inviteCode}`)
     } catch (err: any) {
         alert(err?.data?.message || 'Register failed')

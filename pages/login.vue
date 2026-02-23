@@ -64,10 +64,19 @@ const onSubmit = async () => {
 
     // set auth ก่อน
     authStore.setAuth(token, role, formState.remember)
+
+    await navigateTo(
+      role === 'manager'
+        ? '/manager'
+        : role === 'mentor'
+          ? '/mentor'
+          : '/intern',
+      { replace: true }
+    )
     console.log('role:', role)
     console.log('login role from backend:', role)
-console.log('store role after setAuth:', authStore.role)
-console.log('token after setAuth:', authStore.access_token)
+    console.log('store role after setAuth:', authStore.role)
+    console.log('token after setAuth:', authStore.access_token)
     // redirect
     if (role === 'manager') return navigateTo('/manager')
     if (role === 'mentor') return navigateTo('/mentor')
