@@ -63,8 +63,11 @@ const onSubmit = async () => {
     const role = res.data.user.role.toLowerCase()
 
     // set auth ก่อน
-    authStore.clearAuth()
     authStore.setAuth(token, role, formState.remember)
+    console.log('role:', role)
+    console.log('login role from backend:', role)
+console.log('store role after setAuth:', authStore.role)
+console.log('token after setAuth:', authStore.access_token)
     // redirect
     if (role === 'manager') return navigateTo('/manager')
     if (role === 'mentor') return navigateTo('/mentor')
