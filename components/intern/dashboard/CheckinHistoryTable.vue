@@ -30,25 +30,25 @@ onMounted(async () => {
 
     data.value = (res.data || [])
       .map((item, index) => {
-        if (item.type === 'CHECK_IN') {
-          const dateObj = dayjs(item.createdAt)
 
-          return {
-            key: index,
-            date: dateObj.format('DD/MM/YYYY'),
-            time: dateObj.format('HH:mm'),
-            status: formatCheckinStatus(item.status)
+        // 🔥 check_in (ตัวเล็ก)
+        if (item.type === 'check_in') {
+
+          const dateObj = dayjs(item.date)
+
+          const rawTime = item.details?.replace('Time: ', '') || null
+
+          let formattedTime = '-'
+
+          if (rawTime) {
+            const dateTime = dayjs(`${item.date} ${rawTime}`).add(7, 'hour')
+            formattedTime = dateTime.format('HH:mm')
           }
-        }
-
-        if (item.type === 'LEAVE') {
-          const dateObj = dayjs(item.startDate)
-
           return {
             key: index,
             date: dateObj.format('DD/MM/YYYY'),
-            time: '-',
-            status: 'Leave'
+            time: formattedTime,
+            status: formatCheckinStatus(item.status)
           }
         }
 
@@ -64,9 +64,9 @@ onMounted(async () => {
 })
 
 const formatCheckinStatus = (status) => {
-  if (status === 'ON_TIME') return 'On time'
-  if (status === 'LATE') return 'Late'
-  return 'Unknown'
+  if (status === 'on_time') return 'On time'
+  if (status === 'late') return 'Late'
+  return status || 'Unknown'
 }
 </script>
 
