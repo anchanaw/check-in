@@ -1,6 +1,11 @@
 <template>
   <a-layout class="page">
     <!-- Header -->
+    <a-badge class="notification" :count="unreadCount" :overflow-count="99" :show-zero="false">
+      <NuxtLink to="/mentor/notifications" class="bell-link">
+        <BellOutlined class="bell-icon" />
+      </NuxtLink>
+    </a-badge>
     <div class="header">
       <a-space direction="vertical" size="2">
         <a-typography-title class="name">
@@ -11,12 +16,6 @@
           {{ user?.role }}
         </a-typography-text>
       </a-space>
-
-      <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
-        <NuxtLink to="/mentor/notifications" class="bell-link">
-          <BellOutlined class="bell-icon" />
-        </NuxtLink>
-      </a-badge>
     </div>
 
     <!-- Content -->
@@ -62,8 +61,16 @@ onMounted(() => {
 
 <style scoped>
 .page {
-  min-height: 100vh;
-  padding: 16px 16px 80px;
+  position: fixed;
+  /* ยึดเต็มหน้าจอ */
+  inset: 0;
+  /* top:0 right:0 bottom:0 left:0 */
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 0 16px;
   background: #6CBCFA;
 }
 
@@ -86,9 +93,8 @@ onMounted(() => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
+  width: 100%;
+  padding: 40px 20px 10px;
 }
 
 .name {
@@ -103,6 +109,13 @@ onMounted(() => {
 
 .mt {
   margin-top: 16px;
+}
+
+.notification {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
 }
 
 .bell-link {

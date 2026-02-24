@@ -52,15 +52,18 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import dayjs from 'dayjs'
+import { useApi } from '~/composables/core'
 import BackButton from '@/components/base/BackButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 
+const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
 
 interface PointDetail {
-  id: number
+  id: string
   points: number
   type: string
   reason: string
@@ -69,57 +72,66 @@ interface PointDetail {
 
 const bonus = ref<PointDetail | null>(null)
 
-/* 🔥 mock data */
-const mockData: Record<number, PointDetail> = {
-  2: {
-    id: 1,
-    points: 2,
-    type: 'Mentor-added bonus',
-    reason: 'Extra offer on task',
-    date: '09 Jan 2026'
-  },
-  3: {
-    id: 2,
-    points: -2,
-    type: 'Mentor adjustment',
-    reason: 'Arriving late',
-    date: '09 Jan 2026'
-  }
-}
-
 onMounted(async () => {
   loading.value = true
-  const id = Number(route.params.id)
+
+  const internId = route.params.internId as string
+  const pointId = route.params.pointId as string
+
+  console.log('INTERN ID:', internId)
+  console.log('POINT ID:', pointId)
 
   try {
-    // 🔥 เปิดใช้ตอน API พร้อม
-    // const res = await $fetch<PointDetail>(`/api/points/${id}`)
-    // bonus.value = res
+    const res = await apiFetch(
+      `/users/interns/${internId}/points`
+    ) as any
 
-    // 🔥 ตอนนี้ใช้ mock แทน
-    const data = mockData[id]
+    const history = res?.data || []
 
-    if (!data) {
-      router.replace('/mentor/points')
+    const found = history.find(
+      (item: any) => item.id === pointId
+    )
+
+    if (!found) {
+      router.back()
       return
     }
 
-    bonus.value = data
-
-  } catch (err) {
-    console.error('Load failed, using fallback mock')
-
-    const fallback = mockData[id]
-    if (fallback) {
-      bonus.value = fallback
-    } else {
-      router.replace('/mentor/points')
+    bonus.value = {
+      id: found.id,
+      points: found.points,
+      type: mapType(found),
+      reason: found.reason || '-',
+      date: dayjs(found.createdAt)
+        .add(7, 'hour')
+        .format('DD MMM YYYY HH:mm')
     }
 
+  } catch (err) {
+    console.error('Load point detail error:', err)
+    router.back()
   } finally {
     loading.value = false
   }
 })
+
+const mapType = (item: any) => {
+  if (item.sourceType === 'bonus') {
+    return 'Bonus'
+  }
+
+  if (item.sourceType === 'manual') {
+    return item.points > 0
+      ? 'Manual Added'
+      : 'Manual Deducted'
+  }
+
+  if (item.sourceType === 'checkin') {
+    return 'Check-in'
+  }
+
+  return 'Point Update'
+}
 
 const formattedPoints = computed(() => {
   if (!bonus.value) return ''

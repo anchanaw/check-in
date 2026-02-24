@@ -24,17 +24,40 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  latitude: number | null
-  longitude: number | null
-}>()
+import { ref, onMounted } from 'vue'
 
-const emit = defineEmits<{
-  (e: 'reset'): void
-}>()
+const latitude = ref<number | null>(null)
+const longitude = ref<number | null>(null)
+const loading = ref(false)
+
+const getLocation = () => {
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported')
+    return
+  }
+
+  loading.value = true
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      latitude.value = position.coords.latitude
+      longitude.value = position.coords.longitude
+      loading.value = false
+    },
+    (error) => {
+      console.error(error)
+      alert('Unable to retrieve location')
+      loading.value = false
+    }
+  )
+}
+
+onMounted(() => {
+  getLocation()
+})
 
 const handleReset = () => {
-  emit('reset')
+  getLocation()   // 🔥 ดึงใหม่
 }
 </script>
 

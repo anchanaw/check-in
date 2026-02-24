@@ -11,17 +11,17 @@
 
     <div class="content">
 
-  <a-spin :spinning="loading">
+      <a-spin :spinning="loading">
 
-    <div class="card-stack">
-      <TaskStatusCard status="approved" />
-      <TaskSummaryCard :task="task" />
-      <TaskDescriptionCard :task="task" />
+        <div class="card-stack">
+          <TaskStatusCard status="approved" />
+          <TaskSummaryCard :task="task" />
+          <TaskDescriptionCard :task="task" />
+        </div>
+
+      </a-spin>
+
     </div>
-
-  </a-spin>
-
-</div>
 
   </a-layout>
 </template>
@@ -29,17 +29,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import dayjs from 'dayjs'
+import { useApi } from '~/composables/core'
 
 import BackButton from '@/components/base/BackButton.vue'
 import TaskStatusCard from '@/components/mentor/task/TaskStatusCard.vue'
 import TaskSummaryCard from '@/components/mentor/task/TaskSummaryCard.vue'
 import TaskDescriptionCard from '@/components/mentor/task/TaskDescriptionCard.vue'
 
+const { apiFetch } = useApi()
 const route = useRoute()
 const loading = ref(true)
 
 interface TaskDetail {
-  id: number
+  id: string
   studentName: string
   taskTitle: string
   submittedDate: string
@@ -51,7 +54,7 @@ interface TaskDetail {
 }
 
 const task = ref<TaskDetail>({
-  id: 0,
+  id: '',
   studentName: '',
   taskTitle: '',
   submittedDate: '',
@@ -59,32 +62,44 @@ const task = ref<TaskDetail>({
   description: '',
   image: '',
   note: '',
-  status: 'approved'
+  status: 'pending'
 })
 
 onMounted(async () => {
-  loading.value = true
+  try {
+    loading.value = true
 
-  const taskId = route.params.id
-  console.log('TASK ID:', taskId)
+    const submissionId = route.params.id as string
+    console.log('SUBMISSION ID:', submissionId)
 
-  await new Promise(r => setTimeout(r, 800)) // mock API delay
+    const res = await apiFetch(
+      `/tasks/${submissionId}/submissions`
+    ) as any
 
-  // 🔥 mock data (รอเปลี่ยนเป็น API)
-  task.value = {
-    id: 1,
-    studentName: 'Sompong',
-    taskTitle: 'Share your day',
-    submittedDate: '15 Jan 2026',
-    bonusPoints: 2,
-    description:
-      'This report provides an analysis of the latest trends and statistics. The intern has conducted research and presented detailed findings on the given topic.',
-    image: '/images/sample.jpg',
-    note: 'Good reflection and clear explanation',
-    status: 'approved'
+    console.log('TASK DETAIL RESPONSE:', res)
+    console.log('TASK DATA:', res?.data)
+
+    const data = res?.data
+
+    task.value = {
+      id: data.id,
+      studentName: `${data.intern?.firstName || ''} ${data.intern?.lastName || ''}`,
+      taskTitle: data.task?.title || '',
+      submittedDate: dayjs(data.createdAt)
+        .add(7, 'hour')
+        .format('DD MMM YYYY HH:mm'),
+      bonusPoints: data.task?.points || 0,
+      description: data.content || '',
+      image: data.fileUrl || '',
+      note: data.reviewNote || '',
+      status: data.status || 'pending'
+    }
+
+  } catch (err) {
+    console.error('Task detail error:', err)
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 })
 </script>
 

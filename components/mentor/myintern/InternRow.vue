@@ -7,8 +7,13 @@
     </div>
 
     <div class="center">
-      <span v-if="intern.status === 'checked-in'" class="green">
+
+      <span v-if="intern.status === 'checked-in' && intern.checkin_time" class="green">
         {{ intern.checkin_time }}
+      </span>
+
+      <span v-else-if="intern.status === 'checked-in'" class="green">
+        Checked In
       </span>
 
       <span v-else-if="intern.status === 'leave-pending'" class="orange">
@@ -19,11 +24,14 @@
         On Leave
       </span>
 
-      <span v-else class="gray">-</span>
+      <span v-else class="gray">
+        -
+      </span>
+
     </div>
 
     <div class="right">
-      #{{ intern.order }}
+      #{{ intern.rank }}
     </div>
 
   </div>
@@ -36,9 +44,10 @@ const props = defineProps<{
   intern: {
     id: string   // ✅ เปลี่ยนเป็น string
     name: string
-    status: string
+    status: 'checked-in' | 'not-checked' | 'leave-pending' | 'on-leave'
     checkin_time?: string
-    order: number
+    rank: number
+    totalScore: number
   }
 }>()
 
@@ -88,28 +97,40 @@ function goDetail() {
 }
 
 /* สีสถานะ */
-.checked-in { background: #22c55e; }
-.not-checked { background: #bdbdbd; }
-.leave-pending { background: #f59e0b; }
-.on-leave { background: #3b82f6; }
+.checked-in {
+  background: #22c55e;
+}
 
-.green { 
-  color: #22c55e; 
+.not-checked {
+  background: #bdbdbd;
+}
+
+.leave-pending {
+  background: #f59e0b;
+}
+
+.on-leave {
+  background: #3b82f6;
+}
+
+.green {
+  color: #22c55e;
   font-weight: 500;
 }
 
-.orange { 
-  color: #f59e0b; 
+.orange {
+  color: #f59e0b;
   font-weight: 500;
 }
 
-.blue { 
-  color: #3b82f6; 
+.blue {
+  color: #3b82f6;
   font-weight: 500;
 }
 
-.gray { 
-  color: #d32f2f; /* สีแดงแบบในรูป */
+.gray {
+  color: #d32f2f;
+  /* สีแดงแบบในรูป */
   font-weight: 500;
 }
 
@@ -136,5 +157,4 @@ function goDetail() {
 .clickable:active {
   transform: scale(0.98);
 }
-
 </style>

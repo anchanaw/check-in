@@ -21,11 +21,11 @@
       </div>
 
       <div class="right">
-        <a-button class="do-btn" v-if="data.status === 'not_done'" shape="round" type="primary" @click="goToDetail">
+        <a-button v-if="data.status === 'not_done'" class="do-btn" shape="round" type="primary" @click="goToDetail">
           + DO
         </a-button>
 
-        <span v-if="data.status === 'done'" class="point">
+        <span v-else-if="data.status === 'approved' && data.point" class="point">
           + {{ data.point }}
         </span>
       </div>
@@ -49,23 +49,45 @@ const router = useRouter()
 interface AssignmentData {
   id: string
   title: string
-  status: 'done' | 'not_done'
+  status: 'done' | 'not_done' | 'pending' | 'approved' | 'rejected'
   point?: number
   isBonus?: boolean
-  deadline?: string   // 🔥 เพิ่มตรงนี้
+  deadline?: string
 }
 
 const props = defineProps<{
   data: AssignmentData
 }>()
 
-const statusText = computed(() =>
-  props.data.status === 'done' ? 'Done' : 'Not Done'
-)
+const statusText = computed(() => {
+  switch (props.data.status) {
+    case 'done':
+      return 'Done'
+    case 'pending':
+      return 'Pending Review'
+    case 'approved':
+      return 'Approved'
+    case 'rejected':
+      return 'Rejected'
+    default:
+      return 'Not Done'
+  }
+})
 
-const statusClass = computed(() =>
-  props.data.status === 'done' ? 'done' : 'not-done'
-)
+const statusClass = computed(() => {
+  switch (props.data.status) {
+    case 'done':
+      return 'done'
+    case 'pending':
+      return 'pending'
+    case 'approved':
+      return 'approved'
+    case 'rejected':
+      return 'rejected'
+    default:
+      return 'not-done'
+  }
+})
 
 const goToDetail = () => {
   router.push(`/intern/tasks/${props.data.id}`)
@@ -99,10 +121,26 @@ const goToDetail = () => {
 
 .done {
   color: #52c41a;
+  font-weight: 600;
 }
 
 .not-done {
+  color: #999;
+}
+
+.pending {
+  color: #faad14;
+  font-weight: 600;
+}
+
+.approved {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.rejected {
   color: #ff4d4f;
+  font-weight: 600;
 }
 
 .right {

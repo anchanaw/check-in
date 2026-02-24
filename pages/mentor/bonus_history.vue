@@ -33,77 +33,120 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import dayjs from 'dayjs'
+import { useApi } from '~/composables/core'
 import BackButton from '@/components/base/BackButton.vue'
 import BonusHistoryItem from '@/components/mentor/bonus/BonusHistoryItem.vue'
+
+const route = useRoute()
+
+console.log('ROUTE PARAMS:', route.params)
+console.log('INTERN ID FROM ROUTE:', route.params.id)
+const { apiFetch } = useApi()
 
 const activeTab = ref('all')
 const loading = ref(true)
 
 interface HistoryItem {
-  id: number
-  eventType: 'task' | 'mentor_add' | 'mentor_remove'
-  title: string
-  subtitle: string
-  date: string
-  points: number
+    id: string
+    sourceId: string
+    eventType: 'task' | 'mentor_add' | 'mentor_remove'
+    title: string
+    subtitle: string
+    date: string
+    points: number
 }
 
 const items = ref<HistoryItem[]>([])
 
-/* mock API */
+const mapEventType = (
+    item: any
+): 'task' | 'mentor_add' | 'mentor_remove' => {
+
+    if (item.eventType === 'BONUS_POINT') {
+        return 'mentor_add'
+    }
+
+    if (item.eventType === 'MANUAL_POINT' && item.points > 0) {
+        return 'mentor_add'
+    }
+
+    if (item.eventType === 'MANUAL_POINT' && item.points < 0) {
+        return 'mentor_remove'
+    }
+
+    return 'task'
+}
+
 onMounted(async () => {
-    loading.value = true
-    await new Promise(r => setTimeout(r, 800))
+    try {
+        loading.value = true
 
-    items.value = [
-        {
-            id: 1,
-            eventType: 'task',
-            title: 'Task Completed',
-            subtitle: 'Share your day',
-            date: '15 Jan 2026',
-            points: 2
-        },
-        {
-            id: 2,
-            eventType: 'mentor_add',
-            title: 'Bonus Points',
-            subtitle: 'Mentor reward',
-            date: '09 Jan 2026',
-            points: 2
-        },
-        {
-            id: 3,
-            eventType: 'mentor_remove',
-            title: 'Points Deducted',
-            subtitle: 'Mentor reward',
-            date: '09 Jan 2026',
-            points: -2
-        }
-    ]
+        const internId = route.query.id as string
+        console.log('FETCHING POINTS FOR INTERN:', internId)
 
-    loading.value = false
+        const res = await apiFetch(
+            `/users/interns/${internId}/points`
+        ) as any
+        console.log('POINT API RESPONSE:', res)
+        console.log('POINT DATA:', res?.data)
+        const history = res?.data || []
+
+        items.value = history.map((item: any) => ({
+            id: item.id,               // point id
+            sourceId: item.sourceId,   // 👈 submission id / bonus id
+            eventType: mapEventType(item),
+            title: mapTitle(item),
+            subtitle: item.reason || '-',
+            date: dayjs(item.createdAt).add(7, 'hour').format('DD MMM YYYY'),
+            points: item.points
+        }))
+
+    } catch (err) {
+        console.error('Point history error:', err)
+    } finally {
+        loading.value = false
+    }
 })
 
+/* ===== map title ตาม eventType ===== */
+const mapTitle = (item: any) => {
+    if (item.eventType === 'BONUS_POINT') {
+        return 'Bonus Points'
+    }
+
+    if (item.eventType === 'MANUAL_POINT') {
+        return item.points > 0
+            ? 'Manual Points'
+            : 'Points Deducted'
+    }
+
+    return 'Points Update'
+}
+
+/* ===== filter tabs ===== */
 const filteredItems = computed(() => {
-  if (activeTab.value === 'all') {
-    return items.value
-  }
+    if (activeTab.value === 'all') {
+        return items.value
+    }
 
-  if (activeTab.value === 'task') {
-    return items.value.filter(i => i.eventType === 'task')
-  }
+    if (activeTab.value === 'task') {
+        return items.value.filter(
+            i => i.eventType === 'task'
+        )
+    }
 
-  if (activeTab.value === 'bonus') {
-    return items.value.filter(i =>
-      i.eventType === 'mentor_add' ||
-      i.eventType === 'mentor_remove'
-    )
-  }
+    if (activeTab.value === 'bonus') {
+        return items.value.filter(
+            i =>
+                i.eventType === 'mentor_add' ||
+                i.eventType === 'mentor_remove'
+        )
+    }
 
-  return []
+    return []
 })
-
 </script>
 
 <style scoped>

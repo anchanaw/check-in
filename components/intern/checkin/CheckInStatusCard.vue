@@ -15,7 +15,7 @@
   </BaseCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useApi } from '~/composables/core'
 
@@ -25,15 +25,35 @@ const { apiFetch } = useApi()
 
 onMounted(async () => {
   try {
-    const res = await apiFetch('/check-ins/me')
+    const res = await apiFetch < {
+      success: boolean
+  data: {
+        id: string
+    checkInDate: string
+    checkInTime: string
+    status: string
+    latitude: number
+    longitude: number
+      }[]
+    } > ('/check-ins/me')
+    
+    // 🔥 ดูข้อมูลจริง
+    const checkins = res?.data || []
 
-    // 🔥 สมมติ backend ส่งแบบนี้:
-    // { checkedInToday: true }
+    if (Array.isArray(checkins) && checkins.length > 0) {
+      const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      const todayRecord = checkins.find(
+        (item: any) => item.checkInDate === today
+      )
 
-    checkedIn.value = res.data.checkedInToday
+      checkedIn.value = !!todayRecord
+    } else {
+      checkedIn.value = false
+    }
 
   } catch (err) {
     console.error(err)
+    checkedIn.value = false
   } finally {
     loading.value = false
   }
@@ -53,5 +73,4 @@ onMounted(async () => {
 .success {
   color: #52c41a;
 }
-
 </style>

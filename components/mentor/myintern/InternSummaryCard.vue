@@ -26,7 +26,7 @@
       <div class="row">
         <div class="left">
           <img src="/icons/total.svg" class="icon" />
-          <span class="label">Total Hours</span>
+          <span class="label">Total Points</span>
         </div>
         <span class="value">{{ data.totalPoints }} pts</span>
       </div>

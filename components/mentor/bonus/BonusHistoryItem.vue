@@ -53,7 +53,8 @@ const router = useRouter()
 
 const props = defineProps<{
     item: {
-        id: number
+        id: string
+        sourceId: string
         eventType: 'task' | 'mentor_add' | 'mentor_remove'
         title: string
         subtitle: string
@@ -70,7 +71,7 @@ const formattedPoints = computed(() => {
 
 const goDetail = () => {
     if (props.item.eventType === 'task') {
-        router.push(`/mentor/task_history/${props.item.id}`)
+        router.push(`/mentor/task_history/${props.item.sourceId}`)
     } else {
         router.push(`/mentor/points_detail/${props.item.id}`)
     }

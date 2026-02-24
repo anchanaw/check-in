@@ -21,7 +21,7 @@
 </div>
 
 <!-- Rows -->
-<div v-else v-for="item in items" :key="item.id" class="row">
+<div v-else v-for="item in latestItems" :key="item.id" class="row">
   <span
     class="point"
     :class="{ positive: item.point > 0, negative: item.point < 0 }"
@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import { useRouter } from 'vue-router'
 
@@ -49,11 +50,25 @@ interface BonusItem {
   date: string
 }
 
-defineProps<{
+const props = defineProps<{
   items: BonusItem[]
+  internId: string
 }>()
 
 const router = useRouter()
+
+/* ✅ เอา 3 อันล่าสุด */
+const latestItems = computed(() => {
+  if (!props.items) return []
+
+  return [...props.items]
+    .sort(
+      (a, b) =>
+        new Date(b.date).getTime() -
+        new Date(a.date).getTime()
+    )
+    .slice(0, 3)
+})
 
 const formatDate = (date: string) => {
   if (!date) return '-'
@@ -61,7 +76,10 @@ const formatDate = (date: string) => {
 }
 
 const goViewAll = () => {
-  router.push('/mentor/bonus_history')
+  router.push({
+    path: '/mentor/bonus_history',
+    query: { id: props.internId }
+  })
 }
 </script>
 

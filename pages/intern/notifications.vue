@@ -3,9 +3,7 @@
     <!-- Header -->
     <div class="noti-header">
       <div class="header-left">
-        <a-button type="text" shape="circle" @click="goBack">
-          <ArrowLeftOutlined />
-        </a-button>
+          <BackButton />
         <span class="title">Notifications</span>
       </div>
 
@@ -16,50 +14,83 @@
 
     <!-- Content -->
     <div class="noti-list">
-      <NotificationItem
-        v-for="noti in notifications"
-        :key="noti.id"
-        :data="noti"
-        @detail="onDetail"
-        @remove="removeNoti"
-      />
+      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
+        @remove="removeNoti" />
 
-      <a-empty
-        v-if="!notifications.length"
-        description="No notifications"
-      />
+      <a-empty v-if="!notifications.length" description="No notifications" />
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
+import { useApi } from '~/composables/core'
 import NotificationItem from '@/components/intern/NotificationItem.vue'
 import {
   ArrowLeftOutlined,
   DeleteOutlined
 } from '@ant-design/icons-vue'
+import BackButton from '~/components/base/BackButton.vue'
 
-const router = useRouter()
-const notifications = ref([
-  {
-    id: 1,
-    title: 'Title',
-    body: 'Body text.'
-  }
-])
+const { apiFetch } = useApi()
 
-const goBack = () => {
-  router.back()
+const notifications = ref<Notification[]>([])
+const loading = ref(false)
+
+type Notification = {
+  id: string
+  title: string
+  body: string
+  createdAt: string
 }
+onMounted(async () => {
+  try {
+    loading.value = true
 
-const onDetail = (noti) => {
+    const res: any = await apiFetch('/tasks')
+
+    const tasks = res?.data || res || []
+
+    console.log('TASKS:', tasks)
+
+    const threeDaysAgo = dayjs().subtract(3, 'day')
+
+    const recentTasks = tasks.filter((task: any) =>
+      dayjs(task.createdAt).isAfter(threeDaysAgo)
+    )
+
+    recentTasks.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() -
+        new Date(a.createdAt).getTime()
+    )
+
+    notifications.value = recentTasks.map((task: any) => ({
+      id: task.id,
+      title: task.title,
+      body: `${task.points} pts`,
+      createdAt: dayjs(task.createdAt)
+        .add(7, 'hour')
+        .format('DD/MM/YYYY HH:mm')
+    }))
+
+  } catch (err) {
+    console.error('Notification error:', err)
+  } finally {
+    loading.value = false
+  }
+})
+
+const onDetail = (noti: Notification) => {
   console.log('detail:', noti)
 }
 
-const removeNoti = (id) => {
-  notifications.value = notifications.value.filter(n => n.id !== id)
+const removeNoti = (id: string) => {
+  notifications.value = notifications.value.filter(
+    n => n.id !== id
+  )
 }
 
 const clearAll = () => {
@@ -97,5 +128,4 @@ const clearAll = () => {
 .noti-list {
   padding: 12px;
 }
-
 </style>

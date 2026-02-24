@@ -93,12 +93,17 @@ const onSubmit = async () => {
 
 <style scoped>
 .login-page {
+  position: fixed;      /* ยึดเต็มหน้าจอ */
+  inset: 0;             /* top:0 right:0 bottom:0 left:0 */
+  
   display: flex;
   flex-direction: column;
   align-items: center;
+
   padding: 0 16px;
-  min-height: 100vh;
   background-color: #6CBCFA;
+
+  overflow-x: hidden;   /* กันล้นขวา */
 }
 
 .logo {

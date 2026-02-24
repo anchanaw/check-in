@@ -19,7 +19,7 @@
         <a-space direction="vertical" :size="14" style="width:100%">
           <InternSummaryCard :data="intern" :loading="loading" />
           <GiveBonusCard @updated="() => loadIntern(route.params.id as string)" />
-          <BonusHistoryCard :items="bonusHistory" />
+          <BonusHistoryCard :items="bonusHistory" :internId="route.params.id as string" />
           <LeaveHistoryCard :items="leaveHistory" />
         </a-space>
       </BaseCard>
@@ -33,6 +33,7 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useApi } from '~/composables/core'
+import dayjs from 'dayjs'
 
 import InternSummaryCard from '@/components/mentor/myintern/InternSummaryCard.vue'
 import GiveBonusCard from '@/components/mentor/myintern/GiveBonusCard.vue'
@@ -67,47 +68,150 @@ const loadIntern = async (internId: string) => {
   loading.value = true
 
   try {
-    // 1️⃣ ดึงข้อมูล intern
+    /* =========================
+       1️⃣ ดึงข้อมูล intern
+    ========================= */
     const internRes = await apiFetch('/users/interns') as { data: any[] }
+
     const user = internRes.data.find(
       i => String(i.id) === String(internId)
     )
 
-    // 2️⃣ ดึงคะแนน
-    const pointRes = await apiFetch(`/users/interns/${internId}/points`) as { data: { totalPoints: number; history: any[] } }
-    const totalPoints = pointRes.data?.totalPoints || 0
-    bonusHistory.value = pointRes.data?.history || []
+    /* =========================
+     2️⃣ ดึงคะแนนจาก ranking
+  ========================= */
+    const rankingRes = await apiFetch(
+      '/points/ranking'
+    ) as { data: any[] }
 
-    // 3️⃣ ดึง ranking
-    const rankingRes = await apiFetch('/points/ranking') as { data: any[] }
-    const rankingIndex = rankingRes.data.findIndex(
-      (r: any) => String(r.userId) === String(internId)
+    const rankingList = rankingRes.data || []
+
+    const myRankIndex = rankingList.findIndex(
+      (r: any) => String(r.internId) === String(internId)
     )
-    const rank = rankingIndex >= 0 ? `#${rankingIndex + 1}` : '-'
 
-    // 4️⃣ ดึง attendance
-    const attendanceRes = await apiFetch(`/users/interns/${internId}/attendance`) as { data: { todayCheckIn?: any; averageCheckInTime?: string; leaves?: any[] } }
-    const attendance = attendanceRes.data
+    const rank =
+      myRankIndex >= 0 ? `#${myRankIndex + 1}` : '-'
 
-    const todayCheckIn = attendance?.todayCheckIn
-    const avgTime = attendance?.averageCheckInTime || '-'
+    const totalPoints =
+      myRankIndex >= 0
+        ? Number(rankingList[myRankIndex].totalPoints)
+        : 0
+    /* =========================
+       4️⃣ ดึง check-ins จริง
+    ========================= */
+    const checkRes = await apiFetch(
+      `/users/interns/${internId}/check-ins`
+    ) as { data: any[] }
 
-    intern.value = {
-      name: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
-      checkedIn: !!todayCheckIn,
-      checkinTime: todayCheckIn?.time || '',
-      rank,
-      totalPoints,
-      avgTime
+    const records = checkRes.data || []
+
+    const today = dayjs().add(7, 'hour').format('YYYY-MM-DD')
+
+    const todayRecord = records.find(
+      (item: any) =>
+        item.checkInDate === today
+    )
+
+    let checkinTime = ''
+    let avgTime = '-'
+
+    if (todayRecord) {
+      checkinTime = dayjs(
+        `${todayRecord.checkInDate} ${todayRecord.checkInTime}`
+      )
+        .add(7, 'hour')
+        .format('HH:mm')
     }
 
-    leaveHistory.value = attendance?.leaves || []
+    // 🔥 คำนวณ average check-in time
+    if (records.length > 0) {
+      const minutes = records.map((r: any) => {
+        const adjusted = dayjs(
+          `${r.checkInDate} ${r.checkInTime}`
+        ).add(7, 'hour')
+
+        return adjusted.hour() * 60 + adjusted.minute()
+      })
+
+      const avg =
+        minutes.reduce((a, b) => a + b, 0) /
+        minutes.length
+
+      const avgHour = Math.floor(avg / 60)
+      const avgMin = Math.round(avg % 60)
+
+      avgTime =
+        `${String(avgHour).padStart(2, '0')}:` +
+        `${String(avgMin).padStart(2, '0')}`
+    }
+
+    /* =========================
+       5️⃣ SET DATA
+    ========================= */
+    intern.value = {
+      name: user
+        ? `${user.firstName} ${user.lastName}`
+        : 'Unknown',
+      checkedIn: !!todayRecord,
+      checkinTime,
+      rank,
+      totalPoints: Number(totalPoints),
+      avgTime
+    }
 
   } catch (err) {
     console.error('Intern detail error:', err)
   } finally {
     loading.value = false
   }
+
+  const pointRes = await apiFetch(
+  `/users/interns/${internId}/points`
+) as any
+
+const history = pointRes.data || []
+
+// 🔥 เรียงใหม่สุดก่อน
+history.sort(
+  (a: any, b: any) =>
+    new Date(b.createdAt).getTime() -
+    new Date(a.createdAt).getTime()
+)
+
+// 🔥 ส่งแค่ 3 อันไป card
+bonusHistory.value = history.slice(0, 3).map((item: any) => ({
+  id: item.id,
+  point: item.points,
+  reason: item.reason || item.eventType,
+  date: item.createdAt
+}))
+
+const attendanceRes = await apiFetch(
+  `/users/interns/${internId}/attendance`
+) as any
+
+const attendance = attendanceRes.data || []
+
+// 🔥 เอาเฉพาะ leave
+const leaves = attendance.filter(
+  (item: any) => item.type === 'leave'
+)
+
+// 🔥 เรียงใหม่สุดก่อน
+leaves.sort(
+  (a: any, b: any) =>
+    new Date(b.date).getTime() -
+    new Date(a.date).getTime()
+)
+
+// 🔥 เอาแค่ 3 อัน
+leaveHistory.value = leaves.slice(0, 3).map((item: any) => ({
+  id: item.id,
+  date: item.date,
+  status: item.status,
+  reason: item.reason || '-'
+}))
 }
 
 watch(

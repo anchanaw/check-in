@@ -25,14 +25,25 @@
 
                 <!-- Actions -->
                 <div class="actions">
-                    <a-button danger class="action-btn reject" :loading="submitting" @click="reviewTask('rejected')">
-                        Reject
-                    </a-button>
+                    <template v-if="!reviewed">
+                        <a-button danger class="action-btn reject" :loading="submitting"
+                            @click="reviewTask('rejected')">
+                            Reject
+                        </a-button>
 
-                    <a-button type="primary" class="action-btn approve" :loading="submitting"
-                        @click="reviewTask('approved')">
-                        Approve & Add points
-                    </a-button>
+                        <a-button type="primary" class="action-btn approve" :loading="submitting"
+                            @click="reviewTask('approved')">
+                            Approve & Add points
+                        </a-button>
+                    </template>
+
+                    <template v-else>
+                        <div class="review-result">
+                            <a-tag :color="reviewed === 'approved' ? 'green' : 'red'">
+                                {{ reviewed === 'approved' ? 'Approved' : 'Rejected' }}
+                            </a-tag>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -48,55 +59,58 @@ import BaseCard from '@/components/base/BaseCard.vue'
 const { apiFetch } = useApi()
 
 const props = defineProps<{
-  task: {
-    id: string
-    description: string
-    imageUrl?: string
-  }
-  loading: boolean
+    task: {
+        id: string
+        description: string
+        imageUrl?: string
+    }
+    loading: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'updated'): void
+    (e: 'updated'): void
 }>()
 
 const note = ref('')
 const submitting = ref(false)
-
+const reviewed = ref<null | 'approved' | 'rejected'>(null)
+    
 const reviewTask = async (status: 'approved' | 'rejected') => {
-  if (submitting.value) return
+    if (submitting.value) return
 
-  if (!props.task?.id) {
-    message.error('Invalid task ID')
-    return
-  }
+    if (!props.task?.id) {
+        message.error('Invalid task ID')
+        return
+    }
 
-  try {
-    submitting.value = true
+    try {
+        submitting.value = true
 
-    await apiFetch(`/tasks/submissions/${props.task.id}/review`, {
-      method: 'PATCH',
-      body: {
-        status,
-        note: note.value?.trim() || undefined // ส่งเฉพาะถ้ามีค่า
-      }
-    })
+        await apiFetch(`/tasks/submissions/${props.task.id}/review`, {
+            method: 'PATCH',
+            body: {
+                status,
+                note: note.value?.trim() || undefined // ส่งเฉพาะถ้ามีค่า
+            }
+        })
 
-    message.success(
-      status === 'approved'
-        ? 'Task approved successfully'
-        : 'Task rejected successfully'
-    )
+        reviewed.value = status
 
-    note.value = '' // reset note
-    emit('updated') // refresh parent list
+        message.success(
+            status === 'approved'
+                ? 'Task approved successfully'
+                : 'Task rejected successfully'
+        )
 
-  } catch (err: any) {
-    console.error('Review error:', err)
-    message.error(err?.message || 'Failed to update task')
-  } finally {
-    submitting.value = false
-  }
+        note.value = '' // reset note
+        emit('updated') // refresh parent list
+
+    } catch (err: any) {
+        console.error('Review error:', err)
+        message.error(err?.message || 'Failed to update task')
+    } finally {
+        submitting.value = false
+    }
 }
 </script>
 

@@ -47,9 +47,21 @@ onMounted(async () => {
     /* 🔹 2. ดึง check-in วันนี้ */
     const checkRes = await apiFetch('/check-ins/me')
 
-    if (checkRes.data.checkedInToday) {
-      checkInTime.value = dayjs(checkRes.data.createdAt).format('HH:mm')
-      totalHours.value = checkRes.data.hours ?? '-'
+    const today = dayjs().add(7, 'hour').format('YYYY-MM-DD')
+
+    const todayRecord = checkRes.data?.find(
+      (item) => item.checkInDate === today
+    )
+
+    if (todayRecord) {
+      const dateTime = dayjs(
+        `${todayRecord.checkInDate} ${todayRecord.checkInTime}`
+      )
+
+      const thaiTime = dateTime.add(7, 'hour')
+
+      checkInTime.value = thaiTime.format('HH:mm')
+      totalHours.value = '8 hrs'
     } else {
       checkInTime.value = '-'
       totalHours.value = '-'
@@ -58,13 +70,18 @@ onMounted(async () => {
     /* 🔹 3. ดึง ranking */
     const rankRes = await apiFetch('/points/ranking')
 
-    const myIndex = rankRes.data.findIndex(
-      (u) => String(u.userId) === String(myUserId)
+    const rankingList = rankRes.data || []
+
+    const myIndex = rankingList.findIndex(
+      (u) => String(u.internId) === String(myUserId)
     )
 
     if (myIndex !== -1) {
       rankToday.value = `#${myIndex + 1}`
-      rankScore.value = `${rankRes.data[myIndex].totalPoints} pts`
+      rankScore.value = `${rankingList[myIndex].totalPoints} pts`
+    } else {
+      rankToday.value = '-'
+      rankScore.value = '-'
     }
 
   } catch (err) {

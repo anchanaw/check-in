@@ -1,25 +1,32 @@
 <template>
-  <CheckInHeader :userName="`${user.firstName} ${user.lastName}`" :date="dateTime.date" />
-  <div class="content">
-    <LocationCard :latitude="latitude" :longitude="longitude" />
-    <CheckInStatusCard />
-  </div>
+    <a-badge class="notification" :count="newTaskCount" :overflow-count="99">
+      <a-button class="notification-btn" type="text" shape="circle"   @click="goToNoti">
+        <BellOutlined />
+      </a-button>
+    </a-badge>
+    <div class="content">
+      <CheckInHeader :userName="`${user.firstName} ${user.lastName}`" :date="dateTime.date" />
 
-  <div class="action">
-    <a-button class="checkin-btn" type="primary" size="large" :loading="checking" @click="onCheckIn">
-      ⭐ Check-in
-    </a-button>
-  </div>
+      <LocationCard :latitude="latitude" :longitude="longitude" />
+      <CheckInStatusCard />
+    </div>
 
-  <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
+    <div class="action">
+      <a-button class="checkin-btn" type="primary" size="large" :loading="checking" @click="onCheckIn">
+        ⭐ Check-in
+      </a-button>
+    </div>
 
-  <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
-  <BottomBar />
+    <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
+
+    <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
+    <BottomBar />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
+import { BellOutlined } from '@ant-design/icons-vue'
 import CheckInHeader from '~/components/intern/checkin/CheckInHeader.vue'
 import LocationCard from '~/components/intern/checkin/LocationCard.vue'
 import CheckInStatusCard from '~/components/intern/checkin/CheckInStatusCard.vue'
@@ -29,8 +36,10 @@ import { useCheckinApi } from '~/composables/useCheckinApi'
 import BottomBar from '~/components/intern/BottomBar.vue'
 import { useApi } from '~/composables/core'
 import { message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 
-
+const router = useRouter()
 const { apiFetch } = useApi()
 const { checkIn } = useCheckinApi()
 
@@ -51,6 +60,7 @@ const user = ref({
 // เวลา real-time
 const now = ref(new Date())
 let timer: number | undefined
+const newTaskCount = ref(0)
 
 const getLocation = () => {
   return new Promise<{ lat: number, lng: number }>((resolve, reject) => {
@@ -97,16 +107,26 @@ const getLocation = () => {
 
 onMounted(async () => {
   try {
-    const res: any = await apiFetch('/auth/me')
+    const [meRes, taskRes]: any = await Promise.all([
+      apiFetch('/auth/me'),
+      apiFetch('/tasks')
+    ])
 
-    user.value.firstName = res.data.firstName || ''
-    user.value.lastName = res.data.lastName || ''
+    user.value.firstName = meRes?.data?.firstName || ''
+    user.value.lastName = meRes?.data?.lastName || ''
+
+    const threeDaysAgo = dayjs().subtract(3, 'day')
+
+    const recentTasks = (taskRes?.data || []).filter((task: any) =>
+      dayjs(task.createdAt).isAfter(threeDaysAgo)
+    )
+
+    newTaskCount.value = recentTasks.length
 
   } catch (err) {
-    console.error('Failed to load user:', err)
+    console.error('Init page error:', err)
   }
 
-  // timer เดิม
   timer = setInterval(() => {
     now.value = new Date()
   }, 60000)
@@ -145,13 +165,23 @@ const onCheckIn = async () => {
   }
 }
 
+const goToNoti = () => {
+  router.push('/intern/notifications')
+}
 </script>
 
 
 <style scoped>
-.content {
-  padding: 0 16px;
+.checkin-page {
+  position: relative;
+  inset: 0;
   display: flex;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   gap: 16px;
@@ -177,5 +207,16 @@ const onCheckIn = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.notification {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification-btn {
+  font-size: 30px;
 }
 </style>

@@ -68,14 +68,17 @@ const goBack = () => {
 }
 
 /* ✅ Submit งาน */
-const onSubmit = async (formData: FormData) => {
+const onSubmit = async (data: { content: string }) => {
   try {
     await apiFetch(`/tasks/${taskId}/submissions`, {
       method: 'POST',
-      body: formData
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     })
 
-    router.push('/intern/assignment')
+    router.push('/intern/tasks')
     message.success('Task submitted successfully')
 
   } catch (err) {

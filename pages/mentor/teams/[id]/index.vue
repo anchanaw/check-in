@@ -64,7 +64,7 @@
 import { ref, onMounted, onActivated, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
-
+import dayjs from 'dayjs'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BackButton from '@/components/base/BackButton.vue'
 import InternRow from '@/components/mentor/myintern/InternRow.vue'
@@ -74,15 +74,8 @@ const { apiFetch } = useApi()
 const route = useRoute()
 const router = useRouter()
 
-interface Intern {
-  id: string
-  name: string
-  status: string
-  order: number
-}
 
 const team = ref({ name: '' })
-const interns = ref<Intern[]>([])
 const invite = ref<any | null>(null)
 
 const loading = ref(true)
@@ -94,35 +87,35 @@ const teamId = route.params.id as string
 /* =========================
    LOAD DATA
 ========================= */
+interface Intern {
+  id: string
+  name: string
+  status: 'checked-in' | 'not-checked'
+  checkin_time?: string
+  rank: number
+  totalScore: number
+}
+
+const interns = ref<Intern[]>([])
+
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
 
-    // 🔥 1. ดึง user ปัจจุบัน
-    const me = await apiFetch<any>('/auth/me')
-    const myId = me.data.id
+    /* =========================
+       1️⃣ โหลดข้อมูลพื้นฐานพร้อมกัน
+    ========================= */
+    const [teamRes, internRes, rankingRes, inviteRes] =
+      await Promise.all([
+        apiFetch<{ data: { teams: any[] } }>('/teams?page=1&pageSize=100'),
+        apiFetch<{ data: any[] }>('/users/interns'),
+        apiFetch<{ data: any[] }>('/points/ranking'),
+        apiFetch<{ data: any[] }>('/auth/invites')
+      ])
 
-    // 🔥 2. โหลด teams
-    // 🔥 โหลด teams อย่างเดียว
-    const firstPageRes: any = await apiFetch('/teams?page=1&pageSize=10')
+    const allTeams = teamRes.data.teams || []
 
-    let allTeams = [...firstPageRes.data.teams]
-    const totalPages = firstPageRes.data.totalPages
-
-    if (totalPages > 1) {
-      const otherPages = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) =>
-          apiFetch(`/teams?page=${i + 2}&pageSize=10`)
-        )
-      )
-
-      otherPages.forEach((res: any) => {
-        allTeams = [...allTeams, ...res.data.teams]
-      })
-    }
-
-    // 🔥 หาเฉพาะทีม id นี้เลย
     const currentTeam = allTeams.find(
       (t: any) => String(t.id) === String(teamId)
     )
@@ -134,31 +127,97 @@ const loadData = async () => {
 
     team.value.name = currentTeam.name
 
-    // ===== LOAD OTHER DATA =====
-    const [internRes, inviteRes, rankingRes] = await Promise.all([
-      apiFetch('/users/interns') as Promise<{ data: any[] }>,
-      apiFetch('/auth/invites') as Promise<{ data: any[] }>,
-      apiFetch('/points/ranking') as Promise<{ data: any[] }>
-    ])
-
-    // ===== TEAM INTERNS =====
-    const teamInterns = internRes.data.filter((intern: any) =>
+    /* =========================
+       2️⃣ Filter intern ในทีมนี้
+    ========================= */
+    const teamInterns = (internRes.data || []).filter((intern: any) =>
       intern.teams?.some((t: any) => String(t.id) === String(teamId))
     )
 
+    /* =========================
+       3️⃣ Ranking + Score Map
+    ========================= */
     const rankingMap: Record<string, number> = {}
-    rankingRes.data.forEach((item: any, index: number) => {
-      rankingMap[String(item.userId)] = index + 1
-    })
+    const scoreMap: Record<string, number> = {}
 
-    interns.value = teamInterns.map((intern: any) => ({
-      id: String(intern.id),
-      name: `${intern.firstName} ${intern.lastName}`,
-      status: 'not-checked',
-      order: rankingMap[String(intern.id)] || 0
-    }))
+    rankingRes.data
+      .sort((a: any, b: any) => b.totalPoints - a.totalPoints)
+      .forEach((item: any, index: number) => {
+        rankingMap[String(item.internId)] = index + 1
+        scoreMap[String(item.internId)] = item.totalPoints
+      })
 
-    // ===== ACTIVE INVITE =====
+    /* =========================
+       4️⃣ โหลด check-in วันนี้ของแต่ละคน
+    ========================= */
+    const checkStatusMap: Record<string, boolean> = {}
+    const checkTimeMap: Record<string, string> = {}
+
+    const today = dayjs().add(7, 'hour').format('YYYY-MM-DD')
+
+    await Promise.all(
+      teamInterns.map(async (intern: any) => {
+        try {
+          const res: any = await apiFetch(
+            `/users/interns/${intern.id}/check-ins`
+          )
+
+          const records = res?.data || []
+
+          const todayRecord = records.find(
+            (item: any) =>
+              item.checkInDate === today
+          )
+
+          if (todayRecord) {
+            checkStatusMap[String(intern.id)] = true
+
+            // 🔥 ใช้ checkInTime ตรง ๆ
+            checkTimeMap[String(intern.id)] = dayjs(
+              `${todayRecord.checkInDate} ${todayRecord.checkInTime}`
+            )
+              .add(7, 'hour')
+              .format('HH:mm')
+
+          } else {
+            checkStatusMap[String(intern.id)] = false
+            checkTimeMap[String(intern.id)] = ''
+          }
+
+        } catch (err) {
+          console.error('Check-in fetch error:', err)
+          checkStatusMap[String(intern.id)] = false
+          checkTimeMap[String(intern.id)] = ''
+        }
+      })
+    )
+
+    /* =========================
+       5️⃣ รวมข้อมูลทั้งหมด
+    ========================= */
+    type InternStatus = 'checked-in' | 'not-checked'
+    interns.value = teamInterns
+      .map((intern: any) => {
+        const status: InternStatus =
+          checkStatusMap[String(intern.id)]
+            ? 'checked-in'
+            : 'not-checked'
+
+        return {
+          id: String(intern.id),
+          name: `${intern.firstName} ${intern.lastName}`,
+          status,
+          checkin_time: checkTimeMap[String(intern.id)] || '',
+          rank: rankingMap[String(intern.id)] || 0,
+          totalScore: scoreMap[String(intern.id)] || 0
+        }
+      })
+      .sort((a, b) => a.rank - b.rank)
+    console.log('checkTimeMap:', checkTimeMap)
+
+    /* =========================
+       6️⃣ Invite
+    ========================= */
     invite.value =
       inviteRes.data.find(
         (i: any) =>

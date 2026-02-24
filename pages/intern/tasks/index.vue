@@ -3,17 +3,9 @@
     <h2 class="page-title">Assignments</h2>
 
     <div class="wrapper">
-      <AssignmentCard
-        v-for="item in assignments"
-        :key="item.id"
-        :data="item"
-        @addLabel="onAddLabel"
-      />
+      <AssignmentCard v-for="item in assignments" :key="item.id" :data="item" @addLabel="onAddLabel" />
 
-      <a-empty
-        v-if="!assignments.length"
-        description="No assignments"
-      />
+      <a-empty v-if="!assignments.length" description="No assignments" />
     </div>
 
     <BottomBar active="assignment" />
@@ -44,18 +36,31 @@ onMounted(async () => {
   try {
     loading.value = true
 
-    const res = await apiFetch<{ data: TaskItem[] }>('/tasks')
+    const [taskRes, submissionRes] = await Promise.all([
+      apiFetch<{ data: TaskItem[] }>('/tasks'),
+      apiFetch<{ data: any[] }>('/tasks/submissions/me')
+    ])
 
-    const taskList = res.data || []
+    const taskList = taskRes.data || []
+    const submissions = submissionRes.data || []
 
-    assignments.value = taskList.map((task) => ({
-      id: task.id,
-      title: task.title,
-      status: getStatus(task.deadline),
-      point: task.points,
-      isBonus: task.isBonus,
-      deadline: task.deadline
-    }))
+    // เอา taskId ของงานที่ submit แล้ว
+    const submittedTaskIds = submissions.map(s => s.taskId)
+
+    assignments.value = taskList.map((task) => {
+      const submission = submissions.find(s => s.taskId === task.id)
+
+      return {
+        id: task.id,
+        title: task.title,
+        status: submission
+          ? submission.status   // pending / approved / rejected
+          : getStatus(task.deadline), // not_done / done
+        point: task.points,
+        isBonus: task.isBonus,
+        deadline: task.deadline
+      }
+    })
 
   } catch (err) {
     console.error('Failed to load assignments:', err)
