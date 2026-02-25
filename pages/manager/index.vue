@@ -1,14 +1,15 @@
 <template>
   <div class="dashboard-page">
     <!-- 🔔 notification -->
-    <div class="top-right">
-      <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
-        <NuxtLink to="/manager/notifications" class="bell-link">
-          <BellOutlined class="bell-icon" />
-        </NuxtLink>
-      </a-badge>
-    </div>
-
+    <ClientOnly>
+      <div class="top-right">
+        <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
+          <NuxtLink to="/manager/notifications" class="bell-link">
+            <BellOutlined class="bell-icon" />
+          </NuxtLink>
+        </a-badge>
+      </div>
+    </ClientOnly>
     <BaseCard class="dashboard-card">
       <div class="header-title">Manager Dashboard</div>
 
