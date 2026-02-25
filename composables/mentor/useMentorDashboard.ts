@@ -16,6 +16,7 @@ export function useMentorDashboard() {
     id: string
     name: string
     mentorId: string
+    internTotal?: number
     interns: any[]
   }
 
@@ -40,40 +41,43 @@ export function useMentorDashboard() {
       loading.value = true
       error.value = null
 
-      // 🔥 ดึง profile ตัวเองก่อน
       const me = await apiFetch<MeResponse>('/auth/me')
-      const myId = me.data.id
+      const myId = me?.data?.id
 
-      // 🔥 ดึงข้อมูลทั้งหมดพร้อมกัน
-      const [teamsRes, tasksRes, leaveRes] = await Promise.all([
-        apiFetch<TeamsResponse>('/teams'),
+      const [teamsResult, tasksResult, leaveResult] = await Promise.allSettled([
+        apiFetch<TeamsResponse>(`/teams?mentorId=${myId}&page=1&pageSize=100`),
         apiFetch<any>('/tasks/submissions/pending'),
         apiFetch<any>('/leaves/pending')
       ])
 
       if (!isMounted) return
 
-      const allTeams = teamsRes.data.teams
+      const allTeams =
+        teamsResult.status === 'fulfilled'
+          ? (teamsResult.value?.data?.teams || [])
+          : []
 
-      // 🔥 filter ทีมที่ mentorId ตรงกับตัวเอง
-      const myTeams = allTeams.filter(
-        team => team.mentorId === myId
-      )
-
-      // 🔥 รวม intern ของทีมตัวเอง
-      const internCount = myTeams.reduce(
-        (total, team) => total + (team.interns?.length || 0),
+      const internCount = allTeams.reduce(
+        (total, team) => total + (team.internTotal ?? team.interns?.length ?? 0),
         0
       )
 
+      const taskToReview =
+        tasksResult.status === 'fulfilled'
+          ? (tasksResult.value?.data?.submissions?.length ??
+            (Array.isArray(tasksResult.value?.data) ? tasksResult.value.data.length : 0))
+          : 0
+
+      const leaveRequests =
+        leaveResult.status === 'fulfilled'
+          ? (leaveResult.value?.data?.leaves?.length ??
+            (Array.isArray(leaveResult.value?.data) ? leaveResult.value.data.length : 0))
+          : 0
+
       overview.value = {
         internCount,
-        taskToReview: Array.isArray(tasksRes?.data)
-          ? tasksRes.data.length
-          : 0,
-        leaveRequests: Array.isArray(leaveRes?.data)
-          ? leaveRes.data.length
-          : 0
+        taskToReview,
+        leaveRequests
       }
 
     } catch (err: any) {

@@ -23,7 +23,12 @@
         <div class="content">
             <a-spin :spinning="loading">
 
-                <BonusHistoryItem v-for="item in filteredItems" :key="item.id" :item="item" />
+                <BonusHistoryItem
+                    v-for="item in filteredItems"
+                    :key="item.id"
+                    :item="item"
+                    :intern-id="internId"
+                />
 
             </a-spin>
         </div>
@@ -40,6 +45,7 @@ import BackButton from '@/components/base/BackButton.vue'
 import BonusHistoryItem from '@/components/mentor/bonus/BonusHistoryItem.vue'
 
 const route = useRoute()
+const internId = (route.query.id as string) || ''
 
 console.log('ROUTE PARAMS:', route.params)
 console.log('INTERN ID FROM ROUTE:', route.params.id)
@@ -50,7 +56,7 @@ const loading = ref(true)
 
 interface HistoryItem {
     id: string
-    sourceId: string
+    sourceId?: string
     eventType: 'task' | 'mentor_add' | 'mentor_remove'
     title: string
     subtitle: string
@@ -76,26 +82,47 @@ const mapEventType = (
         return 'mentor_remove'
     }
 
-    return 'task'
+    // Only classify as task when API explicitly indicates task/submission source.
+    if (
+        item.sourceType === 'task' ||
+        item.sourceType === 'submission' ||
+        String(item.eventType || '').includes('TASK')
+    ) {
+        return 'task'
+    }
+
+    return item.points < 0 ? 'mentor_remove' : 'mentor_add'
 }
 
 onMounted(async () => {
     try {
         loading.value = true
 
-        const internId = route.query.id as string
         console.log('FETCHING POINTS FOR INTERN:', internId)
 
-        const res = await apiFetch(
-            `/users/interns/${internId}/points`
-        ) as any
+        const res = await apiFetch<{
+            data: {
+                intern: any
+                points: any[]
+                total: number
+                page: number
+                pageSize: number
+                totalPages: number
+            }
+        }>(`/users/interns/${internId}/points`)
+
+        const history = res?.data?.points || []
+
         console.log('POINT API RESPONSE:', res)
         console.log('POINT DATA:', res?.data)
-        const history = res?.data || []
 
         items.value = history.map((item: any) => ({
             id: item.id,               // point id
-            sourceId: item.sourceId,   // 👈 submission id / bonus id
+            sourceId:
+                item.sourceId ||
+                item.submissionId ||
+                item.taskSubmissionId ||
+                '',
             eventType: mapEventType(item),
             title: mapTitle(item),
             subtitle: item.reason || '-',

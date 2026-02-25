@@ -24,14 +24,14 @@ const items = [
         label: 'DASHBOARD',
         to: '/mentor',
         match: '/mentor',
-        group: ['dashboard', 'tasks'],
+        group: ['dashboard', 'tasks','leave_review'],
         icon: '/icons/mentor/dashboard.svg'
     },
     {
         label: 'INTERN',
         to: '/mentor/teams',
         match: '/mentor/teams',
-        group: ['review_bonus', 'team'],
+        group: ['teams', 'review_bonus', 'team'],
         icon: '/icons/mentor/intern.svg'
     },
     {

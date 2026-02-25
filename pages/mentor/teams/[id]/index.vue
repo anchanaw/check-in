@@ -109,13 +109,13 @@ const loadData = async () => {
     const [teamRes, internRes, rankingRes, inviteRes] =
       await Promise.all([
         apiFetch<{ data: { teams: any[] } }>('/teams?page=1&pageSize=100'),
-        apiFetch<{ data: any[] }>('/users/interns'),
+        apiFetch<{ data: { interns: any[]; total: number; page: number; pageSize: number; totalPages: number } }>('/users/interns'),
         apiFetch<{ data: any[] }>('/points/ranking'),
         apiFetch<{ data: any[] }>('/auth/invites')
       ])
 
     const allTeams = teamRes.data.teams || []
-
+    console.log('intern:', internRes.data)
     const currentTeam = allTeams.find(
       (t: any) => String(t.id) === String(teamId)
     )
@@ -130,7 +130,7 @@ const loadData = async () => {
     /* =========================
        2️⃣ Filter intern ในทีมนี้
     ========================= */
-    const teamInterns = (internRes.data || []).filter((intern: any) =>
+    const teamInterns = (internRes.data?.interns || []).filter((intern: any) =>
       intern.teams?.some((t: any) => String(t.id) === String(teamId))
     )
 
@@ -158,11 +158,9 @@ const loadData = async () => {
     await Promise.all(
       teamInterns.map(async (intern: any) => {
         try {
-          const res: any = await apiFetch(
-            `/users/interns/${intern.id}/check-ins`
-          )
+          const res: any = await apiFetch<{ data: { intern: any; checkIns: any[]; total: number; page: number; pageSize: number; totalPages: number } }>(`/users/interns/${intern.id}/check-ins`)
 
-          const records = res?.data || []
+          const records = res?.data?.checkIns || []
 
           const todayRecord = records.find(
             (item: any) =>

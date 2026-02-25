@@ -61,8 +61,16 @@ onMounted(async () => {
     loading.value = true
 
     // ดึง submission pending
-    const submissionRes: any = await apiFetch('/tasks/submissions/pending')
-    const submission = submissionRes.data?.find(
+    const submissionRes = await apiFetch<{
+      data: {
+        submissions: any[]
+        total: number
+        page: number
+        pageSize: number
+        totalPages: number
+      }
+    }>('/tasks/submissions/pending')
+    const submission = submissionRes.data?.submissions?.find(
       (s: any) => s.id === id
     )
 
@@ -72,13 +80,27 @@ onMounted(async () => {
       return
     }
 
+    if (!submission.taskId) {
+      message.error('Invalid submission taskId')
+      router.back()
+      return
+    }
+
     // ดึง task detail
-    const taskRes: any = await apiFetch(`/tasks/${submission.taskId}`)
-    const taskData = taskRes.data
+    const taskRes = await apiFetch<{ data: any }>(`/tasks/${submission.taskId}`)
+    const taskData = taskRes?.data?.task || taskRes?.data || {}
 
     // ดึง intern
-    const internRes: any = await apiFetch('/users/interns')
-    const intern = internRes.data?.find(
+    const internRes = await apiFetch<{
+      data: {
+        interns: any[]
+        total: number
+        page: number
+        pageSize: number
+        totalPages: number
+      }
+    }>('/users/interns')
+    const intern = internRes.data?.interns?.find(
       (i: any) => i.id === submission.internId
     )
 

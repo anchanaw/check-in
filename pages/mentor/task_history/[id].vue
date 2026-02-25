@@ -72,6 +72,11 @@ onMounted(async () => {
     const submissionId = route.params.id as string
     console.log('SUBMISSION ID:', submissionId)
 
+    if (!submissionId || submissionId === 'undefined') {
+      console.error('Invalid submissionId:', submissionId)
+      return
+    }
+
     const res = await apiFetch(
       `/tasks/${submissionId}/submissions`
     ) as any

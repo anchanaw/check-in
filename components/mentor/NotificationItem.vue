@@ -44,7 +44,10 @@ const goDetail = () => {
   }
 
   if (props.data.type === 'leave') {
-    router.push(`/mentor/leave_review/${props.data.refId}`)
+    router.push({
+      path: '/mentor/leave_review',
+      query: { id: props.data.refId }
+    })
   }
 }
 </script>

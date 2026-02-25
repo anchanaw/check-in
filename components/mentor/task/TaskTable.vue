@@ -1,12 +1,7 @@
 <template>
-  <a-table
-    :columns="columns"
-    :data-source="tasks"
-    :loading="loading"
-    row-key="id"
-  >
+  <a-table :columns="columns" :data-source="tasks" :loading="loading" row-key="id">
     <template #bodyCell="{ column, record }">
-      
+
       <!-- Format points -->
       <template v-if="column.dataIndex === 'points'">
         +{{ record.points }}
@@ -39,6 +34,16 @@ type Task = {
   isBonus: boolean
 }
 
+type TasksResponse = {
+  data: {
+    tasks: Task[]
+    total: number
+    page: number
+    pageSize: number
+    totalPages: number
+  }
+}
+
 const loading = ref(true)
 const tasks = ref<Task[]>([])
 
@@ -48,8 +53,8 @@ const tasks = ref<Task[]>([])
 const loadTasks = async () => {
   try {
     loading.value = true
-    const res: any = await apiFetch('/tasks')
-    tasks.value = res.data
+    const res = await apiFetch<TasksResponse>('/tasks')
+    tasks.value = res?.data?.tasks || []
   } catch (err) {
     console.error(err)
     message.error('Failed to load tasks')

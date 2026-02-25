@@ -23,7 +23,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useApi } from '~/composables/core'
 import { message } from 'ant-design-vue'
 
@@ -33,7 +32,6 @@ import MentorBottomBar from '@/components/mentor/MentorBottomBar.vue'
 import BackButton from '@/components/base/BackButton.vue'
 
 const { apiFetch } = useApi()
-const router = useRouter()
 
 const leaves = ref<any[]>([])
 const loading = ref(false)
@@ -41,7 +39,7 @@ const interns = ref<any[]>([])
 
 const loadInterns = async () => {
   const res: any = await apiFetch('/users/interns')
-  interns.value = res.data || []
+  interns.value = res.data?.interns || []
 }
 
 const formatDate = (dateStr: string) => {
@@ -95,12 +93,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
-// ✅ ไปหน้า detail
-const goDetail = (id: string) => {
-  router.push(`/mentor/leave_review/${id}`)
-}
-
 
 const approveLeave = async (id: string) => {
   try {

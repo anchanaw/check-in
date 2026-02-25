@@ -15,10 +15,7 @@
         <BaseCard v-if="bonus" class="bonus-card">
 
           <!-- Top Colored Section -->
-          <div
-            class="points-header"
-            :class="bonus.points < 0 ? 'minus' : 'plus'"
-          >
+          <div class="points-header" :class="bonus.points < 0 ? 'minus' : 'plus'">
             {{ formattedPoints }} points
           </div>
 
@@ -75,18 +72,30 @@ const bonus = ref<PointDetail | null>(null)
 onMounted(async () => {
   loading.value = true
 
-  const internId = route.params.internId as string
-  const pointId = route.params.pointId as string
+  const pointId = route.params.id as string
+  const internId = route.query.internId as string
 
   console.log('INTERN ID:', internId)
   console.log('POINT ID:', pointId)
 
-  try {
-    const res = await apiFetch(
-      `/users/interns/${internId}/points`
-    ) as any
+  if (!internId || !pointId) {
+    router.back()
+    return
+  }
 
-    const history = res?.data || []
+  try {
+    const res = await apiFetch<{
+      data: {
+        intern: { id: string; email: string; firstName: string; lastName: string }
+        points: any[]
+        total: number
+        page: number
+        pageSize: number
+        totalPages: number
+      }
+    }>(`/users/interns/${internId}/points`)
+
+    const history = res?.data?.points || []
 
     const found = history.find(
       (item: any) => item.id === pointId

@@ -18,12 +18,7 @@ export const useMentorNotifications = () => {
       console.log('TASK RES FULL:', taskRes)
       console.log('LEAVE RES FULL:', leaveRes)
 
-      // 🔥 รองรับทั้ง 2 แบบ
-      const taskList =
-        taskRes?.data?.data ??
-        taskRes?.data ??
-        []
-
+      const taskList = taskRes?.data?.submissions || []
       const leaveList =
         leaveRes?.data?.data ??
         leaveRes?.data ??

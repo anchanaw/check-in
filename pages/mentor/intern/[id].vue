@@ -71,9 +71,9 @@ const loadIntern = async (internId: string) => {
     /* =========================
        1️⃣ ดึงข้อมูล intern
     ========================= */
-    const internRes = await apiFetch('/users/interns') as { data: any[] }
+    const internRes = await apiFetch<{ data: { interns: any[]; total: number; page: number; pageSize: number; totalPages: number } }>('/users/interns')
 
-    const user = internRes.data.find(
+    const user = internRes.data?.interns.find(
       i => String(i.id) === String(internId)
     )
 
@@ -100,11 +100,11 @@ const loadIntern = async (internId: string) => {
     /* =========================
        4️⃣ ดึง check-ins จริง
     ========================= */
-    const checkRes = await apiFetch(
-      `/users/interns/${internId}/check-ins`
-    ) as { data: any[] }
+    const checkRes = await apiFetch<{
+      data: { intern: any; checkIns: any[]; total: number; page: number; pageSize: number; totalPages: number }
+    }>(`/users/interns/${internId}/check-ins`)
 
-    const records = checkRes.data || []
+    const records = checkRes.data?.checkIns || []
 
     const today = dayjs().add(7, 'hour').format('YYYY-MM-DD')
 
@@ -124,7 +124,7 @@ const loadIntern = async (internId: string) => {
         .format('HH:mm')
     }
 
-    // 🔥 คำนวณ average check-in time
+    //คำนวณ average check-in time
     if (records.length > 0) {
       const minutes = records.map((r: any) => {
         const adjusted = dayjs(
@@ -166,52 +166,53 @@ const loadIntern = async (internId: string) => {
     loading.value = false
   }
 
-  const pointRes = await apiFetch(
-  `/users/interns/${internId}/points`
-) as any
+  const pointRes = await apiFetch<{
+    data: { intern: any; points: any[]; total: number; page: number; pageSize: number; totalPages: number }
+  }>(`/users/interns/${internId}/points`)
 
-const history = pointRes.data || []
+  const history = pointRes.data?.points || []
 
-// 🔥 เรียงใหม่สุดก่อน
-history.sort(
-  (a: any, b: any) =>
-    new Date(b.createdAt).getTime() -
-    new Date(a.createdAt).getTime()
-)
 
-// 🔥 ส่งแค่ 3 อันไป card
-bonusHistory.value = history.slice(0, 3).map((item: any) => ({
-  id: item.id,
-  point: item.points,
-  reason: item.reason || item.eventType,
-  date: item.createdAt
-}))
+  //เรียงใหม่สุดก่อน
+  history.sort(
+    (a: any, b: any) =>
+      new Date(b.createdAt).getTime() -
+      new Date(a.createdAt).getTime()
+  )
 
-const attendanceRes = await apiFetch(
-  `/users/interns/${internId}/attendance`
-) as any
+  //ส่งแค่ 3 อันไป card
+  bonusHistory.value = history.slice(0, 3).map((item: any) => ({
+    id: item.id,
+    point: item.points,
+    reason: item.reason || item.eventType,
+    date: item.createdAt
+  }))
 
-const attendance = attendanceRes.data || []
+  const attendanceRes = await apiFetch<{
+    data: { events: any[]; total: number; page: number; pageSize: number; totalPages: number }
+  }>(`/users/interns/${internId}/attendance`)
 
-// 🔥 เอาเฉพาะ leave
-const leaves = attendance.filter(
-  (item: any) => item.type === 'leave'
-)
+  const attendance = attendanceRes.data?.events || []
 
-// 🔥 เรียงใหม่สุดก่อน
-leaves.sort(
-  (a: any, b: any) =>
-    new Date(b.date).getTime() -
-    new Date(a.date).getTime()
-)
+  //เอาเฉพาะ leave
+  const leaves = attendance.filter(
+    (item: any) => item.type === 'leave'
+  )
 
-// 🔥 เอาแค่ 3 อัน
-leaveHistory.value = leaves.slice(0, 3).map((item: any) => ({
-  id: item.id,
-  date: item.date,
-  status: item.status,
-  reason: item.reason || '-'
-}))
+  //เรียงใหม่สุดก่อน
+  leaves.sort(
+    (a: any, b: any) =>
+      new Date(b.date).getTime() -
+      new Date(a.date).getTime()
+  )
+
+  //เอาแค่ 3 อัน
+  leaveHistory.value = leaves.slice(0, 3).map((item: any) => ({
+    id: item.id,
+    date: item.date,
+    status: item.status,
+    reason: item.reason || '-'
+  }))
 }
 
 watch(

@@ -52,9 +52,10 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const props = defineProps<{
+    internId: string
     item: {
         id: string
-        sourceId: string
+        sourceId?: string
         eventType: 'task' | 'mentor_add' | 'mentor_remove'
         title: string
         subtitle: string
@@ -70,10 +71,13 @@ const formattedPoints = computed(() => {
 })
 
 const goDetail = () => {
-    if (props.item.eventType === 'task') {
+    if (props.item.eventType === 'task' && props.item.sourceId) {
         router.push(`/mentor/task_history/${props.item.sourceId}`)
     } else {
-        router.push(`/mentor/points_detail/${props.item.id}`)
+        router.push({
+            path: `/mentor/points_detail/${props.item.id}`,
+            query: { internId: props.internId }
+        })
     }
 }
 

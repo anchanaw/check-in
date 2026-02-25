@@ -23,7 +23,7 @@
       <BaseCard class="outer-card">
         <a-space direction="vertical" :size="27" style="width:100%">
           <div class="space-item">
-            <OverviewCard :loading="loading" :data="overview" />
+            <OverviewCard :loading="loading" :data="overview"/>
           </div>
           <div class="space-item">
             <ActionCard />
@@ -49,11 +49,12 @@ import { BellOutlined } from '@ant-design/icons-vue'
 import { useCurrentUser } from '@/composables/mentor/useCurrentUser'
 
 const { user, fetchUser } = useCurrentUser()
-const { loading, overview } = useMentorDashboard()
+const { loading, overview, fetchOverview } = useMentorDashboard()
 const { unreadCount, fetchNotifications } = useMentorNotifications()
 
 onMounted(() => {
   fetchUser()
+  fetchOverview()
   fetchNotifications()
 })
 

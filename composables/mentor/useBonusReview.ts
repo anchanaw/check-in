@@ -24,12 +24,18 @@ export function useBonusReview() {
             // 1️⃣ ดึง intern ทั้งหมด
             const internRes = await apiFetch<{
                 success: boolean
-                data: any[]
+                data: {
+                    interns: any[]
+                    total: number
+                    page: number
+                    pageSize: number
+                    totalPages: number
+                }
             }>('/users/interns')
             const internMap: Record<string, string> = {}
 
             if (internRes && typeof internRes === 'object' && 'data' in internRes) {
-                internRes.data.forEach((i: any) => {
+                internRes.data?.interns?.forEach((i: any) => {
                     internMap[i.id] = `${i.firstName} ${i.lastName}`
                 })
             }
@@ -37,9 +43,15 @@ export function useBonusReview() {
             // 2️⃣ ดึง pending submissions
             const submissionRes = await apiFetch<{
                 success: boolean
-                data: any[]
+                data: {
+                    submissions: any[]
+                    total: number
+                    page: number
+                    pageSize: number
+                    totalPages: number
+                }
             }>('/tasks/submissions/pending')
-            const submissions = (submissionRes && typeof submissionRes === 'object' && 'data' in submissionRes) ? submissionRes.data : []
+            const submissions = submissionRes?.data?.submissions || []
 
             // 3️⃣ ดึง task detail
             tasks.value = await Promise.all(
