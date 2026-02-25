@@ -1,26 +1,28 @@
 <template>
+  <ClientOnly>
   <div class="dashboard-page">
     <!-- 🔔 notification -->
-    <ClientOnly>
-      <div class="top-right">
-        <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
-          <NuxtLink to="/manager/notifications" class="bell-link">
-            <BellOutlined class="bell-icon" />
-          </NuxtLink>
-        </a-badge>
-      </div>
 
-      <BaseCard class="dashboard-card">
-        <div class="header-title">Manager Dashboard</div>
+    <div class="top-right">
+      <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
+        <NuxtLink to="/manager/notifications" class="bell-link">
+          <BellOutlined class="bell-icon" />
+        </NuxtLink>
+      </a-badge>
+    </div>
 
-        <DashboardStats :stats="stats" :loading="loading" />
-        <PendingLeaveCard :leaves="pendingLeaves" @view="goToLeaveDetail" @view-all="goToLeaveList" />
-        <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
-        <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
-      </BaseCard>
-    </ClientOnly>
+    <BaseCard class="dashboard-card">
+      <div class="header-title">Manager Dashboard</div>
+
+      <DashboardStats :stats="stats" :loading="loading" />
+      <PendingLeaveCard :leaves="pendingLeaves" @view="goToLeaveDetail" @view-all="goToLeaveList" />
+      <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
+      <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
+    </BaseCard>
+
     <ManagerBottomBar />
   </div>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
