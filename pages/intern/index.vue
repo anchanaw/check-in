@@ -1,26 +1,26 @@
 <template>
-    <a-badge class="notification" :count="newTaskCount" :overflow-count="99">
-      <a-button class="notification-btn" type="text" shape="circle"   @click="goToNoti">
-        <BellOutlined />
-      </a-button>
-    </a-badge>
-    <div class="content">
-      <CheckInHeader :userName="`${user.firstName} ${user.lastName}`" :date="dateTime.date" />
+  <a-badge class="notification" :count="newTaskCount" :overflow-count="99">
+    <a-button class="notification-btn" type="text" shape="circle" @click="goToNoti">
+      <BellOutlined />
+    </a-button>
+  </a-badge>
+  <div class="content">
+    <CheckInHeader :userName="`${user.firstName} ${user.lastName}`" :date="dateTime.date" />
 
-      <LocationCard :latitude="latitude" :longitude="longitude" />
-      <CheckInStatusCard />
-    </div>
+    <LocationCard :latitude="latitude" :longitude="longitude" />
+    <CheckInStatusCard />
+  </div>
 
-    <div class="action">
-      <a-button class="checkin-btn" type="primary" size="large" :loading="checking" @click="onCheckIn">
-        ⭐ Check-in
-      </a-button>
-    </div>
+  <div class="action">
+    <a-button class="checkin-btn" type="primary" size="large" :loading="checking" @click="onCheckIn">
+      ⭐ Check-in
+    </a-button>
+  </div>
 
-    <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
+  <CheckinSuccessModal :open="checkinSuccess" @close="checkinSuccess = false" />
 
-    <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
-    <BottomBar />
+  <CheckinFailModal :open="checkinFail" @close="checkinFail = false" />
+  <BottomBar />
 </template>
 
 <script setup lang="ts">
@@ -107,9 +107,10 @@ const getLocation = () => {
 
 onMounted(async () => {
   try {
-    const [meRes, taskRes]: any = await Promise.all([
+    const [meRes, taskRes, submissionRes]: any = await Promise.all([
       apiFetch('/auth/me'),
-      apiFetch('/tasks')
+      apiFetch('/tasks'),
+      apiFetch('/tasks/submissions/me')
     ])
 
     user.value.firstName = meRes?.data?.firstName || ''
@@ -117,9 +118,17 @@ onMounted(async () => {
 
     const threeDaysAgo = dayjs().subtract(3, 'day')
 
-    const recentTasks = (taskRes?.data || []).filter((task: any) =>
-      dayjs(task.createdAt).isAfter(threeDaysAgo)
-    )
+    const tasks = taskRes?.data?.tasks || []
+    const submissionsRaw = submissionRes?.data?.submissions || submissionRes?.data || []
+    const submissions = Array.isArray(submissionsRaw) ? submissionsRaw : []
+
+    const recentTasks = tasks
+      .filter((task: any) => dayjs(task.createdAt).isAfter(threeDaysAgo))
+      .map((task: any) => ({
+        ...task,
+        status: getTaskStatus(task, submissions)
+      }))
+      .filter((task: any) => task.status === 'not_done')
 
     newTaskCount.value = recentTasks.length
 
@@ -167,6 +176,15 @@ const onCheckIn = async () => {
 
 const goToNoti = () => {
   router.push('/intern/notifications')
+}
+
+function getTaskStatus(task: any, submissions: any[]) {
+  const submission = submissions.find((s: any) => s.taskId === task.id)
+  if (submission) return submission.status
+
+  const now = new Date()
+  const end = new Date(task.deadline)
+  return now > end ? 'done' : 'not_done'
 }
 </script>
 

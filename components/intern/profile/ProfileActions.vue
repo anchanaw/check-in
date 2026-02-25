@@ -16,9 +16,10 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
 import { useAuthStore } from '~/stores/auth.store'
 
-defineEmits(['leave', 'logout'])
+const emit = defineEmits(['leave', 'logout'])
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -32,8 +33,14 @@ const goRequestLeave = () => {
 }
 
 const handleLogout = () => {
-  authStore.clearAuth()
-  router.push('/login')
+  Modal.confirm({
+    title: 'Are you sure you want to logout?',
+    onOk() {
+      authStore.clearAuth()
+      emit('logout')
+      router.replace('/login')
+    }
+  })
 }
 </script>
 

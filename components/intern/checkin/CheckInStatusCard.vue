@@ -25,20 +25,29 @@ const { apiFetch } = useApi()
 
 onMounted(async () => {
   try {
-    const res = await apiFetch < {
+    const res = await apiFetch<{
       success: boolean
-  data: {
+      data: {
         id: string
-    checkInDate: string
-    checkInTime: string
-    status: string
-    latitude: number
-    longitude: number
+        checkInDate: string
+        checkInTime: string
+        status: string
+        latitude: number
+        longitude: number
       }[]
-    } > ('/check-ins/me')
-    
-    // 🔥 ดูข้อมูลจริง
-    const checkins = res?.data || []
+    }>('/check-ins/me')
+
+    type CheckIn = {
+      id: string
+      checkInDate: string
+      checkInTime: string
+      status: string
+      latitude: number
+      longitude: number
+    }
+
+    const payload = res?.data as { checkIns?: CheckIn[] } | CheckIn[] | undefined
+    const checkins = Array.isArray(payload) ? payload : (payload?.checkIns ?? [])
 
     if (Array.isArray(checkins) && checkins.length > 0) {
       const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD

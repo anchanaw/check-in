@@ -13,12 +13,14 @@
     </div>
 
     <!-- Content -->
-    <div class="noti-list">
-      <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
-        @remove="removeNoti" />
+    <a-spin :spinning="loading">
+      <div class="noti-list">
+        <NotificationItem v-for="noti in notifications" :key="noti.id" :data="noti" @detail="onDetail"
+          @remove="removeNoti" />
 
-      <a-empty v-if="!notifications.length" description="No notifications" />
-    </div>
+        <a-empty v-if="!loading && !notifications.length" description="No notifications" />
+      </div>
+    </a-spin>
   </div>
 </template>
 
@@ -35,6 +37,7 @@ import {
 import BackButton from '~/components/base/BackButton.vue'
 
 const { apiFetch } = useApi()
+const router = useRouter()
 
 const notifications = ref<Notification[]>([])
 const loading = ref(false)
@@ -44,14 +47,20 @@ type Notification = {
   title: string
   body: string
   createdAt: string
+  status: string
 }
 onMounted(async () => {
   try {
     loading.value = true
 
-    const res: any = await apiFetch('/tasks')
+    const [taskRes, submissionRes]: any = await Promise.all([
+      apiFetch('/tasks'),
+      apiFetch('/tasks/submissions/me')
+    ])
 
-    const tasks = res?.data || res || []
+    const tasks = taskRes?.data?.tasks || []
+    const submissionsRaw = submissionRes?.data?.submissions || submissionRes?.data || []
+    const submissions = Array.isArray(submissionsRaw) ? submissionsRaw : []
 
     console.log('TASKS:', tasks)
 
@@ -67,14 +76,17 @@ onMounted(async () => {
         new Date(a.createdAt).getTime()
     )
 
-    notifications.value = recentTasks.map((task: any) => ({
-      id: task.id,
-      title: task.title,
-      body: `${task.points} pts`,
-      createdAt: dayjs(task.createdAt)
-        .add(7, 'hour')
-        .format('DD/MM/YYYY HH:mm')
-    }))
+    notifications.value = recentTasks
+      .map((task: any) => ({
+        id: task.id,
+        title: task.title,
+        body: `${task.points} pts`,
+        status: getTaskStatus(task, submissions),
+        createdAt: dayjs(task.createdAt)
+          .add(7, 'hour')
+          .format('DD/MM/YYYY HH:mm')
+      }))
+      .filter((noti: Notification) => noti.status === 'not_done')
 
   } catch (err) {
     console.error('Notification error:', err)
@@ -84,7 +96,7 @@ onMounted(async () => {
 })
 
 const onDetail = (noti: Notification) => {
-  console.log('detail:', noti)
+  router.push(`/intern/tasks/${noti.id}`)
 }
 
 const removeNoti = (id: string) => {
@@ -95,6 +107,15 @@ const removeNoti = (id: string) => {
 
 const clearAll = () => {
   notifications.value = []
+}
+
+function getTaskStatus(task: any, submissions: any[]) {
+  const submission = submissions.find((s: any) => s.taskId === task.id)
+  if (submission) return submission.status
+
+  const now = new Date()
+  const end = new Date(task.deadline)
+  return now > end ? 'done' : 'not_done'
 }
 </script>
 

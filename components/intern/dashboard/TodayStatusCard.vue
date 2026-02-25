@@ -49,9 +49,17 @@ onMounted(async () => {
 
     const today = dayjs().add(7, 'hour').format('YYYY-MM-DD')
 
-    const todayRecord = checkRes.data?.find(
+    const checkIns = checkRes.data?.checkIns || []
+
+    const todayRecord = checkIns.find(
       (item) => item.checkInDate === today
     )
+
+    const totalCheckInDays = Number(checkRes.data?.totalCheckInDays || 0)
+    totalHours.value =
+      totalCheckInDays > 0
+        ? `${totalCheckInDays * 8} hrs`
+        : '-'
 
     if (todayRecord) {
       const dateTime = dayjs(
@@ -61,10 +69,8 @@ onMounted(async () => {
       const thaiTime = dateTime.add(7, 'hour')
 
       checkInTime.value = thaiTime.format('HH:mm')
-      totalHours.value = '8 hrs'
     } else {
       checkInTime.value = '-'
-      totalHours.value = '-'
     }
 
     /* 🔹 3. ดึง ranking */

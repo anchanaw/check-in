@@ -28,10 +28,10 @@ onMounted(async () => {
 
     const res = await apiFetch('/check-ins/attendance')
 
-    data.value = (res.data || [])
+    data.value = (res.data?.events || [])
       .map((item, index) => {
 
-        // 🔥 check_in (ตัวเล็ก)
+        // check_in )
         if (item.type === 'check_in') {
 
           const dateObj = dayjs(item.date)

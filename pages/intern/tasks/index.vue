@@ -2,11 +2,13 @@
   <div class="assignments-page">
     <h2 class="page-title">Assignments</h2>
 
-    <div class="wrapper">
-      <AssignmentCard v-for="item in assignments" :key="item.id" :data="item" @addLabel="onAddLabel" />
+    <a-spin :spinning="loading">
+      <div class="wrapper">
+        <AssignmentCard v-for="item in assignments" :key="item.id" :data="item" @addLabel="onAddLabel" />
 
-      <a-empty v-if="!assignments.length" description="No assignments" />
-    </div>
+        <a-empty v-if="!loading && !assignments.length" description="No assignments" />
+      </div>
+    </a-spin>
 
     <BottomBar active="assignment" />
   </div>
@@ -37,15 +39,16 @@ onMounted(async () => {
     loading.value = true
 
     const [taskRes, submissionRes] = await Promise.all([
-      apiFetch<{ data: TaskItem[] }>('/tasks'),
-      apiFetch<{ data: any[] }>('/tasks/submissions/me')
+      apiFetch<{ data: { tasks: TaskItem[] } | TaskItem[] }>('/tasks'),
+      apiFetch<{ data: { submissions: any[] } | any[] }>('/tasks/submissions/me')
     ])
 
-    const taskList = taskRes.data || []
-    const submissions = submissionRes.data || []
-
-    // เอา taskId ของงานที่ submit แล้ว
-    const submittedTaskIds = submissions.map(s => s.taskId)
+    const taskList = Array.isArray(taskRes.data)
+      ? taskRes.data
+      : (taskRes.data?.tasks || [])
+    const submissions = Array.isArray(submissionRes.data)
+      ? submissionRes.data
+      : (submissionRes.data?.submissions || [])
 
     assignments.value = taskList.map((task) => {
       const submission = submissions.find(s => s.taskId === task.id)
