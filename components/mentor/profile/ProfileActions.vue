@@ -4,7 +4,6 @@
       Edit Profile
     </a-button>
 
-    <!-- 🔥 แสดง Invite เฉพาะ mentor -->
 
     <a-button danger block @click="logout">
       Logout
@@ -35,9 +34,6 @@ const goEditProfile = () => {
   emit('edit')
 }
 
-const goInviteIntern = () => {
-  emit('invite')
-}
 
 const logout = () => {
   Modal.confirm({

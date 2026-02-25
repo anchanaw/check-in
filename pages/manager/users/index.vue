@@ -49,8 +49,8 @@ onMounted(async () => {
       apiFetch('/users/mentors')
     ])
 
-    const internList = internRes?.data || []
-    const mentorList = mentorRes?.data || []
+    const internList = internRes?.data?.interns || []
+    const mentorList = mentorRes?.data?.mentors || []
 
     counts.value = {
       mentor: mentorList.length,

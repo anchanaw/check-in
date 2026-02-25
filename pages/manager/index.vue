@@ -94,17 +94,17 @@ onMounted(async () => {
 
     /** ---------- MENTORS ---------- */
     const mentorRes: any = await apiFetch('/users/mentors')
-    stats.value.mentor = mentorRes.data?.length || 0
+    stats.value.mentor = mentorRes.data?.total || 0
 
     /** ---------- INTERNS ---------- */
     const internRes: any = await apiFetch('/users/interns')
-    const interns = internRes.data || []
+    const interns = internRes.data?.interns || []
 
     stats.value.intern = interns.length
-
     topInterns.value = interns
       .slice(0, 3)
       .map((i: any) => `${i.firstName} ${i.lastName}`)
+
 
     /** ---------- PENDING LEAVES ---------- */
     const leaveRes: any = await apiFetch('/leaves/pending')

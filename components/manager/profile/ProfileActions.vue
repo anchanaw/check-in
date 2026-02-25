@@ -8,18 +8,23 @@
       Company Settings
     </a-button>
 
-    <a-button danger block @click="$emit('logout')">
+    <a-button danger block @click="logout">
       Logout
     </a-button>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { Modal } from 'ant-design-vue'
+import { useAuthStore } from '@/stores/auth.store'
 
-defineEmits(['logout'])
+const emit = defineEmits<{                           
+  (e: 'logout'): void
+}>()
 
 const router = useRouter()
+const authStore = useAuthStore()  
 
 const goEditProfile = () => {
   router.push('/manager/profile/edit')
@@ -27,6 +32,16 @@ const goEditProfile = () => {
 
 const goCompanySetting = () => {
   router.push('/manager/profile/company_setting')
+}
+const logout = () => {
+  Modal.confirm({
+    title: 'Are you sure you want to logout?',
+    onOk() {
+      authStore.clearAuth()
+      emit('logout')
+      router.replace('/login')
+    }
+  })
 }
 </script>
 

@@ -56,23 +56,42 @@ const selectedIntern = ref<Intern & {
   university?: string
   studentId?: string
   lastCheckedIn?: string
+  isActive?: boolean
 }>({
   id: 0,
   name: '',
   status: 'inactive'
 })
+const resolveStatus = (user: any): 'active' | 'inactive' => {
+  if (user?.status === 'active' || user?.status === 'inactive') {
+    return user.status
+  }
+  return user?.isActive === false ? 'inactive' : 'active'
+}
+
+const resolveTeam = (user: any): string => {
+  if (Array.isArray(user?.teams) && user.teams.length > 0) {
+    return user.teams
+      .map((t: any) => t?.name)
+      .filter(Boolean)
+      .join(', ')
+  }
+  return user?.teamName || '-'
+}
+
 const loadInterns = async () => {
   try {
     loading.value = true
 
     const res: any = await apiFetch('/users/interns')
 
-    const internList = res.data || []
+    const internList = res.data?.interns || []
 
     interns.value = internList.map((u: any) => ({
       id: u.id,
       name: `${u.firstName} ${u.lastName}`,
-      status: u.isActive ? 'active' : 'inactive'
+      status: resolveStatus(u),
+      team: resolveTeam(u)
     }))
 
   } catch (err) {
@@ -98,14 +117,17 @@ const openDetail = async (intern: Intern) => {
     selectedIntern.value = {
       id: data.id,
       name: `${data.firstName} ${data.lastName}`,
-      status: data.isActive ? 'active' : 'inactive',
+      status: resolveStatus(data),
+      isActive: data.isActive,
 
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       university: data.university,
       studentId: data.studentId,
-      team: data.teamName || '-',
+      team: resolveTeam(data) !== '-'
+        ? resolveTeam(data)
+        : ((intern as any).team || '-'),
       lastCheckedIn: data.lastCheckIn
         ? new Date(data.lastCheckIn).toLocaleString()
         : '-'

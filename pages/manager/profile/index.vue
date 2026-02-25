@@ -110,7 +110,7 @@ const onEdit = () => {
 }
 
 const onLogout = () => {
-  auth.clearAuth()   // 🔥 ใช้ store เท่านั้น
+  auth.clearAuth()   
   router.push('/login')
 }
 </script>

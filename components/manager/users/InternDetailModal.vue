@@ -61,7 +61,6 @@
 </template>
 
 <script setup lang="ts">
-import BaseCard from '@/components/base/BaseCard.vue'
 
 defineProps<{
   open: boolean

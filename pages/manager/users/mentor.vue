@@ -54,7 +54,7 @@ const loadMentors = async () => {
       method: 'GET'
     })
 
-    const list = res?.data || []
+    const list = res?.data?.mentors || []
 
     let mapped = list.map((m: any) => ({
       id: m.id,
