@@ -12,7 +12,7 @@ export function useApiFetch(url, options = {}) {
     const auth = useAuthStore()
 
     const defaults = {
-        baseURL: '/api',  // 🔥 แก้ตรงนี้
+        baseURL:config.public.apiBase,
         key: url,
         server: false,
         onRequest({ options }) {

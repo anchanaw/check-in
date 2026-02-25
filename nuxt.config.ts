@@ -41,10 +41,16 @@ export default defineNuxtConfig({
     ],
   ],
 
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || ''
+    }
+  },
+
   nitro: {
     devProxy: {
       '/api': {
-        target: import.meta.env.NUXT_PUBLIC_API_BASE || '',
+        target: process.env.NUXT_PUBLIC_API_BASE || '',
         changeOrigin: true,
       },
     },
@@ -56,11 +62,7 @@ export default defineNuxtConfig({
     },
   },
 
-  runtimeConfig: {
-    public: {
-      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || ''
-    }
-  },
+
 
   app: {
     head: {

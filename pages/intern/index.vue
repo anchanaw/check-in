@@ -59,7 +59,7 @@ const user = ref({
 
 // เวลา real-time
 const now = ref(new Date())
-let timer: number | undefined
+let timer: ReturnType<typeof setInterval> | undefined
 const newTaskCount = ref(0)
 
 const getLocation = () => {

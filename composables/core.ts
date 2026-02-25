@@ -1,10 +1,13 @@
 import { useAuthStore } from '~/stores/auth.store'
 import { navigateTo } from '#app'
+import { config } from 'process'
+import { useRuntimeConfig } from '#app'
 
 export const useApi = () => {
   const apiFetch = async <T>(url: string, options: any = {}) => {
 
     const authStore = useAuthStore()
+    const config = useRuntimeConfig()
 
     const publicEndpoints = ['/auth/login', '/auth/register']
     const isPublicEndpoint = publicEndpoints.some(endpoint =>
@@ -23,10 +26,11 @@ export const useApi = () => {
     }
 
     try {
-      return await $fetch<T>(`/api${url}`, {
+      return await $fetch<T>(url, {
+        baseURL: config.public.apiBase,   
         ...options,
         headers
-      })
+      })  
     } catch (err: any) {
       const status = err?.response?.status || err?.status
 
