@@ -41,11 +41,10 @@ export default defineNuxtConfig({
     ],
   ],
 
-  // ✅ DEV PROXY (ทำงานเฉพาะตอน npm run dev)
   nitro: {
     devProxy: {
       '/api': {
-        target: 'https://vercel-project-five-pi.vercel.app',
+        target: import.meta.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
         changeOrigin: true,
       },
     },
@@ -57,7 +56,6 @@ export default defineNuxtConfig({
     },
   },
 
-  // ⚠️ เก็บไว้ได้ แต่ "ไม่ต้องใช้ในโค้ด frontend แล้ว"
   runtimeConfig: {
     public: {
       apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || ''
