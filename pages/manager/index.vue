@@ -9,7 +9,7 @@
           </NuxtLink>
         </a-badge>
       </div>
-    </ClientOnly>
+    
     <BaseCard class="dashboard-card">
       <div class="header-title">Manager Dashboard</div>
 
@@ -18,6 +18,7 @@
       <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
       <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
     </BaseCard>
+  </ClientOnly>
     <ManagerBottomBar />
   </div>
 </template>
