@@ -44,11 +44,11 @@
                 <a-date-picker v-model:value="formState.dateOfBirth" style="width:100%" />
             </a-form-item>
 
-            <a-form-item label="Student ID" name="studentId">
+            <a-form-item v-if="showInternFields" label="Student ID" name="studentId">
                 <a-input v-model:value="formState.studentId" />
             </a-form-item>
 
-            <a-form-item label="University" name="university">
+            <a-form-item v-if="showInternFields" label="University" name="university">
                 <a-input v-model:value="formState.university" />
             </a-form-item>
 
@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import { useRoute, navigateTo } from '#app'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useApi } from '~/composables/core'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -81,6 +81,29 @@ if (!inviteCode) {
 
 const loading = ref(false)
 const role = ref<'intern' | 'mentor' | null>(null)
+const showInternFields = computed(() => role.value !== 'mentor')
+
+const roleFromQuery = route.query.role
+if (roleFromQuery === 'intern' || roleFromQuery === 'mentor') {
+    role.value = roleFromQuery
+}
+
+// Fallback: infer role from invite code pattern when role query is not provided.
+if (!role.value && typeof inviteCode === 'string') {
+    const normalizedCode = inviteCode.toUpperCase()
+    if (normalizedCode.startsWith('MENTOR-')) {
+        role.value = 'mentor'
+    } else if (normalizedCode.startsWith('INTERN-')) {
+        role.value = 'intern'
+    }
+}
+
+watch(role, (next) => {
+    if (next === 'mentor') {
+        formState.value.studentId = ''
+        formState.value.university = ''
+    }
+})
 
 // form model
 const formState = ref({
