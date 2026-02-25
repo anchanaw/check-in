@@ -44,7 +44,7 @@ export default defineNuxtConfig({
   nitro: {
     devProxy: {
       '/api': {
-        target: import.meta.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
+        target: import.meta.env.NUXT_PUBLIC_API_BASE || '',
         changeOrigin: true,
       },
     },
