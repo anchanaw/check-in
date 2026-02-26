@@ -1,27 +1,27 @@
 <template>
   <ClientOnly>
-  <div class="dashboard-page">
-    <!-- 🔔 notification -->
+    <div class="dashboard-page">
+      <!-- 🔔 notification -->
 
-    <div class="top-right">
-      <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
-        <NuxtLink to="/manager/notifications" class="bell-link">
-          <BellOutlined class="bell-icon" />
-        </NuxtLink>
-      </a-badge>
+      <div class="top-right">
+        <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
+          <NuxtLink to="/manager/notifications" class="bell-link">
+            <BellOutlined class="bell-icon" />
+          </NuxtLink>
+        </a-badge>
+      </div>
+
+      <BaseCard class="dashboard-card">
+        <div class="header-title">Manager Dashboard</div>
+
+        <DashboardStats :stats="stats" :loading="loading" />
+        <PendingLeaveCard :leaves="pendingLeaves" @view="goToLeaveDetail" @view-all="goToLeaveList" />
+        <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
+        <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
+      </BaseCard>
+
+      <ManagerBottomBar />
     </div>
-
-    <BaseCard class="dashboard-card">
-      <div class="header-title">Manager Dashboard</div>
-
-      <DashboardStats :stats="stats" :loading="loading" />
-      <PendingLeaveCard :leaves="pendingLeaves" @view="goToLeaveDetail" @view-all="goToLeaveList" />
-      <TeamOverview :mostInternTeam="overview.mostIntern" :newestTeam="overview.newest" :loading="loading" />
-      <RankingCard :topTeams="topTeams" :topInterns="topInterns" :loading="loading" />
-    </BaseCard>
-
-    <ManagerBottomBar />
-  </div>
   </ClientOnly>
 </template>
 
@@ -98,7 +98,8 @@ onMounted(async () => {
 
     /** ---------- MENTORS ---------- */
     const mentorRes: any = await apiFetch('/users/mentors')
-    stats.value.mentor = mentorRes.data?.total || 0
+    const mentors = mentorRes.data?.mentors || []
+    stats.value.mentor = mentorRes.data?.total ?? mentors.length
 
     /** ---------- INTERNS ---------- */
     const internRes: any = await apiFetch('/users/interns')

@@ -68,12 +68,13 @@ const form = reactive<{
 const loadMentors = async () => {
     try {
         const res = await useApiFetch('/users/mentors')
-        const list = res?.data ?? []
+        const list = res?.data?.mentors ?? []
 
         mentorOptions.value = list.map((m: any) => ({
             label: `${m.firstName} ${m.lastName}`,
             value: m.id
         }))
+
     } catch (err) {
         console.error(err)
     }
