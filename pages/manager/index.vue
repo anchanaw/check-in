@@ -65,6 +65,7 @@ const pendingLeaves = ref<any[]>([])
 onMounted(async () => {
   try {
     loading.value = true
+    await fetchNotifications()
 
     /** ---------- TEAMS ---------- */
     const teamRes: any = await apiFetch('/teams')
