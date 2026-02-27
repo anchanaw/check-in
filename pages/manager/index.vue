@@ -1,8 +1,6 @@
 <template>
   <ClientOnly>
     <div class="dashboard-page">
-      <!-- 🔔 notification -->
-
       <div class="top-right">
         <a-badge :count="unreadCount" :overflow-count="99" :show-zero="false">
           <NuxtLink to="/manager/notifications" class="bell-link">
@@ -106,9 +104,15 @@ onMounted(async () => {
     const interns = internRes.data?.interns || []
 
     stats.value.intern = interns.length
-    topInterns.value = interns
+
+    /** ---------- TOP 3 INTERNS (POINTS RANKING) ---------- */
+    const rankingRes: any = await apiFetch('/points/ranking')
+    const rankingList = rankingRes?.data || []
+    topInterns.value = rankingList
+      .sort((a: any, b: any) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0))
       .slice(0, 3)
-      .map((i: any) => `${i.firstName} ${i.lastName}`)
+      .map((i: any) => `${i.firstName ?? ''} ${i.lastName ?? ''}`.trim())
+      .filter((name: string) => !!name)
 
 
     /** ---------- PENDING LEAVES ---------- */
@@ -153,15 +157,13 @@ const goToLeaveList = () => {
 .dashboard-page {
   background: #74c3ff;
   min-height: 100vh;
-  padding: 24px 12px;
+  padding: 24px 12px 96px;
   position: relative;
-  /* 🔴 เพิ่มบรรทัดนี้ */
 }
 
 .dashboard-card {
   max-width: 360px;
   margin: 35px auto 0;
-  /* top 55px */
 }
 
 .header-title {
@@ -174,17 +176,15 @@ const goToLeaveList = () => {
 }
 
 
-/* 🔔 ลอยอยู่นอก card */
 .top-right {
   position: fixed;
-  /* ยึดกับ viewport */
   top: 16px;
   right: 16px;
   z-index: 100;
-  /* สูงกว่ากรอบขาว */
 }
 
 .bell-icon {
+  position: relative;
   font-size: 24px;
   color: #000;
   cursor: pointer;
