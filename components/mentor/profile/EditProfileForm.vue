@@ -85,7 +85,7 @@ watch(
   (val) => {
     if (val) Object.assign(form, val)
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 const submit = () => {

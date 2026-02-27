@@ -46,6 +46,10 @@ import { useApiFetch } from '~/composables/useApiFetch'
 const loading = ref(false)
 const officeId = ref<string | null>(null)
 const mentorOptions = ref<{ label: string; value: string }[]>([])
+const BACKEND_TZ_OFFSET_HOURS = -7
+const DISPLAY_TZ_OFFSET_HOURS = 7
+
+const shiftHour = (hour: number, offset: number) => (hour + offset + 24) % 24
 
 const form = reactive<{
     name: string
@@ -99,11 +103,11 @@ const loadOffice = async () => {
         form.radius = office.radiusMeters ?? 0
 
         form.start_time = dayjs()
-            .hour(office.checkInStartHour ?? 0)
+            .hour(shiftHour(office.checkInStartHour ?? 0, DISPLAY_TZ_OFFSET_HOURS))
             .minute(office.checkInStartMinute ?? 0)
 
         form.end_time = dayjs()
-            .hour(office.checkInEndHour ?? 0)
+            .hour(shiftHour(office.checkInEndHour ?? 0, DISPLAY_TZ_OFFSET_HOURS))
             .minute(office.checkInEndMinute ?? 0)
 
         form.mentorIds = office.mentorIds ?? []
@@ -132,23 +136,27 @@ const submit = async () => {
     loading.value = true
     if (form.end_time.isBefore(form.start_time)) {
         message.error('End time must be after start time')
+        loading.value = false
         return
     }
     try {
+        const startForBackend = form.start_time.add(BACKEND_TZ_OFFSET_HOURS, 'hour')
+        const endForBackend = form.end_time.add(BACKEND_TZ_OFFSET_HOURS, 'hour')
+
         const payload = {
             name: form.name,
             latitude: Number(form.latitude),
             longitude: Number(form.longitude),
             radiusMeters: Number(form.radius),
 
-            checkInStartHour: form.start_time.hour(),
-            checkInStartMinute: form.start_time.minute(),
+            checkInStartHour: startForBackend.hour(),
+            checkInStartMinute: startForBackend.minute(),
 
-            checkInEndHour: form.end_time.hour(),
-            checkInEndMinute: form.end_time.minute(),
+            checkInEndHour: endForBackend.hour(),
+            checkInEndMinute: endForBackend.minute(),
 
-            lateThresholdHour: form.end_time.hour(),
-            lateThresholdMinute: form.end_time.minute(),
+            lateThresholdHour: endForBackend.hour(),
+            lateThresholdMinute: endForBackend.minute(),
 
             mentorIds: form.mentorIds
         }
@@ -190,6 +198,8 @@ const submit = async () => {
 
 .page {
     padding: 16px;
+    max-width: 420px;
+    margin: 0 auto;
 }
 
 .top-header {
@@ -198,6 +208,7 @@ const submit = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
 }
 
 .back-btn {
@@ -219,5 +230,9 @@ const submit = async () => {
 
 .save-wrapper {
     margin-top: 12px;
+}
+
+.page :deep(.ant-form) {
+    width: 100%;
 }
 </style>

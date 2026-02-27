@@ -10,8 +10,7 @@
       <BaseCard>
         <EditProfileHeader :user="user" :avatar="form.avatarPreview" @updateAvatar="onAvatarChange" />
 
-        <EditProfileForm :formData="form" @save="onSave" @cancel="onCancel"
-          @changePassword="onChangePassword" />
+        <EditProfileForm :formData="form" :editableFields="editableFields" @save="onSave" @cancel="onCancel" />
       </BaseCard>
     </div>
   </div>
@@ -30,6 +29,7 @@ import BackButton from '~/components/base/BackButton.vue'
 
 const { apiFetch } = useApi()
 const router = useRouter()
+const editableFields = ['firstName', 'lastName', 'gender', 'dob'] as const
 
 const user = reactive({
   name: '',
@@ -40,6 +40,12 @@ const form = reactive({
   avatar: null as File | null,
   avatarPreview: null as string | null,
   email: '',
+  firstName: '',
+  lastName: '',
+  gender: '',
+  dob: ''
+})
+const initialForm = reactive({
   firstName: '',
   lastName: '',
   gender: '',
@@ -58,10 +64,16 @@ onMounted(async () => {
     form.firstName = data.firstName
     form.lastName = data.lastName
     form.gender = data.gender || ''
-    form.dob = data.dateOfBirth || ''
+    form.dob = data.dateOfBirth
+      ? new Date(data.dateOfBirth).toISOString().split('T')[0]!
+      : ''
+    initialForm.firstName = form.firstName
+    initialForm.lastName = form.lastName
+    initialForm.gender = form.gender
+    initialForm.dob = form.dob
 
     const imgRes: any = await apiFetch('/auth/profile/image-signed-url')
-    form.avatarPreview = imgRes.data?.url || null
+    form.avatarPreview = imgRes.data?.signedUrl || imgRes.data?.url || null
 
   } catch {
     message.error('Session expired')
@@ -80,17 +92,35 @@ const onAvatarChange = (file: File) => {
 const onSave = async (payload: any) => {
   console.log('payload:', payload)
   try {
-    await apiFetch('/auth/profile', {
-      method: 'PATCH',
-      body: {
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        gender: payload.gender,
-        ...(payload.dob && {
-          dateOfBirth: new Date(payload.dob).toISOString()
-        })
-      }
-    })
+    const hasAvatarChange = !!form.avatar
+    const body: Record<string, any> = {}
+
+    if (payload.firstName !== initialForm.firstName) {
+      body.firstName = payload.firstName ?? ''
+    }
+    if (payload.lastName !== initialForm.lastName) {
+      body.lastName = payload.lastName ?? ''
+    }
+    if ((payload.gender || '') !== initialForm.gender) {
+      body.gender = payload.gender || null
+    }
+    if ((payload.dob || '') !== initialForm.dob) {
+      body.dateOfBirth = payload.dob
+        ? new Date(payload.dob).toISOString()
+        : null
+    }
+
+    if (Object.keys(body).length > 0) {
+      await apiFetch('/auth/profile', {
+        method: 'PATCH',
+        body
+      })
+
+      initialForm.firstName = payload.firstName ?? ''
+      initialForm.lastName = payload.lastName ?? ''
+      initialForm.gender = payload.gender || ''
+      initialForm.dob = payload.dob || ''
+    }
 
     if (form.avatar) {
   const formData = new FormData()
@@ -100,7 +130,14 @@ const onSave = async (payload: any) => {
     method: 'POST',
     body: formData
   })
+
+  form.avatar = null
 }
+
+    if (Object.keys(body).length === 0 && !hasAvatarChange) {
+      message.info('No changes to save')
+      return
+    }
 
     message.success('Profile updated successfully')
     await apiFetch('/auth/profile/image-signed-url')
@@ -113,9 +150,6 @@ const onSave = async (payload: any) => {
 
 const onCancel = () => router.back()
 
-const onChangePassword = () => {
-  router.push('/manager/change_password')
-}
 </script>
 
 <style scoped>

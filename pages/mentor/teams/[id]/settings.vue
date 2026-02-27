@@ -28,12 +28,12 @@
                     <InviteLinkCard v-if="invite" :invite="{
                         id: invite.id,
                         link: `${baseUrl}/invite?code=${invite.code}`,
-                        maxUses: invite.maxUses,
-                        used: invite.usesCount,
+                        maxUses: toNumber(invite.maxUses),
+                        used: toNumber(invite.usesCount),
                         status:
                             invite.isActive === false
                                 ? 'Disabled'
-                                : invite.usesCount >= invite.maxUses
+                                : toNumber(invite.usesCount) >= toNumber(invite.maxUses)
                                     ? 'Used'
                                     : 'Active'
                     }" @copy="copyLink" @disable="disableInvite" />
@@ -77,6 +77,7 @@ const invite = ref<any | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const baseUrl = import.meta.client ? window.location.origin : ''
+const toNumber = (value: unknown) => Number(value ?? 0)
 
 const loadData = async () => {
     try {
@@ -110,12 +111,23 @@ const loadData = async () => {
         // ===== LOAD INVITES =====
         const inviteRes: any = await apiFetch('/auth/invites')
 
+        const inviteList = inviteRes.data || []
+        const teamInvites = inviteList.filter(
+            (i: any) =>
+                String(i.teamId) === String(teamId) &&
+                i.type === 'join_team' &&
+                i.role === 'intern'
+        )
+
+        // Prefer a currently usable invite, then fall back to any invite in this team.
         invite.value =
-            inviteRes.data.find(
+            teamInvites.find(
                 (i: any) =>
-                    i.type === 'registration' &&
-                    i.role === 'intern'
-            ) || null
+                    i.isActive !== false &&
+                    toNumber(i.usesCount) < toNumber(i.maxUses)
+            ) ||
+            teamInvites[0] ||
+            null
 
     } catch (err) {
         console.error(err)
@@ -144,7 +156,6 @@ const disableInvite = async () => {
       body: { isActive: false }
     })
 
-    // ✅ เปลี่ยน isActive จริง
     invite.value.isActive = false
 
     message.success('Invite disabled successfully')

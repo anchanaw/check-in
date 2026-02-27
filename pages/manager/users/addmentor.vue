@@ -82,6 +82,35 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
+.invite-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #6ec1ff;
+}
+
+.top-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.title {
+  font-weight: 600;
+}
+
+.content {
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+.content :deep(.base-card) {
+  width: 100%;
+  max-width: 420px;
+}
+
 .result {
   margin-top: 16px;
 }

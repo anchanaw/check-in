@@ -50,6 +50,14 @@ const form = reactive({
     university: '',
     studentId: ''
 })
+const initialForm = reactive({
+    firstName: '',
+    lastName: '',
+    gender: '',
+    dob: '',
+    university: '',
+    studentId: ''
+})
 
 interface MeResponse {
     success: boolean
@@ -97,6 +105,13 @@ onMounted(async () => {
             form.dob = ''
         }
 
+        initialForm.firstName = form.firstName
+        initialForm.lastName = form.lastName
+        initialForm.gender = form.gender
+        initialForm.dob = form.dob
+        initialForm.university = form.university
+        initialForm.studentId = form.studentId
+
         // โหลดรูป
         try {
             const imgRes = await apiFetch < any > ('/auth/profile/image-signed-url')
@@ -123,19 +138,48 @@ const onAvatarChange = (file: File) => {
 /* ------------------ SAVE ------------------ */
 const onSave = async (payload: any) => {
     try {
-        await apiFetch('/auth/profile', {
-            method: 'PATCH',
-            body: {
-                firstName: payload.firstName,
-                lastName: payload.lastName,
-                gender: payload.gender,
-                university: payload.university,
-                studentId: payload.studentId,
-                ...(payload.dob && {
-                    dateOfBirth: new Date(payload.dob).toISOString()
-                })
-            }
-        })
+        const hasAvatarChange = !!form.avatar
+        const body: Record<string, any> = {}
+
+        if ((payload.firstName ?? '') !== initialForm.firstName) {
+            body.firstName = payload.firstName ?? ''
+        }
+        if ((payload.lastName ?? '') !== initialForm.lastName) {
+            body.lastName = payload.lastName ?? ''
+        }
+        if ((payload.gender || '') !== initialForm.gender) {
+            body.gender = payload.gender || null
+        }
+        if ((payload.university ?? '') !== initialForm.university) {
+            body.university = payload.university ?? ''
+        }
+        if ((payload.studentId ?? '') !== initialForm.studentId) {
+            body.studentId = payload.studentId ?? ''
+        }
+        if ((payload.dob || '') !== initialForm.dob) {
+            body.dateOfBirth = payload.dob
+                ? new Date(payload.dob).toISOString()
+                : null
+        }
+
+        if (Object.keys(body).length === 0 && !hasAvatarChange) {
+            message.info('No changes to save')
+            return
+        }
+
+        if (Object.keys(body).length > 0) {
+            await apiFetch('/auth/profile', {
+                method: 'PATCH',
+                body
+            })
+
+            initialForm.firstName = payload.firstName ?? ''
+            initialForm.lastName = payload.lastName ?? ''
+            initialForm.gender = payload.gender || ''
+            initialForm.dob = payload.dob || ''
+            initialForm.university = payload.university ?? ''
+            initialForm.studentId = payload.studentId ?? ''
+        }
 
         // upload avatar
         if (form.avatar) {
@@ -146,6 +190,7 @@ const onSave = async (payload: any) => {
                 method: 'POST',
                 body: formData
             })
+            form.avatar = null
         }
 
         message.success('Profile updated successfully')
